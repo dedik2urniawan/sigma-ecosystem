@@ -2,6 +2,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import "./globals.css"; // Ensure global styles are imported if not already contextually available
+
+// Add smooth scrolling to HTML tag via global CSS or inline if possible, 
+// strictly speaking Next.js handles this in layout, but we can enforce some classes on the container.
 
 // Tech Background Component - Holographic Globe & Data Rain
 const TechBackground = () => {
@@ -307,6 +311,159 @@ const DevelopmentModal = ({ isOpen, onClose, title }: DevelopmentModalProps) => 
   );
 };
 
+// Device Frames for "Tech Vibes"
+const MobileFrame = ({ icon, color }: { icon: string, color: string }) => (
+  <div className="relative w-16 h-28 bg-slate-900 rounded-[1rem] border-4 border-slate-200 shadow-xl overflow-hidden flex flex-col mx-auto group-hover:scale-105 transition-transform duration-500">
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-3 bg-slate-900 rounded-b-lg z-20"></div>
+    <div className={`flex-1 bg-gradient-to-br ${color} flex items-center justify-center relative`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] opacity-50"></div>
+      <span className="material-icons-round text-3xl text-white relative z-10 animate-pulse">{icon}</span>
+    </div>
+    <div className="h-8 bg-white flex items-center justify-center gap-1">
+      <div className="w-8 h-1 bg-slate-100 rounded-full"></div>
+    </div>
+  </div>
+);
+
+const WebFrame = ({ icon, color }: { icon: string, color: string }) => (
+  <div className="relative w-28 h-20 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden flex flex-col mx-auto group-hover:scale-105 transition-transform duration-500">
+    <div className="h-4 bg-slate-50 border-b border-slate-100 flex items-center px-2 gap-1">
+      <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+      <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+    </div>
+    <div className={`flex-1 bg-gradient-to-br ${color} flex items-center justify-center relative`}>
+      <span className="material-icons-round text-3xl text-white relative z-10">{icon}</span>
+      {/* Floating elements */}
+      <div className="absolute top-2 right-2 w-4 h-1 bg-white/20 rounded-full"></div>
+      <div className="absolute bottom-2 left-2 w-6 h-1 bg-white/20 rounded-full"></div>
+    </div>
+  </div>
+);
+
+const AiBrain = ({ icon, color }: { icon: string, color: string }) => (
+  <div className="relative w-24 h-24 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+    {/* Pulse Rings */}
+    <div className={`absolute inset-0 rounded-full border-2 ${color.replace('from-', 'border-').split(' ')[0]} opacity-20 animate-ping`}></div>
+    <div className={`absolute inset-2 rounded-full border ${color.replace('from-', 'border-').split(' ')[0]} opacity-40 animate-pulse`}></div>
+
+    <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg overflow-hidden`}>
+      <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
+      <span className="material-icons-round text-3xl text-white relative z-10">{icon}</span>
+    </div>
+
+    {/* Connecting Nodes */}
+    <div className="absolute -top-2 -right-1 w-2 h-2 rounded-full bg-purple-400 animate-bounce"></div>
+    <div className="absolute -bottom-1 -left-2 w-2 h-2 rounded-full bg-blue-400 animate-bounce delay-100"></div>
+  </div>
+);
+
+// Innovation Section Component
+const InnovationSection = () => {
+  const steps = [
+    {
+      step: "01",
+      title: "Temukan Dini",
+      subtitle: "Early Detection",
+      desc: "Skrining balita stunting secara real-time menggunakan SIGMA Mobileapp di tingkat Posyandu.",
+      visual: <MobileFrame icon="person_search" color="from-blue-500 to-blue-600" />,
+      color: "from-blue-400 to-blue-600",
+      shadow: "shadow-blue-500/20",
+      border: "border-blue-200",
+      bg: "bg-blue-50"
+    },
+    {
+      step: "02",
+      title: "Intervensi & Dampingi",
+      subtitle: "Targeted Intervention",
+      desc: "Pemberian PKMK & pemantauan intensif via SIGMA PKMK Apps & Mobile Apps.",
+      visual: (
+        <div className="flex items-center justify-center gap-2 relative">
+          <div className="scale-90 origin-right"><WebFrame icon="medical_services" color="from-emerald-500 to-emerald-600" /></div>
+          <div className="scale-75 origin-left -ml-4 mt-4 shadow-2xl relative z-10"><MobileFrame icon="local_hospital" color="from-teal-500 to-teal-600" /></div>
+        </div>
+      ),
+      color: "from-emerald-400 to-emerald-600",
+      shadow: "shadow-emerald-500/20",
+      border: "border-emerald-200",
+      bg: "bg-emerald-50"
+    },
+    {
+      step: "03",
+      title: "Monitoring Evaluasi",
+      subtitle: "Comprehensive Analysis",
+      desc: "Analisis dampak intervensi berbasis data presisi menggunakan SIGMA RCS & Chatbot AI.",
+      visual: <AiBrain icon="psychology" color="from-purple-500 to-purple-700" />,
+      color: "from-purple-400 to-purple-600",
+      shadow: "shadow-purple-500/20",
+      border: "border-purple-200",
+      bg: "bg-purple-50"
+    }
+  ];
+
+  return (
+    <section id="framework" className="py-24 relative overflow-hidden bg-white">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40"></div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-20">
+          <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-[10px] font-bold tracking-[0.2em] uppercase font-mono mb-6 shadow-lg shadow-slate-200">
+            Strategic Framework
+          </span>
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+            Inovasi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-600 to-purple-600">TINDIK ANTING</span>
+          </h2>
+          <p className="text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
+            Pendekatan holistik <span className="font-bold text-slate-700">Temukan Dini, Intervensi, Dampingi, dan Monitoring Evaluasi Anak Stunting</span> yang didukung sepenuhnya oleh ekosistem digital SIGMA.
+          </p>
+        </div>
+
+        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          {/* Connecting Line (Desktop) */}
+          <div className="hidden md:block absolute top-[6rem] left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-200 via-emerald-200 to-purple-200 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-emerald-500 to-purple-500 w-full animate-[shimmer_2s_infinite] opacity-50"></div>
+          </div>
+
+          {steps.map((item, i) => (
+            <div key={i} className="relative z-10 group">
+              <div className={`relative bg-white rounded-[2rem] p-8 border ${item.border} shadow-xl ${item.shadow} hover:-translate-y-2 transition-all duration-500 h-full flex flex-col items-center text-center`}>
+
+                {/* Step Number Badge */}
+                <div className="absolute -top-5 bg-slate-900 text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold font-mono text-sm shadow-lg border-2 border-white z-20">
+                  {item.step}
+                </div>
+
+                {/* Tech Visual Container */}
+                <div className="h-32 w-full flex items-center justify-center mb-6 relative">
+                  {/* Glow effect behind visual */}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${item.color} opacity-5 blur-2xl rounded-full scale-75`}></div>
+                  {item.visual}
+                </div>
+
+                <h3 className="text-xl font-extrabold text-slate-900 mb-2">{item.title}</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono mb-4 block">
+                  {item.subtitle}
+                </span>
+
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                  {item.desc}
+                </p>
+
+                {/* Tech Badge */}
+                <div className={`mt-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${item.bg} border-l-2 ${item.border.replace('border', 'border-l')}`}>
+                  <span className="material-icons-round text-xs opacity-70">terminal</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wide opacity-80">Supported by SIGMA</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeModalTitle, setActiveModalTitle] = useState("");
@@ -391,12 +548,11 @@ export default function Home() {
               </div>
             </div>
             <div className="hidden md:flex items-center gap-8">
+              <a href="#framework" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Framework</a>
               <a href="#applications" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Aplikasi</a>
               <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Tentang</a>
               <a
-                href="https://pkmk-malangkab.app/login"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/rcs"
                 className="px-6 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 hover:shadow-indigo-200 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2"
               >
                 <span className="material-icons-round text-sm">login</span>
@@ -488,6 +644,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Innovation Section - Tindik Anting */}
+        <InnovationSection />
+
         {/* Applications Section */}
         <section id="applications" className="py-24 bg-white relative z-10 border-t border-slate-100/50">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -568,10 +727,13 @@ export default function Home() {
         </section>
 
         {/* Features - Grid */}
-        <section className="relative w-full py-24 bg-white overflow-hidden border-t border-slate-100/50" id="about">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <section className="relative w-full py-24 bg-slate-50 overflow-hidden border-t border-slate-100/50" id="about">
+          {/* Noise Texture Overlay */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-6 border border-indigo-100 font-mono">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-6 border border-indigo-100 font-mono shadow-sm">
                 Why Choose SIGMA?
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
@@ -585,27 +747,30 @@ export default function Home() {
               {[
                 {
                   title: "Data Terpusat", icon: "database", color: "blue", desc: "Single source of truth data gizi terintegrasi.",
-                  classes: { bg: "bg-blue-50 text-blue-600 border-blue-100" }
+                  classes: { bg: "bg-blue-50 text-blue-600 border-blue-100", hover: "group-hover:shadow-blue-200/50 group-hover:border-blue-200" }
                 },
                 {
                   title: "AI Insights", icon: "psychology", color: "purple", desc: "Machine learning untuk prediksi stunting.",
-                  classes: { bg: "bg-purple-50 text-purple-600 border-purple-100" }
+                  classes: { bg: "bg-purple-50 text-purple-600 border-purple-100", hover: "group-hover:shadow-purple-200/50 group-hover:border-purple-200" }
                 },
                 {
                   title: "Real-Time", icon: "bolt", color: "amber", desc: "Pemantauan langsung dari lapangan.",
-                  classes: { bg: "bg-amber-50 text-amber-600 border-amber-100" }
+                  classes: { bg: "bg-amber-50 text-amber-600 border-amber-100", hover: "group-hover:shadow-amber-200/50 group-hover:border-amber-200" }
                 },
                 {
                   title: "Keamanan", icon: "verified_user", color: "emerald", desc: "Enkripsi standar industri kesehatan.",
-                  classes: { bg: "bg-emerald-50 text-emerald-600 border-emerald-100" }
+                  classes: { bg: "bg-emerald-50 text-emerald-600 border-emerald-100", hover: "group-hover:shadow-emerald-200/50 group-hover:border-emerald-200" }
                 }
               ].map((feat, i) => (
-                <div key={i} className={`bg-white p-8 rounded-[2rem] border border-slate-100 hover:border-indigo-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)] transition-all duration-300 group`}>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${feat.classes.bg}`}>
+                <div key={i} className={`bg-white p-8 rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-xl transition-all duration-500 group relative overflow-hidden ${feat.classes.hover}`}>
+                  <div className={`absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500`}>
+                    <span className="material-icons-round text-9xl -mr-8 -mt-8 rotate-12">{feat.icon}</span>
+                  </div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 ${feat.classes.bg}`}>
                     <span className="material-icons-round text-2xl">{feat.icon}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{feat.title}</h3>
-                  <p className="text-sm text-slate-500 font-medium leading-relaxed">{feat.desc}</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 relative z-10">{feat.title}</h3>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed relative z-10">{feat.desc}</p>
                 </div>
               ))}
             </div>
@@ -690,7 +855,7 @@ export default function Home() {
               <span>v2.0.0 (Beta)</span>
             </div>
             <div>
-              Crafted with <span className="text-red-400">♥</span> by <a href="#" className="font-bold text-indigo-500">DK</a>
+              Crafted with <span className="text-red-400">♥</span> by <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors">DK</a>
             </div>
           </div>
         </div>

@@ -763,7 +763,7 @@ export default function RCSLandingPage() {
                             <span>SIGMA Ecosystem v2.0</span>
                         </div>
                         <div>
-                            Crafted with <span className="text-red-400">♥</span> by <a href="#" className="font-bold text-emerald-600">DK</a>
+                            Crafted with <span className="text-red-400">♥</span> by <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-emerald-600 hover:text-emerald-700 transition-colors">DK</a>
                         </div>
                     </div>
                 </div>
