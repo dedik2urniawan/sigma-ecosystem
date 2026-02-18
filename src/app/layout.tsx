@@ -25,15 +25,18 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
+          crossOrigin="anonymous"
         />
         {/* Material Icons */}
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
           rel="stylesheet"
+          crossOrigin="anonymous"
         />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="antialiased min-h-screen bg-[#f8fafc] text-slate-800">
