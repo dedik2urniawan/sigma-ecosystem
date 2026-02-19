@@ -209,6 +209,9 @@ export default function PelayananKesehatanPage() {
     const [exportingPDF, setExportingPDF] = useState(false);
     const dashboardRef = useRef<HTMLDivElement>(null);
 
+    // AI Advisor Integration
+    const AiAdvisorPanel = dynamic(() => import("@/components/dashboard/ai/AiAdvisorPanel"), { ssr: false });
+
     // ─── Tab Navigation ──────────────────────────────────────────────────
     const [activeTab, setActiveTab] = useState<"puskesmas" | "desa" | "insiden">("puskesmas");
 
@@ -549,6 +552,46 @@ export default function PelayananKesehatanPage() {
         }
     }, [filterBulan, filterTahun]);
 
+    // Prepare AI Context
+    const aiContext = useMemo(() => {
+        // Identify top issues (simple logic: highest stunting/wasting)
+        const issues = filteredData
+            .map(r => ({
+                puskesmas: r.puskesmas,
+                stunting: r.stunting > 0 && r.jumlah_timbang_ukur > 0 ? (r.stunting / r.jumlah_timbang_ukur) * 100 : 0,
+                wasting: r.wasting > 0 && r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0,
+            }))
+            .sort((a, b) => b.stunting - a.stunting)
+            .slice(0, 5)
+            .map(r => ({
+                puskesmas: r.puskesmas,
+                issue: `Stunting ${(r.stunting).toFixed(1)}%`,
+                value: r.stunting
+            }));
+
+        return {
+            filterTahun,
+            filterBulan,
+            filterPuskesmas,
+            totals: {
+                ...totals,
+                // Ensure plain numbers are passed, not React nodes
+                data_sasaran: totals.data_sasaran,
+                jumlah_timbang_ukur: totals.jumlah_timbang_ukur,
+                stunting: totals.stunting,
+                wasting: totals.wasting,
+                underweight: totals.underweight,
+                obesitas: totals.obesitas,
+                pctDataEntry: totals.pctDataEntry,
+                pctStunting: totals.pctStunting,
+                pctWasting: totals.pctWasting,
+                pctUnderweight: totals.pctUnderweight,
+                pctObesitas: totals.pctObesitas,
+            },
+            topIssues: issues
+        };
+    }, [filteredData, totals, filterTahun, filterBulan, filterPuskesmas]);
+
     if (loading) {
         return (
             <div className="space-y-6">
@@ -559,8 +602,16 @@ export default function PelayananKesehatanPage() {
         );
     }
 
+
+
+
+
+
+
     return (
         <div className="space-y-8" ref={dashboardRef} id="dashboard-content">
+            <AiAdvisorPanel data={aiContext} />
+
             {/* ─── Header ──────────────────────────────────────────── */}
             <div>
                 <div className="flex items-center gap-3 mb-2">
