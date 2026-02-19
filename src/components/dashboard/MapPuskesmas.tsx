@@ -208,6 +208,10 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
         [data, metric, normalizeString]
     );
 
+    // Generate unique ID for map container to force remount on refresh/strict mode
+    // This fixes "Map container is being reused by another instance" error
+    const [mapId] = useState(() => `map-${Math.random().toString(36).substr(2, 9)}`);
+
     if (!geojsonData) {
         return (
             <div className="w-full h-[500px] bg-slate-100 rounded-2xl flex items-center justify-center">
@@ -223,6 +227,7 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
         <div className="relative">
             <div className="rounded-2xl overflow-hidden border border-slate-200" style={{ height: "500px" }}>
                 <MapContainer
+                    key={mapId}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}
