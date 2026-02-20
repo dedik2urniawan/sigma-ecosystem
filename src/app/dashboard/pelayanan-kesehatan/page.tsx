@@ -832,7 +832,6 @@ export default function PelayananKesehatanPage() {
                                 setTablePage(1);
                             }}
                             availableDesa={availableDesa}
-                            availableDesa={availableDesa}
                             lockedPuskesmas={activeTab === "puskesmas" ? null : lockedPuskesmas}
                         />
                     )}
