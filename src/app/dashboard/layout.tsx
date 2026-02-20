@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import SessionTimeout from "@/components/SessionTimeout";
 
 // ─── Auth Context ───────────────────────────────────────────────────────────
 interface UserData {
@@ -170,6 +171,7 @@ export default function DashboardLayout({
 
     return (
         <AuthContext.Provider value={{ user, loading }}>
+            <SessionTimeout />
             <div className="flex min-h-screen bg-slate-100 font-display">
                 {/* ─── Mobile Overlay ──────────────────────────── */}
                 {sidebarOpen && (

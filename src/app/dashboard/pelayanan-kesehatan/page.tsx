@@ -20,6 +20,8 @@ import { jsPDF } from "jspdf";
 import LevelDesaContent from "@/components/dashboard/LevelDesaContent";
 import InsidenStuntingContent from "@/components/dashboard/InsidenStuntingContent";
 import TrendAnalysisChart from "@/components/dashboard/TrendAnalysisChart";
+import CiafDashboardView from "@/components/dashboard/ciaf/CiafDashboardView";
+import DashboardFilters from "@/components/dashboard/DashboardFilters";
 
 // Dynamic import for Map (Leaflet doesn't work with SSR)
 const MapComponent = dynamic(() => import("@/components/dashboard/MapPuskesmas"), {
@@ -32,11 +34,12 @@ const MapComponent = dynamic(() => import("@/components/dashboard/MapPuskesmas")
 });
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-interface BultimRow {
+export interface BultimRow {
     id: string;
     tahun: number;
     bulan: number;
     puskesmas: string;
+    kelurahan?: string;
     data_sasaran: number;
     bb_sangat_kurang: number;
     bb_kurang: number;
@@ -201,6 +204,7 @@ export default function PelayananKesehatanPage() {
     const [filterTahun, setFilterTahun] = useState<number | null>(null);
     const [filterBulan, setFilterBulan] = useState<number | null>(null);
     const [filterPuskesmas, setFilterPuskesmas] = useState<string>("all");
+    const [filterDesa, setFilterDesa] = useState<string>("all");
     const [chartMetric, setChartMetric] = useState("dataEntry");
     const [mapMetric, setMapMetric] = useState("stunting");
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -213,52 +217,130 @@ export default function PelayananKesehatanPage() {
     const AiAdvisorPanel = dynamic(() => import("@/components/dashboard/ai/AiAdvisorPanel"), { ssr: false });
 
     // ─── Tab Navigation ──────────────────────────────────────────────────
-    const [activeTab, setActiveTab] = useState<"puskesmas" | "desa" | "insiden">("puskesmas");
+    const [activeTab, setActiveTab] = useState<"puskesmas" | "desa" | "insiden" | "ciaf">("puskesmas");
 
     // ─── Table Pagination ────────────────────────────────────────────────
     const [tablePage, setTablePage] = useState(1);
     const [tableRowsPerPage, setTableRowsPerPage] = useState(10);
 
-    // Fetch data
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [lockedPuskesmas, setLockedPuskesmas] = useState<string | null>(null);
+
+    // Initial Data Fetch
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchUserAndData = async () => {
             setLoading(true);
-            const { data: rows, error } = await supabase
-                .from("data_bultim")
-                .select("*")
-                .order("tahun", { ascending: false })
-                .order("bulan", { ascending: false });
 
-            if (error) {
-                console.error("Error fetching data:", error);
-            } else {
-                setData(rows || []);
+            // 1. Check User Role
+            const { data: { user } } = await supabase.auth.getUser();
+            let currentPuskesmasName: string | null = null;
 
-                // Get last updated from uploaded_at
-                if (rows && rows.length > 0) {
-                    const latest = rows.reduce((a, b) =>
-                        new Date(a.uploaded_at) > new Date(b.uploaded_at) ? a : b
-                    );
-                    setLastUpdated(latest.uploaded_at);
-                }
+            if (user) {
+                const { data: userProfile } = await supabase
+                    .from("app_users")
+                    .select("role, puskesmas_id")
+                    .eq("id", user.id)
+                    .single();
 
-                // Default filters to the most recent period
-                if (rows && rows.length > 0) {
-                    const years = [...new Set(rows.map((r) => r.tahun))].sort((a, b) => b - a);
-                    const latestYear = years[0];
-                    setFilterTahun(latestYear);
+                if (userProfile) {
+                    setUserRole(userProfile.role);
 
-                    const monthsInYear = [...new Set(rows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
-                    if (monthsInYear.length > 0) {
-                        setFilterBulan(monthsInYear[0]);
+                    if (userProfile.role === "admin_puskesmas" && userProfile.puskesmas_id) {
+                        const { data: pkm } = await supabase
+                            .from("ref_puskesmas")
+                            .select("nama")
+                            .eq("id", userProfile.puskesmas_id)
+                            .single();
+
+                        if (pkm) {
+                            currentPuskesmasName = pkm.nama;
+                            setLockedPuskesmas(pkm.nama);
+
+                            // Only force filter if NOT on "puskesmas" tab
+                            // But initial state is "puskesmas" tab locally, so we DON'T force it initially.
+                            // Unless we want them to start with their own data? 
+                            // User said "bisa akses puskesmas lainnya", so starting with "All" or their own is fine.
+                            // Let's defaulted to "all" for puskesmas tab, but lock others.
+                            // Actually, let's just NOT force it here, as default is "all".
+                            // But if they navigate to other tabs, we MUST force it.
+                        }
                     }
+                }
+            }
+
+            // 2. Fetch Dashboard Data
+            // Loop fetch for potentially large village dataset
+            let allRows: BultimRow[] = [];
+            let page = 0;
+            const size = 1000;
+            let hasMore = true;
+
+            while (hasMore) {
+                const { data: rows, error } = await supabase
+                    .from("data_bultim_desa")
+                    .select("*")
+                    .range(page * size, (page + 1) * size - 1)
+                    .order("tahun", { ascending: false })
+                    .order("bulan", { ascending: false });
+
+                if (error) {
+                    console.error("Error fetching data:", error);
+                    hasMore = false;
+                } else if (rows) {
+                    // Map village data to BultimRow structure
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const mapped = rows.map((r: any) => ({
+                        ...r,
+                        // Ensure data_sasaran exists (sum L+P if missing)
+                        data_sasaran: r.data_sasaran ?? ((r.data_sasaran_l || 0) + (r.data_sasaran_p || 0)),
+                    }));
+
+                    allRows = [...allRows, ...mapped];
+                    if (rows.length < size) hasMore = false;
+                    page++;
+                } else {
+                    hasMore = false;
+                }
+            }
+
+            setData(allRows);
+
+            if (allRows.length > 0) {
+                // Get last updated
+                const latest = allRows.reduce((a, b) =>
+                    new Date(a.uploaded_at) > new Date(b.uploaded_at) ? a : b
+                );
+                setLastUpdated(latest.uploaded_at);
+
+                // Default filters
+                const years = [...new Set(allRows.map((r) => r.tahun))].sort((a, b) => b - a);
+                const latestYear = years[0];
+                setFilterTahun(latestYear);
+
+                const monthsInYear = [...new Set(allRows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
+                if (monthsInYear.length > 0) {
+                    setFilterBulan(monthsInYear[0]);
                 }
             }
             setLoading(false);
         };
 
-        fetchData();
+        fetchUserAndData();
     }, []);
+
+    // Enforce Locked Puskesmas when switching tabs
+    useEffect(() => {
+        if (lockedPuskesmas) {
+            if (activeTab === "puskesmas") {
+                // Allow them to see all, so do nothing (or reset to "all" if desired?)
+                // User requirement: "admin_puskesmas bisa akses puskesmas lainnya"
+                // So we allow them to change filter.
+            } else {
+                // For other tabs (CIAF, etc.), ENFORCE the lock
+                setFilterPuskesmas(lockedPuskesmas);
+            }
+        }
+    }, [activeTab, lockedPuskesmas]);
 
     // Available filter values
     const availableYears = useMemo(() => {
@@ -274,14 +356,25 @@ export default function PelayananKesehatanPage() {
         return [...new Set(data.map((r) => r.puskesmas))].sort();
     }, [data]);
 
+    const availableDesa = useMemo(() => {
+        let filtered = data;
+        if (filterTahun) filtered = filtered.filter((r) => r.tahun === filterTahun);
+        if (filterBulan) filtered = filtered.filter((r) => r.bulan === filterBulan);
+        if (filterPuskesmas !== "all") {
+            filtered = filtered.filter((r) => r.puskesmas === filterPuskesmas);
+        }
+        return [...new Set(filtered.map((r) => r.kelurahan || "Unknown"))].sort();
+    }, [data, filterTahun, filterBulan, filterPuskesmas]);
+
     // Filtered data
     const filteredData = useMemo(() => {
         let result = data;
         if (filterTahun) result = result.filter((r) => r.tahun === filterTahun);
         if (filterBulan) result = result.filter((r) => r.bulan === filterBulan);
         if (filterPuskesmas !== "all") result = result.filter((r) => r.puskesmas === filterPuskesmas);
+        if (filterDesa !== "all") result = result.filter((r) => r.kelurahan === filterDesa);
         return result;
-    }, [data, filterTahun, filterBulan, filterPuskesmas]);
+    }, [data, filterTahun, filterBulan, filterPuskesmas, filterDesa]);
 
     // Trend Data (Ignore Month Filter)
     const trendData = useMemo(() => {
@@ -329,7 +422,8 @@ export default function PelayananKesehatanPage() {
     const chartData = useMemo(() => {
         const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number }>();
 
-        // If a single puskesmas is selected, still show it
+        // If a single puskesmas is selected, still show it (or its villages if we wanted, but logic here assumes Puskesmas bars)
+        // With village data, we MUST aggregate by Puskesmas to avoid duplicate bars
         const chartFiltered = filterPuskesmas === "all" ? filteredData : filteredData;
 
         chartFiltered.forEach((r) => {
@@ -700,512 +794,484 @@ export default function PelayananKesehatanPage() {
                         <span className="material-icons-round text-lg">analytics</span>
                         Analisis Insiden Stunting
                     </button>
+                    <button
+                        onClick={() => setActiveTab("ciaf")}
+                        className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === "ciaf"
+                            ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                            }`}
+                    >
+                        <span className="material-icons-round text-lg">science</span>
+                        Analisis CIAF
+                    </button>
                 </div>
             </div>
 
             {/* ─── Tab Content ────────────────────────────────────── */}
             {activeTab === "desa" ? (
                 <LevelDesaContent />
-            ) : activeTab === "insiden" ? (
-                <InsidenStuntingContent />
             ) : (
                 <>
-
-                    {/* ─── Filters ─────────────────────────────────────────── */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="material-icons-round text-emerald-600">filter_alt</span>
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Filter Data</h2>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {/* Tahun */}
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">
-                                    Tahun
-                                </label>
-                                <select
-                                    value={filterTahun || ""}
-                                    onChange={(e) => {
-                                        const v = e.target.value ? Number(e.target.value) : null;
-                                        setFilterTahun(v);
-                                        setFilterBulan(null);
-                                    }}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                >
-                                    <option value="">Semua Tahun</option>
-                                    {availableYears.map((y) => (
-                                        <option key={y} value={y}>
-                                            {y}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Bulan */}
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">
-                                    Bulan
-                                </label>
-                                <select
-                                    value={filterBulan || ""}
-                                    onChange={(e) => setFilterBulan(e.target.value ? Number(e.target.value) : null)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                >
-                                    <option value="">Semua Bulan</option>
-                                    {availableMonths.map((m) => (
-                                        <option key={m} value={m}>
-                                            {BULAN_LABELS[m]}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Puskesmas */}
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">
-                                    Puskesmas
-                                </label>
-                                <select
-                                    value={filterPuskesmas}
-                                    onChange={(e) => setFilterPuskesmas(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                >
-                                    <option value="all">Semua Puskesmas</option>
-                                    {availablePuskesmas.map((p) => (
-                                        <option key={p} value={p}>
-                                            {p}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ─── Score Cards ─────────────────────────────────────── */}
-                    {data.length === 0 ? (
-                        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-                            <span className="material-icons-round text-6xl text-slate-300 mb-4 block">cloud_upload</span>
-                            <h3 className="text-lg font-bold text-slate-700 mb-2">Belum Ada Data</h3>
-                            <p className="text-sm text-slate-400 max-w-md mx-auto">
-                                Data belum tersedia. Silakan upload file data bulanan melalui menu <strong>Upload Data</strong> untuk mulai melihat analisis.
-                            </p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <ScoreCard label="Total Sasaran" value={formatNum(totals.data_sasaran)} suffix="Balita" icon="groups" color="blue" />
-                                <ScoreCard label="Balita Di Timbang" value={formatNum(totals.jumlah_timbang)} suffix="Balita" icon="monitor_weight" color="emerald" />
-                                <ScoreCard label="Balita Di Ukur" value={formatNum(totals.jumlah_ukur)} suffix="Balita" icon="straighten" color="emerald" />
-                                <ScoreCard label="Timbang & Ukur" value={formatNum(totals.jumlah_timbang_ukur)} suffix="Balita" icon="assignment_turned_in" color="purple" />
-                            </div>
-
-                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                                <ScoreCard label="% Data Entry" value={formatPct(totals.pctDataEntry)} icon="percent" color="blue" highlight />
-                                <ScoreCard label="Kasus Stunting" value={formatNum(totals.stunting)} suffix="Balita" icon="height" color="amber" />
-                                <ScoreCard label="Kasus Wasting" value={formatNum(totals.wasting)} suffix="Balita" icon="trending_down" color="amber" />
-                                <ScoreCard label="Kasus Underweight" value={formatNum(totals.underweight)} suffix="Balita" icon="scale" color="amber" />
-                                <ScoreCard label="Kasus Obesitas" value={formatNum(totals.obesitas)} suffix="Balita" icon="trending_up" color="red" />
-                            </div>
-
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <ScoreCard label="Prevalensi Stunting" value={formatPct(totals.pctStunting)} icon="height" color={totals.pctStunting >= 20 ? "red" : totals.pctStunting >= 10 ? "amber" : "emerald"} highlight />
-                                <ScoreCard label="Prevalensi Wasting" value={formatPct(totals.pctWasting)} icon="trending_down" color={totals.pctWasting >= 10 ? "red" : totals.pctWasting >= 5 ? "amber" : "emerald"} highlight />
-                                <ScoreCard label="Prevalensi Underweight" value={formatPct(totals.pctUnderweight)} icon="scale" color={totals.pctUnderweight >= 20 ? "red" : totals.pctUnderweight >= 10 ? "amber" : "emerald"} highlight />
-                                <ScoreCard label="Prevalensi Obesitas" value={formatPct(totals.pctObesitas)} icon="trending_up" color={totals.pctObesitas >= 5 ? "red" : totals.pctObesitas >= 3 ? "amber" : "emerald"} highlight />
-                            </div>
-
-
-
-                            {/* ─── Trend Analysis ───────────────────────────────── */}
-                            <TrendAnalysisChart data={trendData} year={filterTahun} />
-
-                            {/* ─── Interactive Map ───────────────────────────────── */}
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-icons-round text-emerald-600 text-xl">map</span>
-                                        <div>
-                                            <h2 className="text-base font-bold text-slate-900">Peta Interaktif Prevalensi Gizi</h2>
-                                            <p className="text-xs text-slate-400">
-                                                Peta Prevalensi Gizi per Puskesmas
-                                                {filterPuskesmas !== "all" ? ` — ${filterPuskesmas}` : " (Semua Puskesmas)"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <select
-                                        value={mapMetric}
-                                        onChange={(e) => setMapMetric(e.target.value)}
-                                        className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                    >
-                                        <option value="stunting">Prevalensi Stunting</option>
-                                        <option value="wasting">Prevalensi Wasting</option>
-                                        <option value="underweight">Prevalensi Underweight</option>
-                                        <option value="obesitas">Prevalensi Obesitas</option>
-                                    </select>
-                                </div>
-                                <MapComponent data={mapData} metric={mapMetric} selectedPuskesmas={filterPuskesmas === "all" ? null : filterPuskesmas} />
-                            </div>
-
-                            {/* ─── Charts ───────────────────────────────────────── */}
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-icons-round text-emerald-600 text-xl">bar_chart</span>
-                                        <div>
-                                            <h2 className="text-base font-bold text-slate-900">Grafik Prevalensi dan Data Entry</h2>
-                                            <p className="text-xs text-slate-400">Data per puskesmas diurutkan dari tertinggi ke terendah</p>
-                                        </div>
-                                    </div>
-                                    <select
-                                        value={chartMetric}
-                                        onChange={(e) => setChartMetric(e.target.value)}
-                                        className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                    >
-                                        {Object.entries(chartMetricLabels).map(([key, label]) => (
-                                            <option key={key} value={key}>
-                                                {label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="h-[520px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 130 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                            <XAxis
-                                                dataKey="name"
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                tick={({ x, y, payload }: { x: any; y: any; payload: { value: string } }) => {
-                                                    const name = payload.value;
-                                                    // Abbreviate long names
-                                                    const abbreviated = name.length > 12
-                                                        ? name.split(" ").map((w: string) => w.length > 4 ? w.slice(0, 4) + "." : w).join(" ")
-                                                        : name;
-                                                    return (
-                                                        <g transform={`translate(${x},${y})`}>
-                                                            <text
-                                                                x={0}
-                                                                y={0}
-                                                                dy={8}
-                                                                textAnchor="end"
-                                                                fill="#64748b"
-                                                                fontSize={9}
-                                                                fontFamily="monospace"
-                                                                transform="rotate(-60)"
-                                                            >
-                                                                {abbreviated}
-                                                            </text>
-                                                        </g>
-                                                    );
-                                                }}
-                                                interval={0}
-                                                height={130}
-                                            />
-                                            <YAxis
-                                                tick={{ fontSize: 11, fill: "#64748b" }}
-                                                tickFormatter={(v) => `${v.toFixed(0)}%`}
-                                                axisLine={false}
-                                                tickLine={false}
-                                            />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    borderRadius: "12px",
-                                                    border: "1px solid #e2e8f0",
-                                                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                                                    fontSize: "12px",
-                                                }}
-                                                formatter={(value: any) => [`${Number(value).toFixed(2)}%`, chartMetricLabels[chartMetric]]}
-                                                labelFormatter={(label) => `Puskesmas: ${label}`}
-                                                labelStyle={{ fontWeight: "bold", marginBottom: 4 }}
-                                            />
-                                            <Bar dataKey={chartMetric} radius={[4, 4, 0, 0]} maxBarSize={32}>
-                                                <LabelList
-                                                    dataKey={chartMetric}
-                                                    position="top"
-                                                    fill="#64748b"
-                                                    fontSize={10}
-                                                    fontWeight="bold"
-                                                    formatter={(val: any) => (typeof val === "number" && val > 0) ? `${val.toFixed(1)}%` : ""}
-                                                />
-                                                {chartData.map((entry, index) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={getBarColor(entry[chartMetric as keyof typeof entry] as number, chartMetric)}
-                                                    />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* ─── Data Table ───────────────────────────────────── */}
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="p-6 border-b border-slate-100">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="material-icons-round text-emerald-600 text-xl">table_chart</span>
-                                            <div>
-                                                <h2 className="text-base font-bold text-slate-900">Detail Data per Puskesmas</h2>
-                                                <p className="text-xs text-slate-400">
-                                                    Tabulasi lengkap • {tableData.length} puskesmas
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={handleExportExcel}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all"
-                                            >
-                                                <span className="material-icons-round text-sm">table_view</span>
-                                                Excel
-                                            </button>
-                                            <button
-                                                onClick={handleExportPDF}
-                                                disabled={exportingPDF}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all disabled:opacity-50"
-                                            >
-                                                <span className="material-icons-round text-sm">{exportingPDF ? "hourglass_empty" : "picture_as_pdf"}</span>
-                                                {exportingPDF ? "Generating..." : "PDF"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Scrollable table container with sticky header */}
-                                <div className={`overflow-x-auto ${tableRowsPerPage === 0 ? "max-h-[600px] overflow-y-auto" : ""}`}>
-                                    <table className="w-full text-sm">
-                                        <thead className="sticky top-0 z-20">
-                                            <tr className="bg-slate-50 border-b border-slate-200">
-                                                <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono sticky left-0 bg-slate-50 z-30">
-                                                    No
-                                                </th>
-                                                {[
-                                                    { key: "puskesmas", label: "Puskesmas" },
-                                                    { key: "data_sasaran", label: "Sasaran" },
-                                                    { key: "jumlah_timbang_ukur", label: "Timbang & Ukur" },
-                                                    { key: "pctDataEntry", label: "% Data Entry" },
-                                                    { key: "stunting", label: "Stunting" },
-                                                    { key: "pctStunting", label: "% Stunting" },
-                                                    { key: "wasting", label: "Wasting" },
-                                                    { key: "pctWasting", label: "% Wasting" },
-                                                    { key: "underweight", label: "Underweight" },
-                                                    { key: "pctUnderweight", label: "% Underweight" },
-                                                    { key: "obesitas", label: "Obesitas" },
-                                                    { key: "pctObesitas", label: "% Obesitas" },
-                                                ].map((col) => (
-                                                    <th
-                                                        key={col.key}
-                                                        onClick={() => { handleSort(col.key); setTablePage(1); }}
-                                                        className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono cursor-pointer hover:text-emerald-600 transition-colors whitespace-nowrap select-none bg-slate-50"
-                                                    >
-                                                        <span className="inline-flex items-center gap-1">
-                                                            {col.label}
-                                                            {sortCol === col.key && (
-                                                                <span className="material-icons-round text-xs text-emerald-600">
-                                                                    {sortAsc ? "arrow_upward" : "arrow_downward"}
-                                                                </span>
-                                                            )}
-                                                        </span>
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const showAll = tableRowsPerPage === 0;
-                                                const startIdx = showAll ? 0 : (tablePage - 1) * tableRowsPerPage;
-                                                const paginatedRows = showAll ? tableData : tableData.slice(startIdx, startIdx + tableRowsPerPage);
-                                                return paginatedRows.map((row, i) => {
-                                                    const globalIdx = showAll ? i : startIdx + i;
-                                                    return (
-                                                        <tr
-                                                            key={row.puskesmas}
-                                                            className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${globalIdx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}
-                                                        >
-                                                            <td className="px-4 py-3 text-xs text-slate-500 font-mono sticky left-0 bg-inherit z-10">
-                                                                {globalIdx + 1}
-                                                            </td>
-                                                            <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">
-                                                                {row.puskesmas}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.data_sasaran)}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.jumlah_timbang_ukur)}
-                                                            </td>
-                                                            <td className={`px-4 py-3 font-bold font-mono ${row.pctDataEntry >= 80 ? "text-emerald-600" : row.pctDataEntry >= 60 ? "text-amber-600" : "text-red-600"}`}>
-                                                                {formatPct(row.pctDataEntry)}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.stunting)}
-                                                            </td>
-                                                            <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctStunting, "stunting")}`}>
-                                                                {formatPct(row.pctStunting)}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.wasting)}
-                                                            </td>
-                                                            <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctWasting, "wasting")}`}>
-                                                                {formatPct(row.pctWasting)}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.underweight)}
-                                                            </td>
-                                                            <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctUnderweight, "underweight")}`}>
-                                                                {formatPct(row.pctUnderweight)}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-slate-700 font-mono">
-                                                                {formatNum(row.obesitas)}
-                                                            </td>
-                                                            <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctObesitas, "obesitas")}`}>
-                                                                {formatPct(row.pctObesitas)}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                });
-                                            })()}
-                                        </tbody>
-
-                                        {/* Table Footer — Totals */}
-                                        <tfoot>
-                                            <tr className="bg-emerald-50 border-t-2 border-emerald-200 font-bold">
-                                                <td className="px-4 py-3 sticky left-0 bg-emerald-50 z-10"></td>
-                                                <td className="px-4 py-3 text-emerald-800 uppercase text-xs tracking-wider">
-                                                    Total
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.data_sasaran)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.jumlah_timbang_ukur)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatPct(totals.pctDataEntry)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.stunting)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatPct(totals.pctStunting)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.wasting)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatPct(totals.pctWasting)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.underweight)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatPct(totals.pctUnderweight)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatNum(totals.obesitas)}
-                                                </td>
-                                                <td className="px-4 py-3 text-emerald-800 font-mono">
-                                                    {formatPct(totals.pctObesitas)}
-                                                </td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-
-                                {/* ─── Pagination Controls ─────────────────────────── */}
-                                <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-slate-500">Tampilkan</span>
-                                        <select
-                                            value={tableRowsPerPage}
-                                            onChange={(e) => { setTableRowsPerPage(Number(e.target.value)); setTablePage(1); }}
-                                            className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                                        >
-                                            <option value={10}>10</option>
-                                            <option value={20}>20</option>
-                                            <option value={39}>39</option>
-                                            <option value={0}>All</option>
-                                        </select>
-                                        <span className="text-xs text-slate-500">
-                                            {tableRowsPerPage === 0
-                                                ? `Semua ${tableData.length} puskesmas`
-                                                : `${Math.min((tablePage - 1) * tableRowsPerPage + 1, tableData.length)}–${Math.min(tablePage * tableRowsPerPage, tableData.length)} dari ${tableData.length} puskesmas`
-                                            }
-                                        </span>
-                                    </div>
-
-                                    {tableRowsPerPage > 0 && (
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => setTablePage(1)}
-                                                disabled={tablePage === 1}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
-                                                title="Halaman pertama"
-                                            >
-                                                <span className="material-icons-round text-sm">first_page</span>
-                                            </button>
-                                            <button
-                                                onClick={() => setTablePage((p) => Math.max(1, p - 1))}
-                                                disabled={tablePage === 1}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
-                                                title="Sebelumnya"
-                                            >
-                                                <span className="material-icons-round text-sm">chevron_left</span>
-                                            </button>
-
-                                            {(() => {
-                                                const totalPages = Math.ceil(tableData.length / tableRowsPerPage);
-                                                const pages: (number | string)[] = [];
-                                                for (let p = 1; p <= totalPages; p++) {
-                                                    if (p === 1 || p === totalPages || Math.abs(p - tablePage) <= 1) {
-                                                        pages.push(p);
-                                                    } else if (pages[pages.length - 1] !== "...") {
-                                                        pages.push("...");
-                                                    }
-                                                }
-                                                return pages.map((p, idx) =>
-                                                    p === "..." ? (
-                                                        <span key={`ellipsis-${idx}`} className="px-1 text-xs text-slate-400">…</span>
-                                                    ) : (
-                                                        <button
-                                                            key={p}
-                                                            onClick={() => setTablePage(p as number)}
-                                                            className={`min-w-[32px] h-8 rounded-lg text-xs font-bold transition-all ${tablePage === p
-                                                                ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                                                                : "text-slate-600 hover:bg-slate-100"
-                                                                }`}
-                                                        >
-                                                            {p}
-                                                        </button>
-                                                    )
-                                                );
-                                            })()}
-
-                                            <button
-                                                onClick={() => setTablePage((p) => Math.min(Math.ceil(tableData.length / tableRowsPerPage), p + 1))}
-                                                disabled={tablePage >= Math.ceil(tableData.length / tableRowsPerPage)}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
-                                                title="Selanjutnya"
-                                            >
-                                                <span className="material-icons-round text-sm">chevron_right</span>
-                                            </button>
-                                            <button
-                                                onClick={() => setTablePage(Math.ceil(tableData.length / tableRowsPerPage))}
-                                                disabled={tablePage >= Math.ceil(tableData.length / tableRowsPerPage)}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
-                                                title="Halaman terakhir"
-                                            >
-                                                <span className="material-icons-round text-sm">last_page</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </>
+                    {/* ─── Filters (Shared) ────────────────────────────────── */}
+                    {(activeTab === "puskesmas" || activeTab === "ciaf") && (
+                        <DashboardFilters
+                            filterTahun={filterTahun}
+                            setFilterTahun={setFilterTahun}
+                            filterBulan={filterBulan}
+                            setFilterBulan={setFilterBulan}
+                            filterPuskesmas={filterPuskesmas}
+                            setFilterPuskesmas={setFilterPuskesmas}
+                            availableYears={availableYears}
+                            availableMonths={availableMonths}
+                            availablePuskesmas={availablePuskesmas}
+                            bulanLabels={BULAN_LABELS}
+                            filterDesa={filterDesa}
+                            setFilterDesa={(val) => {
+                                setFilterDesa(val);
+                                // Reset table page if needed
+                                setTablePage(1);
+                            }}
+                            availableDesa={availableDesa}
+                            availableDesa={availableDesa}
+                            lockedPuskesmas={activeTab === "puskesmas" ? null : lockedPuskesmas}
+                        />
                     )}
 
+                    {activeTab === "insiden" ? (
+                        <InsidenStuntingContent />
+                    ) : activeTab === "ciaf" ? (
+                        <CiafDashboardView data={filteredData} currentPuskesmas={filterPuskesmas} />
+                    ) : (
+                        <>
+
+                            {/* ─── Score Cards ─────────────────────────────────────── */}
+                            {data.length === 0 ? (
+                                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                                    <span className="material-icons-round text-6xl text-slate-300 mb-4 block">cloud_upload</span>
+                                    <h3 className="text-lg font-bold text-slate-700 mb-2">Belum Ada Data</h3>
+                                    <p className="text-sm text-slate-400 max-w-md mx-auto">
+                                        Data belum tersedia. Silakan upload file data bulanan melalui menu <strong>Upload Data</strong> untuk mulai melihat analisis.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <ScoreCard label="Total Sasaran" value={formatNum(totals.data_sasaran)} suffix="Balita" icon="groups" color="blue" />
+                                        <ScoreCard label="Balita Di Timbang" value={formatNum(totals.jumlah_timbang)} suffix="Balita" icon="monitor_weight" color="emerald" />
+                                        <ScoreCard label="Balita Di Ukur" value={formatNum(totals.jumlah_ukur)} suffix="Balita" icon="straighten" color="emerald" />
+                                        <ScoreCard label="Timbang & Ukur" value={formatNum(totals.jumlah_timbang_ukur)} suffix="Balita" icon="assignment_turned_in" color="purple" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                        <ScoreCard label="% Data Entry" value={formatPct(totals.pctDataEntry)} icon="percent" color="blue" highlight />
+                                        <ScoreCard label="Kasus Stunting" value={formatNum(totals.stunting)} suffix="Balita" icon="height" color="amber" />
+                                        <ScoreCard label="Kasus Wasting" value={formatNum(totals.wasting)} suffix="Balita" icon="trending_down" color="amber" />
+                                        <ScoreCard label="Kasus Underweight" value={formatNum(totals.underweight)} suffix="Balita" icon="scale" color="amber" />
+                                        <ScoreCard label="Kasus Obesitas" value={formatNum(totals.obesitas)} suffix="Balita" icon="trending_up" color="red" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <ScoreCard label="Prevalensi Stunting" value={formatPct(totals.pctStunting)} icon="height" color={totals.pctStunting >= 20 ? "red" : totals.pctStunting >= 10 ? "amber" : "emerald"} highlight />
+                                        <ScoreCard label="Prevalensi Wasting" value={formatPct(totals.pctWasting)} icon="trending_down" color={totals.pctWasting >= 10 ? "red" : totals.pctWasting >= 5 ? "amber" : "emerald"} highlight />
+                                        <ScoreCard label="Prevalensi Underweight" value={formatPct(totals.pctUnderweight)} icon="scale" color={totals.pctUnderweight >= 20 ? "red" : totals.pctUnderweight >= 10 ? "amber" : "emerald"} highlight />
+                                        <ScoreCard label="Prevalensi Obesitas" value={formatPct(totals.pctObesitas)} icon="trending_up" color={totals.pctObesitas >= 5 ? "red" : totals.pctObesitas >= 3 ? "amber" : "emerald"} highlight />
+                                    </div>
+
+
+
+                                    {/* ─── Trend Analysis ───────────────────────────────── */}
+                                    <TrendAnalysisChart data={trendData} year={filterTahun} />
+
+                                    {/* ─── Interactive Map ───────────────────────────────── */}
+                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-icons-round text-emerald-600 text-xl">map</span>
+                                                <div>
+                                                    <h2 className="text-base font-bold text-slate-900">Peta Interaktif Prevalensi Gizi</h2>
+                                                    <p className="text-xs text-slate-400">
+                                                        Peta Prevalensi Gizi per Puskesmas
+                                                        {filterPuskesmas !== "all" ? ` — ${filterPuskesmas}` : " (Semua Puskesmas)"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <select
+                                                value={mapMetric}
+                                                onChange={(e) => setMapMetric(e.target.value)}
+                                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                                            >
+                                                <option value="stunting">Prevalensi Stunting</option>
+                                                <option value="wasting">Prevalensi Wasting</option>
+                                                <option value="underweight">Prevalensi Underweight</option>
+                                                <option value="obesitas">Prevalensi Obesitas</option>
+                                            </select>
+                                        </div>
+                                        <MapComponent data={mapData} metric={mapMetric} selectedPuskesmas={filterPuskesmas === "all" ? null : filterPuskesmas} />
+                                    </div>
+
+                                    {/* ─── Charts ───────────────────────────────────────── */}
+                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-icons-round text-emerald-600 text-xl">bar_chart</span>
+                                                <div>
+                                                    <h2 className="text-base font-bold text-slate-900">Grafik Prevalensi dan Data Entry</h2>
+                                                    <p className="text-xs text-slate-400">Data per puskesmas diurutkan dari tertinggi ke terendah</p>
+                                                </div>
+                                            </div>
+                                            <select
+                                                value={chartMetric}
+                                                onChange={(e) => setChartMetric(e.target.value)}
+                                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                                            >
+                                                {Object.entries(chartMetricLabels).map(([key, label]) => (
+                                                    <option key={key} value={key}>
+                                                        {label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="h-[520px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 130 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                        tick={({ x, y, payload }: { x: any; y: any; payload: { value: string } }) => {
+                                                            const name = payload.value;
+                                                            // Abbreviate long names
+                                                            const abbreviated = name.length > 12
+                                                                ? name.split(" ").map((w: string) => w.length > 4 ? w.slice(0, 4) + "." : w).join(" ")
+                                                                : name;
+                                                            return (
+                                                                <g transform={`translate(${x},${y})`}>
+                                                                    <text
+                                                                        x={0}
+                                                                        y={0}
+                                                                        dy={8}
+                                                                        textAnchor="end"
+                                                                        fill="#64748b"
+                                                                        fontSize={9}
+                                                                        fontFamily="monospace"
+                                                                        transform="rotate(-60)"
+                                                                    >
+                                                                        {abbreviated}
+                                                                    </text>
+                                                                </g>
+                                                            );
+                                                        }}
+                                                        interval={0}
+                                                        height={130}
+                                                    />
+                                                    <YAxis
+                                                        tick={{ fontSize: 11, fill: "#64748b" }}
+                                                        tickFormatter={(v) => `${v.toFixed(0)}%`}
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                    />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            borderRadius: "12px",
+                                                            border: "1px solid #e2e8f0",
+                                                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                                            fontSize: "12px",
+                                                        }}
+                                                        formatter={(value: any) => [`${Number(value).toFixed(2)}%`, chartMetricLabels[chartMetric]]}
+                                                        labelFormatter={(label) => `Puskesmas: ${label}`}
+                                                        labelStyle={{ fontWeight: "bold", marginBottom: 4 }}
+                                                    />
+                                                    <Bar dataKey={chartMetric} radius={[4, 4, 0, 0]} maxBarSize={32}>
+                                                        <LabelList
+                                                            dataKey={chartMetric}
+                                                            position="top"
+                                                            fill="#64748b"
+                                                            fontSize={10}
+                                                            fontWeight="bold"
+                                                            formatter={(val: any) => (typeof val === "number" && val > 0) ? `${val.toFixed(1)}%` : ""}
+                                                        />
+                                                        {chartData.map((entry, index) => (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={getBarColor(entry[chartMetric as keyof typeof entry] as number, chartMetric)}
+                                                            />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    {/* ─── Data Table ───────────────────────────────────── */}
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <div className="p-6 border-b border-slate-100">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="material-icons-round text-emerald-600 text-xl">table_chart</span>
+                                                    <div>
+                                                        <h2 className="text-base font-bold text-slate-900">Detail Data per Puskesmas</h2>
+                                                        <p className="text-xs text-slate-400">
+                                                            Tabulasi lengkap • {tableData.length} puskesmas
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={handleExportExcel}
+                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all"
+                                                    >
+                                                        <span className="material-icons-round text-sm">table_view</span>
+                                                        Excel
+                                                    </button>
+                                                    <button
+                                                        onClick={handleExportPDF}
+                                                        disabled={exportingPDF}
+                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all disabled:opacity-50"
+                                                    >
+                                                        <span className="material-icons-round text-sm">{exportingPDF ? "hourglass_empty" : "picture_as_pdf"}</span>
+                                                        {exportingPDF ? "Generating..." : "PDF"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Scrollable table container with sticky header */}
+                                        <div className={`overflow-x-auto ${tableRowsPerPage === 0 ? "max-h-[600px] overflow-y-auto" : ""}`}>
+                                            <table className="w-full text-sm">
+                                                <thead className="sticky top-0 z-20">
+                                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                                        <th className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono sticky left-0 bg-slate-50 z-30">
+                                                            No
+                                                        </th>
+                                                        {[
+                                                            { key: "puskesmas", label: "Puskesmas" },
+                                                            { key: "data_sasaran", label: "Sasaran" },
+                                                            { key: "jumlah_timbang_ukur", label: "Timbang & Ukur" },
+                                                            { key: "pctDataEntry", label: "% Data Entry" },
+                                                            { key: "stunting", label: "Stunting" },
+                                                            { key: "pctStunting", label: "% Stunting" },
+                                                            { key: "wasting", label: "Wasting" },
+                                                            { key: "pctWasting", label: "% Wasting" },
+                                                            { key: "underweight", label: "Underweight" },
+                                                            { key: "pctUnderweight", label: "% Underweight" },
+                                                            { key: "obesitas", label: "Obesitas" },
+                                                            { key: "pctObesitas", label: "% Obesitas" },
+                                                        ].map((col) => (
+                                                            <th
+                                                                key={col.key}
+                                                                onClick={() => { handleSort(col.key); setTablePage(1); }}
+                                                                className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono cursor-pointer hover:text-emerald-600 transition-colors whitespace-nowrap select-none bg-slate-50"
+                                                            >
+                                                                <span className="inline-flex items-center gap-1">
+                                                                    {col.label}
+                                                                    {sortCol === col.key && (
+                                                                        <span className="material-icons-round text-xs text-emerald-600">
+                                                                            {sortAsc ? "arrow_upward" : "arrow_downward"}
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const showAll = tableRowsPerPage === 0;
+                                                        const startIdx = showAll ? 0 : (tablePage - 1) * tableRowsPerPage;
+                                                        const paginatedRows = showAll ? tableData : tableData.slice(startIdx, startIdx + tableRowsPerPage);
+                                                        return paginatedRows.map((row, i) => {
+                                                            const globalIdx = showAll ? i : startIdx + i;
+                                                            return (
+                                                                <tr
+                                                                    key={row.puskesmas}
+                                                                    className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${globalIdx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}
+                                                                >
+                                                                    <td className="px-4 py-3 text-xs text-slate-500 font-mono sticky left-0 bg-inherit z-10">
+                                                                        {globalIdx + 1}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">
+                                                                        {row.puskesmas}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.data_sasaran)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.jumlah_timbang_ukur)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${row.pctDataEntry >= 80 ? "text-emerald-600" : row.pctDataEntry >= 60 ? "text-amber-600" : "text-red-600"}`}>
+                                                                        {formatPct(row.pctDataEntry)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.stunting)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctStunting, "stunting")}`}>
+                                                                        {formatPct(row.pctStunting)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.wasting)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctWasting, "wasting")}`}>
+                                                                        {formatPct(row.pctWasting)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.underweight)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctUnderweight, "underweight")}`}>
+                                                                        {formatPct(row.pctUnderweight)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.obesitas)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctObesitas, "obesitas")}`}>
+                                                                        {formatPct(row.pctObesitas)}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        });
+                                                    })()}
+                                                </tbody>
+
+                                                {/* Table Footer — Totals */}
+                                                <tfoot>
+                                                    <tr className="bg-emerald-50 border-t-2 border-emerald-200 font-bold">
+                                                        <td className="px-4 py-3 sticky left-0 bg-emerald-50 z-10"></td>
+                                                        <td className="px-4 py-3 text-emerald-800 uppercase text-xs tracking-wider">
+                                                            Total
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.data_sasaran)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.jumlah_timbang_ukur)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctDataEntry)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.stunting)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctStunting)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.wasting)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctWasting)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.underweight)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctUnderweight)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.obesitas)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctObesitas)}
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+
+                                        {/* ─── Pagination Controls ─────────────────────────── */}
+                                        <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-slate-500">Tampilkan</span>
+                                                <select
+                                                    value={tableRowsPerPage}
+                                                    onChange={(e) => { setTableRowsPerPage(Number(e.target.value)); setTablePage(1); }}
+                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                                                >
+                                                    <option value={10}>10</option>
+                                                    <option value={20}>20</option>
+                                                    <option value={39}>39</option>
+                                                    <option value={0}>All</option>
+                                                </select>
+                                                <span className="text-xs text-slate-500">
+                                                    {tableRowsPerPage === 0
+                                                        ? `Semua ${tableData.length} puskesmas`
+                                                        : `${Math.min((tablePage - 1) * tableRowsPerPage + 1, tableData.length)}–${Math.min(tablePage * tableRowsPerPage, tableData.length)} dari ${tableData.length} puskesmas`
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {tableRowsPerPage > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => setTablePage(1)}
+                                                        disabled={tablePage === 1}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
+                                                        title="Halaman pertama"
+                                                    >
+                                                        <span className="material-icons-round text-sm">first_page</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                                                        disabled={tablePage === 1}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
+                                                        title="Sebelumnya"
+                                                    >
+                                                        <span className="material-icons-round text-sm">chevron_left</span>
+                                                    </button>
+
+                                                    {(() => {
+                                                        const totalPages = Math.ceil(tableData.length / tableRowsPerPage);
+                                                        const pages: (number | string)[] = [];
+                                                        for (let p = 1; p <= totalPages; p++) {
+                                                            if (p === 1 || p === totalPages || Math.abs(p - tablePage) <= 1) {
+                                                                pages.push(p);
+                                                            } else if (pages[pages.length - 1] !== "...") {
+                                                                pages.push("...");
+                                                            }
+                                                        }
+                                                        return pages.map((p, idx) =>
+                                                            p === "..." ? (
+                                                                <span key={`ellipsis-${idx}`} className="px-1 text-xs text-slate-400">…</span>
+                                                            ) : (
+                                                                <button
+                                                                    key={p}
+                                                                    onClick={() => setTablePage(p as number)}
+                                                                    className={`min-w-[32px] h-8 rounded-lg text-xs font-bold transition-all ${tablePage === p
+                                                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                                                                        : "text-slate-600 hover:bg-slate-100"
+                                                                        }`}
+                                                                >
+                                                                    {p}
+                                                                </button>
+                                                            )
+                                                        );
+                                                    })()}
+
+                                                    <button
+                                                        onClick={() => setTablePage((p) => Math.min(Math.ceil(tableData.length / tableRowsPerPage), p + 1))}
+                                                        disabled={tablePage >= Math.ceil(tableData.length / tableRowsPerPage)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
+                                                        title="Selanjutnya"
+                                                    >
+                                                        <span className="material-icons-round text-sm">chevron_right</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setTablePage(Math.ceil(tableData.length / tableRowsPerPage))}
+                                                        disabled={tablePage >= Math.ceil(tableData.length / tableRowsPerPage)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-all"
+                                                        title="Halaman terakhir"
+                                                    >
+                                                        <span className="material-icons-round text-sm">last_page</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                        </>
+                    )
+                    }
                 </>
             )
             }
