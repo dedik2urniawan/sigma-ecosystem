@@ -199,7 +199,8 @@ function ScoreCard({
 
 // ─── Main Page ──────────────────────────────────────────────────────────────
 export default function PelayananKesehatanPage() {
-    const [data, setData] = useState<BultimRow[]>([]);
+    const [dataPuskesmas, setDataPuskesmas] = useState<BultimRow[]>([]);
+    const [dataDesa, setDataDesa] = useState<BultimRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterTahun, setFilterTahun] = useState<number | null>(null);
     const [filterBulan, setFilterBulan] = useState<number | null>(null);
@@ -219,6 +220,11 @@ export default function PelayananKesehatanPage() {
     // ─── Tab Navigation ──────────────────────────────────────────────────
     const [activeTab, setActiveTab] = useState<"puskesmas" | "desa" | "insiden" | "ciaf">("puskesmas");
 
+    // Dynamic data source based on tab
+    const activeData = useMemo(() => {
+        return (activeTab === "desa" || activeTab === "ciaf") ? dataDesa : dataPuskesmas;
+    }, [activeTab, dataDesa, dataPuskesmas]);
+
     // ─── Table Pagination ────────────────────────────────────────────────
     const [tablePage, setTablePage] = useState(1);
     const [tableRowsPerPage, setTableRowsPerPage] = useState(10);
@@ -233,7 +239,6 @@ export default function PelayananKesehatanPage() {
 
             // 1. Check User Role
             const { data: { user } } = await supabase.auth.getUser();
-            let currentPuskesmasName: string | null = null;
 
             if (user) {
                 const { data: userProfile } = await supabase
@@ -253,41 +258,58 @@ export default function PelayananKesehatanPage() {
                             .single();
 
                         if (pkm) {
-                            currentPuskesmasName = pkm.nama;
                             setLockedPuskesmas(pkm.nama);
-
-                            // Only force filter if NOT on "puskesmas" tab
-                            // But initial state is "puskesmas" tab locally, so we DON'T force it initially.
-                            // Unless we want them to start with their own data? 
-                            // User said "bisa akses puskesmas lainnya", so starting with "All" or their own is fine.
-                            // Let's defaulted to "all" for puskesmas tab, but lock others.
-                            // Actually, let's just NOT force it here, as default is "all".
-                            // But if they navigate to other tabs, we MUST force it.
                         }
                     }
                 }
             }
 
-            // 2. Fetch Dashboard Data
-            // Loop fetch for potentially large village dataset
-            let allRows: BultimRow[] = [];
-            let page = 0;
-            const size = 1000;
-            let hasMore = true;
+            // 2. Fetch Dashboard Data (Puskesmas Level)
+            let allPuskesmasRows: BultimRow[] = [];
+            let pkmPage = 0;
+            const pkmSize = 1000;
+            let hasMorePkm = true;
 
-            while (hasMore) {
+            while (hasMorePkm) {
                 const { data: rows, error } = await supabase
-                    .from("data_bultim_desa")
+                    .from("data_bultim")
                     .select("*")
-                    .range(page * size, (page + 1) * size - 1)
+                    .range(pkmPage * pkmSize, (pkmPage + 1) * pkmSize - 1)
                     .order("tahun", { ascending: false })
                     .order("bulan", { ascending: false });
 
                 if (error) {
-                    console.error("Error fetching data:", error);
-                    hasMore = false;
+                    console.error("Error fetching data_bultim:", error);
+                    hasMorePkm = false;
                 } else if (rows) {
-                    // Map village data to BultimRow structure
+                    allPuskesmasRows = [...allPuskesmasRows, ...rows];
+                    if (rows.length < pkmSize) hasMorePkm = false;
+                    pkmPage++;
+                } else {
+                    hasMorePkm = false;
+                }
+            }
+            setDataPuskesmas(allPuskesmasRows);
+
+            // 3. Fetch Dashboard Data (Desa Level)
+            // Loop fetch for potentially large village dataset
+            let allDesaRows: BultimRow[] = [];
+            let desaPage = 0;
+            const desaSize = 1000;
+            let hasMoreDesa = true;
+
+            while (hasMoreDesa) {
+                const { data: rows, error } = await supabase
+                    .from("data_bultim_desa")
+                    .select("*")
+                    .range(desaPage * desaSize, (desaPage + 1) * desaSize - 1)
+                    .order("tahun", { ascending: false })
+                    .order("bulan", { ascending: false });
+
+                if (error) {
+                    console.error("Error fetching data_bultim_desa:", error);
+                    hasMoreDesa = false;
+                } else if (rows) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const mapped = rows.map((r: any) => ({
                         ...r,
@@ -295,29 +317,28 @@ export default function PelayananKesehatanPage() {
                         data_sasaran: r.data_sasaran ?? ((r.data_sasaran_l || 0) + (r.data_sasaran_p || 0)),
                     }));
 
-                    allRows = [...allRows, ...mapped];
-                    if (rows.length < size) hasMore = false;
-                    page++;
+                    allDesaRows = [...allDesaRows, ...mapped];
+                    if (rows.length < desaSize) hasMoreDesa = false;
+                    desaPage++;
                 } else {
-                    hasMore = false;
+                    hasMoreDesa = false;
                 }
             }
+            setDataDesa(allDesaRows);
 
-            setData(allRows);
-
-            if (allRows.length > 0) {
-                // Get last updated
-                const latest = allRows.reduce((a, b) =>
+            if (allPuskesmasRows.length > 0) {
+                // Get last updated using puskesmas rows (assuming sync upload)
+                const latest = allPuskesmasRows.reduce((a, b) =>
                     new Date(a.uploaded_at) > new Date(b.uploaded_at) ? a : b
                 );
                 setLastUpdated(latest.uploaded_at);
 
-                // Default filters
-                const years = [...new Set(allRows.map((r) => r.tahun))].sort((a, b) => b - a);
+                // Default filters based on puskesmas data
+                const years = [...new Set(allPuskesmasRows.map((r) => r.tahun))].sort((a, b) => b - a);
                 const latestYear = years[0];
                 setFilterTahun(latestYear);
 
-                const monthsInYear = [...new Set(allRows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
+                const monthsInYear = [...new Set(allPuskesmasRows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
                 if (monthsInYear.length > 0) {
                     setFilterBulan(monthsInYear[0]);
                 }
@@ -332,11 +353,9 @@ export default function PelayananKesehatanPage() {
     useEffect(() => {
         if (lockedPuskesmas) {
             if (activeTab === "puskesmas") {
-                // Allow them to see all, so do nothing (or reset to "all" if desired?)
-                // User requirement: "admin_puskesmas bisa akses puskesmas lainnya"
-                // So we allow them to change filter.
+                // Admin puskesmas can change filter on puskesmas tab
             } else {
-                // For other tabs (CIAF, etc.), ENFORCE the lock
+                // Enforce lock on other tabs
                 setFilterPuskesmas(lockedPuskesmas);
             }
         }
@@ -344,45 +363,45 @@ export default function PelayananKesehatanPage() {
 
     // Available filter values
     const availableYears = useMemo(() => {
-        return [...new Set(data.map((r) => r.tahun))].sort((a, b) => b - a);
-    }, [data]);
+        return [...new Set(activeData.map((r) => r.tahun))].sort((a, b) => b - a);
+    }, [activeData]);
 
     const availableMonths = useMemo(() => {
-        const filtered = filterTahun ? data.filter((r) => r.tahun === filterTahun) : data;
+        const filtered = filterTahun ? activeData.filter((r) => r.tahun === filterTahun) : activeData;
         return [...new Set(filtered.map((r) => r.bulan))].sort((a, b) => a - b);
-    }, [data, filterTahun]);
+    }, [activeData, filterTahun]);
 
     const availablePuskesmas = useMemo(() => {
-        return [...new Set(data.map((r) => r.puskesmas))].sort();
-    }, [data]);
+        return [...new Set(activeData.map((r) => r.puskesmas))].sort();
+    }, [activeData]);
 
     const availableDesa = useMemo(() => {
-        let filtered = data;
+        let filtered = activeData;
         if (filterTahun) filtered = filtered.filter((r) => r.tahun === filterTahun);
         if (filterBulan) filtered = filtered.filter((r) => r.bulan === filterBulan);
         if (filterPuskesmas !== "all") {
             filtered = filtered.filter((r) => r.puskesmas === filterPuskesmas);
         }
         return [...new Set(filtered.map((r) => r.kelurahan || "Unknown"))].sort();
-    }, [data, filterTahun, filterBulan, filterPuskesmas]);
+    }, [activeData, filterTahun, filterBulan, filterPuskesmas]);
 
     // Filtered data
     const filteredData = useMemo(() => {
-        let result = data;
+        let result = activeData;
         if (filterTahun) result = result.filter((r) => r.tahun === filterTahun);
         if (filterBulan) result = result.filter((r) => r.bulan === filterBulan);
         if (filterPuskesmas !== "all") result = result.filter((r) => r.puskesmas === filterPuskesmas);
-        if (filterDesa !== "all") result = result.filter((r) => r.kelurahan === filterDesa);
+        if (filterDesa !== "all" && (activeTab === "desa" || activeTab === "ciaf")) result = result.filter((r) => r.kelurahan === filterDesa);
         return result;
-    }, [data, filterTahun, filterBulan, filterPuskesmas, filterDesa]);
+    }, [activeData, filterTahun, filterBulan, filterPuskesmas, filterDesa, activeTab]);
 
     // Trend Data (Ignore Month Filter)
     const trendData = useMemo(() => {
-        let result = data;
+        let result = activeData;
         if (filterTahun) result = result.filter((r) => r.tahun === filterTahun);
         if (filterPuskesmas !== "all") result = result.filter((r) => r.puskesmas === filterPuskesmas);
         return result;
-    }, [data, filterTahun, filterPuskesmas]);
+    }, [activeData, filterTahun, filterPuskesmas]);
 
     // Aggregated totals for score cards
     const totals = useMemo(() => {
@@ -461,11 +480,11 @@ export default function PelayananKesehatanPage() {
         const pkmMap = new Map<string, { jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number }>();
 
         // For map, always show all puskesmas (ignore puskesmas filter)
-        let mapFiltered = data;
-        if (filterTahun) mapFiltered = mapFiltered.filter((r) => r.tahun === filterTahun);
-        if (filterBulan) mapFiltered = mapFiltered.filter((r) => r.bulan === filterBulan);
+        let mapFiltered = activeData;
+        if (filterTahun) mapFiltered = mapFiltered.filter((r: BultimRow) => r.tahun === filterTahun);
+        if (filterBulan) mapFiltered = mapFiltered.filter((r: BultimRow) => r.bulan === filterBulan);
 
-        mapFiltered.forEach((r) => {
+        mapFiltered.forEach((r: BultimRow) => {
             const existing = pkmMap.get(r.puskesmas) || { jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0 };
             existing.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
             existing.stunting += r.stunting;
@@ -489,7 +508,7 @@ export default function PelayananKesehatanPage() {
         });
 
         return result;
-    }, [data, filterTahun, filterBulan, mapMetric]);
+    }, [activeData, filterTahun, filterBulan, mapMetric]);
 
     // Table data with sorting
     const tableData = useMemo(() => {
@@ -833,6 +852,7 @@ export default function PelayananKesehatanPage() {
                             }}
                             availableDesa={availableDesa}
                             lockedPuskesmas={activeTab === "puskesmas" ? null : lockedPuskesmas}
+                            showDesaFilter={activeTab === "desa" || activeTab === "ciaf"}
                         />
                     )}
 
@@ -844,7 +864,7 @@ export default function PelayananKesehatanPage() {
                         <>
 
                             {/* ─── Score Cards ─────────────────────────────────────── */}
-                            {data.length === 0 ? (
+                            {activeData.length === 0 ? (
                                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
                                     <span className="material-icons-round text-6xl text-slate-300 mb-4 block">cloud_upload</span>
                                     <h3 className="text-lg font-bold text-slate-700 mb-2">Belum Ada Data</h3>

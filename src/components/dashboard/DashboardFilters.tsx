@@ -15,6 +15,7 @@ interface DashboardFiltersProps {
     setFilterDesa?: (val: string) => void;
     availableDesa?: string[];
     lockedPuskesmas?: string | null;
+    showDesaFilter?: boolean;
 }
 
 export default function DashboardFilters({
@@ -32,7 +33,8 @@ export default function DashboardFilters({
     filterDesa,
     setFilterDesa,
     availableDesa,
-    lockedPuskesmas
+    lockedPuskesmas,
+    showDesaFilter = true,
 }: DashboardFiltersProps) {
     return (
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-6">
@@ -110,7 +112,7 @@ export default function DashboardFilters({
                 </div>
 
                 {/* Desa (Only if Puskesmas selected) */}
-                {filterPuskesmas !== "all" && (
+                {showDesaFilter && filterPuskesmas !== "all" && (
                     <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                         <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">
                             Desa / Kelurahan
