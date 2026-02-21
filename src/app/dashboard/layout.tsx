@@ -37,7 +37,7 @@ const menuItems = [
         label: "Balita Gizi",
         icon: "child_care",
         href: "/dashboard/balita-gizi",
-        ready: false,
+        ready: true,
     },
     {
         id: "balita-kia",
