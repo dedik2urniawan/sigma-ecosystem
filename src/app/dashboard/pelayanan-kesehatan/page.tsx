@@ -852,7 +852,7 @@ export default function PelayananKesehatanPage() {
                             }}
                             availableDesa={availableDesa}
                             lockedPuskesmas={activeTab === "puskesmas" ? null : lockedPuskesmas}
-                            showDesaFilter={activeTab === "desa" || activeTab === "ciaf"}
+                            showDesaFilter={activeTab === "ciaf"}
                         />
                     )}
 
