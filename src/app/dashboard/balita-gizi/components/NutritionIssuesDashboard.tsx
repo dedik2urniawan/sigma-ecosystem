@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { calculateGrowthMetrics, GrowthMetricsResult } from "@/lib/balitaGiziHelper";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell, LabelList } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
-import { Info, ChevronDown, Activity, AlertTriangle, CheckCircle2, Map as MapIcon } from "lucide-react";
+import { Info, ChevronDown, Activity, AlertTriangle, CheckCircle2, Map as MapIcon, TrendingUp, TrendingDown } from "lucide-react";
 
 const MapPuskesmas = dynamic(
     () => import('@/components/dashboard/MapPuskesmas'),
@@ -46,6 +46,9 @@ export default function NutritionIssuesDashboard() {
 
     // Map State
     const [selectedMapMetric, setSelectedMapMetric] = useState<"stunting" | "wasting" | "underweight" | "obesitas">("stunting");
+
+    // Unified prevalence chart metric selector
+    const [selectedPrevalenceMetric, setSelectedPrevalenceMetric] = useState<string>('stunting');
 
     useEffect(() => {
         setCurrentPage(1);
@@ -499,81 +502,208 @@ export default function NutritionIssuesDashboard() {
                         </p>
                     </div>
 
-                    {/* Separate Charts per Wilayah */}
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Grafik Prevalensi per {(effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "Puskesmas" : "Kelurahan"}</h3>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {['stunting', 'wasting', 'underweight', 'obesitas'].map((metricKey) => {
-                                const NameMap: Record<string, string> = {
-                                    stunting: "Stunting",
-                                    wasting: "Wasting",
-                                    underweight: "Underweight",
-                                    obesitas: "Overweight"
-                                };
-                                const title = NameMap[metricKey];
-                                const target = TARGETS[title as keyof typeof TARGETS].val;
-                                const color = TARGETS[title as keyof typeof TARGETS].color;
+                    {/* ── Unified Prevalence Chart with Metric Selector ── */}
+                    {(() => {
+                        const PREV_METRICS = [
+                            { id: 'stunting', label: 'Stunting', key: 'stunting', target: TARGETS.Stunting.val, gradient: ['#dc2626', '#ef4444'], emoji: '📏' },
+                            { id: 'wasting', label: 'Wasting', key: 'wasting', target: TARGETS.Wasting.val, gradient: ['#d97706', '#f59e0b'], emoji: '⚖️' },
+                            { id: 'underweight', label: 'Underweight', key: 'underweight', target: TARGETS.Underweight.val, gradient: ['#2563eb', '#3b82f6'], emoji: '📊' },
+                            { id: 'obesitas', label: 'Overweight', key: 'obesitas', target: TARGETS.Overweight.val, gradient: ['#7c3aed', '#8b5cf6'], emoji: '🔴' },
+                        ];
 
-                                const dataCopy = [...metricsResult.summaryTable];
-                                const sortedData = dataCopy.sort((a, b) => {
-                                    const valA = Number(a[metricKey as keyof typeof a]) || 0;
-                                    const valB = Number(b[metricKey as keyof typeof b]) || 0;
-                                    return valB - valA;
-                                });
+                        const activeMetric = PREV_METRICS.find(m => m.id === selectedPrevalenceMetric) || PREV_METRICS[0];
+                        const sortedData = [...metricsResult.summaryTable].sort((a, b) => {
+                            const valA = Number(a[activeMetric.key as keyof typeof a]) || 0;
+                            const valB = Number(b[activeMetric.key as keyof typeof b]) || 0;
+                            return valB - valA;
+                        });
+                        const avgValue = sortedData.length > 0
+                            ? sortedData.reduce((sum, r) => sum + (Number(r[activeMetric.key as keyof typeof r]) || 0), 0) / sortedData.length
+                            : 0;
+                        const top3 = sortedData.slice(0, 3);
+                        const bottom3 = sortedData.slice(-3).reverse();
+                        const aboveTarget = sortedData.filter(r => (Number(r[activeMetric.key as keyof typeof r]) || 0) > activeMetric.target).length;
 
-                                return (
-                                    <div key={metricKey} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col h-[350px]">
-                                        <h4 className="font-bold text-slate-700 mb-6">Prevalensi {title} (%)</h4>
-                                        <div className="flex-1 w-full relative">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={sortedData} margin={{ top: 20, right: 30, left: 0, bottom: 85 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                                    <XAxis
-                                                        dataKey="name"
-                                                        interval={0}
-                                                        tick={({ x, y, payload }: { x: any; y: any; payload: { value: string } }) => {
-                                                            const name = payload.value;
-                                                            const abbreviated = name.length > 12
-                                                                ? name.split(" ").map((w: string) => w.length > 4 ? w.slice(0, 4) + "." : w).join(" ")
-                                                                : name;
-                                                            return (
-                                                                <g transform={`translate(${x},${y})`}>
-                                                                    <text
-                                                                        x={0}
-                                                                        y={0}
-                                                                        dy={8}
-                                                                        textAnchor="end"
-                                                                        fill="#64748b"
-                                                                        fontSize={11}
-                                                                        fontFamily="monospace"
-                                                                        transform="rotate(-45)"
-                                                                    >
-                                                                        {abbreviated}
-                                                                    </text>
-                                                                </g>
-                                                            );
-                                                        }}
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                    />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-5} />
-                                                    <RechartsTooltip
-                                                        formatter={(value: any) => [`${Number(value).toFixed(2)}%`, `Prevalensi ${title}`]}
-                                                        cursor={{ fill: '#f1f5f9' }}
-                                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                                    />
-                                                    <ReferenceLine y={target} stroke="red" strokeDasharray="3 3" label={{ position: 'insideTopLeft', value: ` Target: ${target}%`, fill: 'red', fontSize: 10, dy: -10 }} />
-                                                    <Bar dataKey={metricKey} fill={color} radius={[4, 4, 0, 0]}>
-                                                        <LabelList dataKey={metricKey} position="top" formatter={(val: any) => `${Number(val).toFixed(1)}%`} fill="#64748b" fontSize={10} fontWeight={600} dy={-5} />
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                        return (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                {/* Header with Metric Selector */}
+                                <div className="p-5 border-b border-slate-100">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-xl" style={{ background: `linear-gradient(135deg, ${activeMetric.gradient[0]}, ${activeMetric.gradient[1]})` }}>
+                                                <Activity className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-800 text-lg">Grafik Prevalensi per {(effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "Puskesmas" : "Kelurahan"}</h3>
+                                                <p className="text-sm text-slate-500 mt-0.5">Pilih indikator untuk melihat distribusi prevalensi</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-center">
+                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Rata-rata</p>
+                                                <p className="text-xl font-black" style={{ color: activeMetric.gradient[0] }}>{avgValue.toFixed(1)}<span className="text-xs text-slate-400">%</span></p>
+                                            </div>
+                                            <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
+                                            <div className="text-center hidden md:block">
+                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Target</p>
+                                                <p className="text-xl font-black text-slate-600">{activeMetric.target}<span className="text-xs text-slate-400">%</span></p>
+                                            </div>
+                                            {aboveTarget > 0 && (
+                                                <>
+                                                    <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
+                                                    <div className="text-center hidden md:block">
+                                                        <p className="text-[10px] text-rose-400 uppercase tracking-wider font-semibold">Melebihi Target</p>
+                                                        <p className="text-xl font-black text-rose-500">{aboveTarget}<span className="text-xs text-slate-400"> wilayah</span></p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+
+                                    {/* Pill Selector */}
+                                    <div className="flex flex-wrap gap-2 mt-4">
+                                        {PREV_METRICS.map(m => (
+                                            <button
+                                                key={m.id}
+                                                onClick={() => setSelectedPrevalenceMetric(m.id)}
+                                                className={`px-4 py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 flex items-center gap-1.5 ${selectedPrevalenceMetric === m.id
+                                                        ? 'text-white shadow-md scale-[1.02]'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                                                    }`}
+                                                style={selectedPrevalenceMetric === m.id ? { background: `linear-gradient(135deg, ${m.gradient[0]}, ${m.gradient[1]})`, borderColor: m.gradient[0] } : {}}
+                                            >
+                                                <span>{m.emoji}</span>
+                                                {m.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Chart + Insights Side by Side */}
+                                <div className="flex flex-col lg:flex-row">
+                                    {/* Chart Area */}
+                                    <div className="flex-1 p-5" style={{ minHeight: 420 }}>
+                                        <ResponsiveContainer width="100%" height={400}>
+                                            <BarChart data={sortedData} margin={{ top: 25, right: 10, left: 0, bottom: 85 }}>
+                                                <defs>
+                                                    <linearGradient id="prevBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0%" stopColor={activeMetric.gradient[1]} stopOpacity={0.95} />
+                                                        <stop offset="100%" stopColor={activeMetric.gradient[0]} stopOpacity={0.85} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    interval={0}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={({ x, y, payload }: { x: any; y: any; payload: { value: string } }) => {
+                                                        const name = payload.value;
+                                                        const abbreviated = name.length > 12
+                                                            ? name.split(" ").map((w: string) => w.length > 4 ? w.slice(0, 4) + "." : w).join(" ")
+                                                            : name;
+                                                        return (
+                                                            <g transform={`translate(${x},${y})`}>
+                                                                <text x={0} y={0} dy={8} textAnchor="end" fill="#64748b" fontSize={10} fontFamily="'Public Sans', monospace" transform="rotate(-45)">
+                                                                    {abbreviated}
+                                                                </text>
+                                                            </g>
+                                                        );
+                                                    }}
+                                                />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dx={-5} tickFormatter={(v) => `${v}%`} />
+                                                <RechartsTooltip
+                                                    cursor={{ fill: 'rgba(241,245,249,0.7)', radius: 6 }}
+                                                    formatter={(value: any) => [`${Number(value).toFixed(2)}%`, `Prevalensi ${activeMetric.label}`]}
+                                                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
+                                                />
+                                                <ReferenceLine y={activeMetric.target} stroke="#ef4444" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `Target: ${activeMetric.target}%`, position: 'right', fill: '#ef4444', fontSize: 11, fontWeight: 700 }} />
+                                                <ReferenceLine y={avgValue} stroke={activeMetric.gradient[0]} strokeDasharray="3 3" strokeWidth={1} strokeOpacity={0.5} />
+                                                <Bar dataKey={activeMetric.key} fill="url(#prevBarGrad)" radius={[6, 6, 0, 0]} maxBarSize={40}>
+                                                    <LabelList position="top" formatter={(val: any) => `${Number(val).toFixed(1)}%`} fill="#475569" fontSize={9} fontWeight={700} dy={-4} />
+                                                    {sortedData.map((entry, index) => {
+                                                        const val = Number(entry[activeMetric.key as keyof typeof entry]) || 0;
+                                                        const isAboveTarget = val > activeMetric.target;
+                                                        return <Cell key={`cell-${index}`} fill={isAboveTarget ? activeMetric.gradient[0] : activeMetric.gradient[1]} fillOpacity={isAboveTarget ? 0.95 : 0.7} />;
+                                                    })}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Insight Panel */}
+                                    <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-100 p-5 bg-slate-50/50 flex flex-col gap-5">
+                                        {/* Highest Prevalence (worst) */}
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="p-1.5 bg-rose-100 rounded-lg">
+                                                    <TrendingUp className="w-3.5 h-3.5 text-rose-600" />
+                                                </div>
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">3 Prevalensi Tertinggi</h4>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {top3.map((r, i) => (
+                                                    <div key={r.name} className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-rose-100 shadow-sm">
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white ${i === 0 ? 'bg-rose-500' : i === 1 ? 'bg-rose-400' : 'bg-rose-300'
+                                                            }`}>{i + 1}</div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-slate-700 truncate">{r.name}</p>
+                                                        </div>
+                                                        <span className="text-sm font-black" style={{ color: activeMetric.gradient[0] }}>
+                                                            {Number(r[activeMetric.key as keyof typeof r]).toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Lowest Prevalence (best) */}
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="p-1.5 bg-emerald-100 rounded-lg">
+                                                    <TrendingDown className="w-3.5 h-3.5 text-emerald-600" />
+                                                </div>
+                                                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">3 Prevalensi Terendah</h4>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {bottom3.map((r, i) => (
+                                                    <div key={r.name} className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-emerald-100 shadow-sm">
+                                                        <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                                                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-slate-700 truncate">{r.name}</p>
+                                                        </div>
+                                                        <span className="text-sm font-black text-emerald-600">
+                                                            {Number(r[activeMetric.key as keyof typeof r]).toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Quick Stats */}
+                                        <div className="mt-auto pt-4 border-t border-slate-200">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Tertinggi</p>
+                                                    <p className="text-lg font-black" style={{ color: activeMetric.gradient[0] }}>
+                                                        {sortedData.length > 0 ? Number(sortedData[0][activeMetric.key as keyof (typeof sortedData)[0]]).toFixed(1) : 0}%
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Terendah</p>
+                                                    <p className="text-lg font-black text-emerald-600">
+                                                        {sortedData.length > 0 ? Number(sortedData[sortedData.length - 1][activeMetric.key as keyof (typeof sortedData)[0]]).toFixed(1) : 0}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Summary Table */}
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">

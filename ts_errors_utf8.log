@@ -1,0 +1,16 @@
+﻿src/app/dashboard/balita-gizi/components/AsiMpasiDashboard.tsx(211,17): error TS2322: Type '{ role: string | undefined; puskesmasOptions: { id: string; name: string; }[]; kelurahanOptions: { id: string; name: string; puskesmas_id: string; }[]; initialValues: { jenisLaporan: "Bulanan" | "Tahunan TW"; tahun: number; bulanTW: number | "ALL"; puskesmas: string; kelurahan: string; }; onChange: (newFilters: Part...' is not assignable to type 'IntrinsicAttributes & DashboardFiltersProps'.
+  Property 'role' does not exist on type 'IntrinsicAttributes & DashboardFiltersProps'.
+src/app/dashboard/balita-gizi/components/AsiMpasiDashboard.tsx(363,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: MapPuskesmasProps, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type 'any[]' is not assignable to type 'Record<string, number>'.
+      Index signature for type 'string' is missing in type 'any[]'.
+  Overload 2 of 2, '(props: MapPuskesmasProps): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type 'any[]' is not assignable to type 'Record<string, number>'.
+      Index signature for type 'string' is missing in type 'any[]'.
+src/app/dashboard/balita-gizi/components/AsiMpasiDashboard.tsx(370,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: MapDesaProps, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type 'any[]' is not assignable to type 'Record<string, number>'.
+      Index signature for type 'string' is missing in type 'any[]'.
+  Overload 2 of 2, '(props: MapDesaProps): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type 'any[]' is not assignable to type 'Record<string, number>'.
+      Index signature for type 'string' is missing in type 'any[]'.

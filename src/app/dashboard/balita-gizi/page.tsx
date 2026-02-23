@@ -6,6 +6,7 @@ import DataQualityDashboard from "./components/DataQualityDashboard";
 
 import GrowthAnalysisDashboard from "./components/GrowthAnalysisDashboard";
 import NutritionIssuesDashboard from "./components/NutritionIssuesDashboard";
+import AsiMpasiDashboard from "./components/AsiMpasiDashboard";
 
 export default function BalitaGiziPage() {
     const [mainTab, setMainTab] = useState<"kualitas" | "indikator">("kualitas");
@@ -85,6 +86,8 @@ export default function BalitaGiziPage() {
                         <GrowthAnalysisDashboard />
                     ) : indikatorSubTab === "masalah_gizi" ? (
                         <NutritionIssuesDashboard />
+                    ) : indikatorSubTab === "asi" ? (
+                        <AsiMpasiDashboard />
                     ) : (
                         <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
                             <ComingSoon
