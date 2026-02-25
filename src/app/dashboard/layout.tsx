@@ -276,6 +276,56 @@ export default function DashboardLayout({
                             </Link>
                         ))}
 
+                        {/* ── Monev Report Section ── */}
+                        {!sidebarCollapsed && (
+                            <div className="pt-4 mt-4 border-t border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 font-mono">
+                                    Monev Report
+                                </p>
+                            </div>
+                        )}
+                        {sidebarCollapsed && <div className="border-t border-slate-100 my-2"></div>}
+                        {[
+                            { id: 'bimtek-gizi', label: 'Bimtek Gizi', icon: 'assignment', href: '/dashboard/bimtek-gizi', ready: true },
+                            { id: 'pkp', label: 'PKP', icon: 'assessment', href: '/dashboard/pkp', ready: false },
+                        ].map((item) => (
+                            <Link
+                                key={item.id}
+                                href={item.href}
+                                onClick={() => setSidebarOpen(false)}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
+                  ${isActive(item.href)
+                                        ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                    }
+                  ${sidebarCollapsed ? "justify-center" : ""}
+                `}
+                                title={sidebarCollapsed ? item.label : undefined}
+                            >
+                                <span
+                                    className={`material-icons-round text-xl shrink-0 ${isActive(item.href)
+                                        ? "text-emerald-600"
+                                        : "text-slate-400 group-hover:text-slate-600"
+                                        }`}
+                                >
+                                    {item.icon}
+                                </span>
+                                {!sidebarCollapsed && (
+                                    <>
+                                        <span className="truncate">{item.label}</span>
+                                        {!item.ready && (
+                                            <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0">
+                                                Soon
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                                {sidebarCollapsed && !item.ready && (
+                                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>
+                                )}
+                            </Link>
+                        ))}
+
                         {/* Upload - Superadmin only */}
                         {user?.role === "superadmin" && (
                             <>
