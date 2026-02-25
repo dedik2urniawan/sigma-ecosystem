@@ -194,11 +194,17 @@ export default function NutritionIssuesDashboard() {
         return kelurahanOptions.filter(k => k.puskesmas_id === selectedPuskesmas);
     }, [selectedPuskesmas, kelurahanOptions]);
 
+    // Year-based targets from SPM/RPJMN
+    const STUNTING_TARGETS: Record<string, number> = { '2025': 18.8, '2026': 17.5, '2027': 16.3, '2028': 15.2, '2029': 14.2 };
+    const WASTING_TARGETS: Record<string, number> = { '2025': 8, '2026': 7.5, '2027': 7, '2028': 6.5, '2029': 5 };
+    const UNDERWEIGHT_TARGETS: Record<string, number> = { '2025': 15, '2026': 14, '2027': 13, '2028': 12, '2029': 11 };
+    const OVERWEIGHT_TARGETS: Record<string, number> = { '2025': 4, '2026': 3.5, '2027': 3, '2028': 2.5, '2029': 2 };
+
     const TARGETS = {
-        Stunting: { val: 14, color: '#ef4444' },
-        Wasting: { val: 7, color: '#f59e0b' },
-        Underweight: { val: 10, color: '#3b82f6' },
-        Overweight: { val: 5, color: '#8b5cf6' }
+        Stunting: { val: STUNTING_TARGETS[year] || 18.8, color: '#ef4444' },
+        Wasting: { val: WASTING_TARGETS[year] || 8, color: '#f59e0b' },
+        Underweight: { val: UNDERWEIGHT_TARGETS[year] || 15, color: '#3b82f6' },
+        Overweight: { val: OVERWEIGHT_TARGETS[year] || 4, color: '#8b5cf6' }
     };
 
     const overallMetrics = useMemo(() => {
@@ -567,8 +573,8 @@ export default function NutritionIssuesDashboard() {
                                                 key={m.id}
                                                 onClick={() => setSelectedPrevalenceMetric(m.id)}
                                                 className={`px-4 py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 flex items-center gap-1.5 ${selectedPrevalenceMetric === m.id
-                                                        ? 'text-white shadow-md scale-[1.02]'
-                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                                                    ? 'text-white shadow-md scale-[1.02]'
+                                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                                                     }`}
                                                 style={selectedPrevalenceMetric === m.id ? { background: `linear-gradient(135deg, ${m.gradient[0]}, ${m.gradient[1]})`, borderColor: m.gradient[0] } : {}}
                                             >
@@ -731,17 +737,17 @@ export default function NutritionIssuesDashboard() {
                                     {metricsResult.summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
                                         <tr key={row.name} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-3 font-semibold text-slate-800">{row.name}</td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.stunting > TARGETS.Stunting.val ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}`}>
-                                                {row.stunting.toFixed(2)}%
+                                            <td className={`px-6 py-3 text-center font-medium ${row.stunting > TARGETS.Stunting.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
+                                                {row.stunting.toFixed(2)}%{row.stunting > TARGETS.Stunting.val && <span className="ml-1 text-[10px]">▲</span>}
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.wasting > TARGETS.Wasting.val ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}`}>
-                                                {row.wasting.toFixed(2)}%
+                                            <td className={`px-6 py-3 text-center font-medium ${row.wasting > TARGETS.Wasting.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
+                                                {row.wasting.toFixed(2)}%{row.wasting > TARGETS.Wasting.val && <span className="ml-1 text-[10px]">▲</span>}
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.underweight > TARGETS.Underweight.val ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}`}>
-                                                {row.underweight.toFixed(2)}%
+                                            <td className={`px-6 py-3 text-center font-medium ${row.underweight > TARGETS.Underweight.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
+                                                {row.underweight.toFixed(2)}%{row.underweight > TARGETS.Underweight.val && <span className="ml-1 text-[10px]">▲</span>}
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.obesitas > TARGETS.Overweight.val ? 'bg-rose-100 text-rose-700' : 'text-slate-600'}`}>
-                                                {row.obesitas.toFixed(2)}%
+                                            <td className={`px-6 py-3 text-center font-medium ${row.obesitas > TARGETS.Overweight.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
+                                                {row.obesitas.toFixed(2)}%{row.obesitas > TARGETS.Overweight.val && <span className="ml-1 text-[10px]">▲</span>}
                                             </td>
                                         </tr>
                                     ))}

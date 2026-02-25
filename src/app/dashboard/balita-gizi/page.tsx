@@ -1,18 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import ComingSoon from "@/components/dashboard/ComingSoon";
 import DataQualityDashboard from "./components/DataQualityDashboard";
 
 import GrowthAnalysisDashboard from "./components/GrowthAnalysisDashboard";
 import NutritionIssuesDashboard from "./components/NutritionIssuesDashboard";
 import AsiMpasiDashboard from "./components/AsiMpasiDashboard";
+import SuplemenDashboard from "./components/SuplemenDashboard";
+import TatalaksanaDashboard from "./components/TatalaksanaDashboard";
 
 export default function BalitaGiziPage() {
     const [mainTab, setMainTab] = useState<"kualitas" | "indikator">("kualitas");
     const [indikatorSubTab, setIndikatorSubTab] = useState<
         "pemantauan" | "masalah_gizi" | "asi" | "suplemen" | "tatalaksana"
     >("pemantauan");
+
+    // Dynamic last updated from data_balita_gizi
+    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+    useEffect(() => {
+        async function fetchLastUpdated() {
+            const { data } = await supabase
+                .from('data_balita_gizi')
+                .select('uploaded_at')
+                .order('uploaded_at', { ascending: false })
+                .limit(1)
+                .single();
+            if (data?.uploaded_at) setLastUpdated(data.uploaded_at);
+        }
+        fetchLastUpdated();
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -29,6 +47,28 @@ export default function BalitaGiziPage() {
                         <p className="text-sm text-slate-500">
                             Monitoring pemantauan pertumbuhan, masalah gizi, dan kepatuhan pelaporan.
                         </p>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            <span className="material-icons-round text-sm">schedule</span>
+                            {lastUpdated ? (
+                                <span>
+                                    Data terakhir diperbarui:{" "}
+                                    <span className="font-semibold text-slate-600">
+                                        {new Date(lastUpdated).toLocaleDateString("id-ID", {
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric",
+                                        })}{" "}
+                                        pukul{" "}
+                                        {new Date(lastUpdated).toLocaleTimeString("id-ID", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </span>
+                                </span>
+                            ) : (
+                                <span className="text-slate-300">Memuat...</span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -88,15 +128,10 @@ export default function BalitaGiziPage() {
                         <NutritionIssuesDashboard />
                     ) : indikatorSubTab === "asi" ? (
                         <AsiMpasiDashboard />
+                    ) : indikatorSubTab === "suplemen" ? (
+                        <SuplemenDashboard />
                     ) : (
-                        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-                            <ComingSoon
-                                title={`Modul ${indikatorSubTab.replace(/_/g, " ")}`}
-                                icon="analytics"
-                                description="Fitur visualisasi indikator gizi ini sedang dalam tahap pengembangan."
-                                gradient="from-teal-500 to-cyan-600"
-                            />
-                        </div>
+                        <TatalaksanaDashboard />
                     )}
                 </div>
             )}

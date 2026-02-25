@@ -441,8 +441,8 @@ export default function AsiMpasiDashboard() {
                                         key={m.id}
                                         onClick={() => setSelectedChartMetric(m.id)}
                                         className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition-all duration-200 flex items-center gap-1.5 ${selectedChartMetric === m.id
-                                                ? 'text-white shadow-md scale-[1.02]'
-                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                                            ? 'text-white shadow-md scale-[1.02]'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                                             }`}
                                         style={selectedChartMetric === m.id ? { background: `linear-gradient(135deg, ${m.gradient[0]}, ${m.gradient[1]})`, borderColor: m.gradient[0] } : {}}
                                     >
@@ -606,18 +606,39 @@ export default function AsiMpasiDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
-                                <tr key={row.name} className="hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                                    <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.recall_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.asi_0_5_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.asi_6_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.wawancara_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.mpasi_5_8_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.mpasi_telur_rate.toFixed(2)}%</td>
-                                    <td className="px-6 py-4 text-center font-medium text-slate-700">{row.mpasi_baik_rate.toFixed(2)}%</td>
-                                </tr>
-                            ))}
+                            {(() => {
+                                // Year-based targets
+                                const MPASI_TARGETS: Record<number, number> = { 2025: 73, 2026: 76, 2027: 79, 2028: 82, 2029: 85 };
+                                const ASI_05_TARGETS: Record<number, number> = { 2025: 73, 2026: 76, 2027: 79, 2028: 82, 2029: 85 };
+                                const ASI_6_TARGETS: Record<number, number> = { 2025: 61, 2026: 64, 2027: 67, 2028: 70, 2029: 73 };
+                                const RECALL_TARGET = 80;
+                                const WAWANCARA_TARGET = 80;
+                                const mpasiTarget = MPASI_TARGETS[selectedYear] || 73;
+                                const asi05Target = ASI_05_TARGETS[selectedYear] || 73;
+                                const asi6Target = ASI_6_TARGETS[selectedYear] || 61;
+
+                                const deficitCell = (val: number, target: number) => {
+                                    const below = val > 0 && val < target;
+                                    return (
+                                        <td className={`px-6 py-4 text-center font-medium ${below ? 'text-red-600 bg-red-50 font-bold' : 'text-slate-700'}`}>
+                                            {val.toFixed(2)}%{below && <span className="ml-1 text-[10px]">▼</span>}
+                                        </td>
+                                    );
+                                };
+
+                                return summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
+                                    <tr key={row.name} className="hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                        {deficitCell(row.recall_rate, RECALL_TARGET)}
+                                        {deficitCell(row.asi_0_5_rate, asi05Target)}
+                                        {deficitCell(row.asi_6_rate, asi6Target)}
+                                        {deficitCell(row.wawancara_rate, WAWANCARA_TARGET)}
+                                        {deficitCell(row.mpasi_5_8_rate, mpasiTarget)}
+                                        {deficitCell(row.mpasi_telur_rate, mpasiTarget)}
+                                        {deficitCell(row.mpasi_baik_rate, mpasiTarget)}
+                                    </tr>
+                                ));
+                            })()}
                         </tbody>
                     </table>
                 </div>
