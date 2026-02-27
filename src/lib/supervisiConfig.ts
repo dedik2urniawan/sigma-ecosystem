@@ -4,6 +4,9 @@
  * Each section maps 1-to-1 with the original paper form.
  */
 
+/** 'text' = Ya/Tidak + catatan text. 'integer' = Ya/Tidak + catatan_integer (numeric) + catatan text */
+export type SectionInputType = 'text' | 'integer';
+
 export interface SupervisiItem {
     number: number;
     label: string;
@@ -12,13 +15,18 @@ export interface SupervisiItem {
 export interface SupervisiSection {
     id: string;
     title: string;
+    inputType: SectionInputType;
     items: SupervisiItem[];
 }
+
+/** Sections where catatan field is numeric (integer analysis) */
+export const INTEGER_SECTIONS = ['sumber_daya_manusia', 'sarana_prasarana', 'stok_obat_program'];
 
 export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'perencanaan_program',
         title: 'Perencanaan Program',
+        inputType: 'text',
         items: [
             { number: 1, label: 'Tahunan Program Gizi' },
             { number: 2, label: 'Perencanaan berbasis analisis situasi wilayah' },
@@ -29,6 +37,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'sumber_daya_manusia',
         title: 'Sumber Daya Manusia',
+        inputType: 'integer',
         items: [
             { number: 1, label: 'Tersedia Tenaga Gizi' },
             { number: 2, label: 'Kader terlatih PMBA' },
@@ -39,6 +48,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'sarana_prasarana',
         title: 'Sarana Prasarana',
+        inputType: 'integer',
         items: [
             { number: 1, label: 'Alat antropometri terstandar' },
             { number: 2, label: 'Ruang Laktasi' },
@@ -51,6 +61,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'stok_obat_program',
         title: 'Stok Obat Program',
+        inputType: 'integer',
         items: [
             { number: 1, label: 'Vitamin A biru' },
             { number: 2, label: 'Vitamin A merah' },
@@ -66,6 +77,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'pencatatan_pelaporan',
         title: 'Pencatatan Pelaporan',
+        inputType: 'text',
         items: [
             { number: 1, label: 'Validasi rutin setiap bulan' },
             { number: 2, label: 'Pelaporan tepat waktu' },
@@ -78,6 +90,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
         id: 'kemitraan_lintas_sektor',
         title: 'Kemitraan Lintas Sektor',
+        inputType: 'text',
         items: [
             { number: 1, label: 'Keterlibatan dalam TPPS Kecamatan' },
             { number: 2, label: 'Kerjasama dengan pemerintah desa' },
