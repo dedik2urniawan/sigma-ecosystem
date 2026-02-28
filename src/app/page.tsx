@@ -692,21 +692,46 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* Dev/Future Applications */}
+              {/* API Gateway — LIVE, links directly to portal */}
+              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-indigo-200/60 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100 group">
+                <CornerAccent />
+                <div className="absolute top-0 right-0 p-8">
+                  <span className="bg-indigo-50 text-indigo-600 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-indigo-100 tracking-wider font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                    Live
+                  </span>
+                </div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-indigo-200">
+                  <span className="material-icons-round text-3xl">hub</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-700 mb-3 group-hover:text-indigo-600 transition-colors">API Gateway</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">
+                  Portal data sharing standar, aman, dan cepat antara SIGMA dengan mitra pihak ketiga.
+                </p>
+                <div className="mt-auto">
+                  <a
+                    href="/api-gateway"
+                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-200"
+                  >
+                    <span className="material-icons-round text-sm">api</span>
+                    Access API Gateway
+                  </a>
+                </div>
+              </div>
+
+              {/* Chatbot AI + Mobile App — still coming soon */}
               {[
-                { title: "API Gateway", desc: "Centralized API management for integrations.", icon: "hub", color: "indigo", status: "Dev", cta: "Access API" },
-                { title: "Chatbot AI", desc: "AI-powered nutrition assistant for instant queries.", icon: "smart_toy", color: "amber", status: "Beta Soon", cta: "Try Beta" },
-                { title: "Mobile App", desc: "Field reporting PWA for Posyandu cadres.", icon: "smartphone", color: "purple", status: "Roadmap", cta: "Download" }
+                { title: "Chatbot AI", desc: "AI-powered nutrition assistant for instant queries.", icon: "smart_toy", status: "Beta Soon", cta: "Try Beta" },
+                { title: "Mobile App", desc: "Field reporting PWA for Posyandu cadres.", icon: "smartphone", status: "Roadmap", cta: "Download" }
               ].map((app, i) => (
                 <div key={i} className="bg-slate-50/50 rounded-[2rem] p-8 border border-dashed border-slate-200 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-slate-300 hover:shadow-lg group">
                   <CornerAccent />
                   <div className="absolute top-0 right-0 p-8">
-                    <span className={`bg-white text-slate-500 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-slate-100 tracking-wider font-mono`}>
+                    <span className="bg-white text-slate-500 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-slate-100 tracking-wider font-mono">
                       {app.status}
                     </span>
                   </div>
-                  {/* Explicit border-slate-200 to ensure visibility */}
-                  <div className={`w-16 h-16 rounded-2xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center mb-6 group-hover:text-slate-600 transition-colors`}>
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center mb-6 group-hover:text-slate-600 transition-colors">
                     <span className="material-icons-round text-3xl">{app.icon}</span>
                   </div>
                   <h3 className="text-xl font-bold text-slate-500 mb-3 group-hover:text-slate-800 transition-colors">{app.title}</h3>
