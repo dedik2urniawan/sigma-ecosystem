@@ -391,8 +391,8 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
 
                             {isExpanded && (
                                 <div className="border-t border-slate-100">
-                                    {/* Column Headers */}
-                                    <div className="grid grid-cols-2 gap-0">
+                                    {/* Column Headers — 3-col layout to match row grid */}
+                                    <div className="grid gap-0" style={{ gridTemplateColumns: '1fr 1fr 40px' }}>
                                         <div className="bg-indigo-50 px-4 py-2.5 flex items-center gap-2 border-r border-slate-100">
                                             {isSuperadmin
                                                 ? <Unlock className="w-3.5 h-3.5 text-indigo-500" />
@@ -400,15 +400,17 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                             <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Hasil Supervisi</span>
                                             {!isSuperadmin && <span className="text-[9px] text-slate-400 ml-auto">(Dinkes only)</span>}
                                         </div>
-                                        <div className="bg-emerald-50 px-4 py-2.5 flex items-center gap-2">
+                                        <div className="bg-emerald-50 px-4 py-2.5 flex items-center gap-2 border-r border-slate-100">
                                             <Unlock className="w-3.5 h-3.5 text-emerald-500" />
                                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Rencana Tindak Lanjut</span>
                                         </div>
+                                        {/* Delete column header */}
+                                        <div className="bg-slate-50 flex items-center justify-center" />
                                     </div>
 
                                     {/* Rows */}
                                     {rows.map((row, rowIdx) => (
-                                        <div key={rowIdx} className="grid grid-cols-2 gap-0 border-t border-slate-50 group relative">
+                                        <div key={rowIdx} className="grid border-t border-slate-100" style={{ gridTemplateColumns: '1fr 1fr 40px' }}>
                                             {/* Hasil Supervisi */}
                                             <div className="p-3 border-r border-slate-100">
                                                 {isSuperadmin ? (
@@ -426,7 +428,7 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                                 )}
                                             </div>
                                             {/* RTL */}
-                                            <div className="p-3 relative">
+                                            <div className="p-3 border-r border-slate-100">
                                                 <textarea
                                                     rows={3}
                                                     placeholder="Rencana tindak lanjut dari Puskesmas..."
@@ -434,12 +436,19 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                                     onChange={e => updateCell(prog.id, rowIdx, "rencana_tindak_lanjut", e.target.value)}
                                                     className="w-full text-sm bg-emerald-50/40 border border-emerald-100 rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-emerald-400 resize-none text-slate-700 placeholder:text-slate-300"
                                                 />
-                                                {/* Delete row button */}
-                                                {rows.length > 1 && (
-                                                    <button onClick={() => removeRow(prog.id, rowIdx)}
-                                                        className="absolute top-3 right-3 p-1 rounded-lg hover:bg-red-50 text-slate-200 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                                            </div>
+                                            {/* Delete button — always visible when rows > 1 */}
+                                            <div className="flex items-center justify-center bg-slate-50/50">
+                                                {rows.length > 1 ? (
+                                                    <button
+                                                        onClick={() => removeRow(prog.id, rowIdx)}
+                                                        title={`Hapus baris ${rowIdx + 1}`}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 border border-red-100 transition-all hover:scale-110 active:scale-95"
+                                                    >
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </button>
+                                                ) : (
+                                                    <div className="w-7 h-7" /> /* placeholder to keep grid stable */
                                                 )}
                                             </div>
                                         </div>
