@@ -61,7 +61,7 @@ export default function ApiGatewayPortal() {
     const [activeTab, setActiveTab] = useState<"overview" | "keys" | "logs" | "docs">("overview");
     const [copiedKey, setCopiedKey] = useState(false);
 
-    const DEMO_FULL_KEY = "sigma_live_d1sk0m1nf0m4l4ng2025";
+    const DEMO_FULL_KEY = process.env.NEXT_PUBLIC_DEMO_API_KEY || "sigma_live_...[HIDDEN]...";
 
     const loadData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -212,7 +212,7 @@ export default function ApiGatewayPortal() {
                                 <p className="text-slate-500"># Contoh request — Indikator Pelayanan Kesehatan</p>
                                 <p className="text-slate-300">curl -X GET \</p>
                                 <p className="text-slate-300 pl-4">'{typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/rcs/v1/pelayanan-kesehatan?tahun=2024&limit=10' \</p>
-                                <p className="text-slate-300 pl-4">-H <span className="text-yellow-300">'X-API-Key: sigma_live_d1sk0m1nf0m4l4ng2025'</span></p>
+                                <p className="text-slate-300 pl-4">-H <span className="text-yellow-300">'{`X-API-Key: ${DEMO_FULL_KEY}`}'</span></p>
                             </div>
                         </div>
                     </div>
