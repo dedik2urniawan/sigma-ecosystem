@@ -77,26 +77,51 @@ function CodeDemo() {
         { text: '  "meta": { "source": "SIGMA RCS", ... }', color: "text-purple-300" },
         { text: "}", color: "text-slate-300" },
     ];
-    const [visibleLines, setVisibleLines] = useState(0);
+
+    const [activeLine, setActiveLine] = useState(0);
+    const [currentCharPos, setCurrentCharPos] = useState(0);
+
     useEffect(() => {
-        if (visibleLines < lines.length) {
-            const t = setTimeout(() => setVisibleLines(v => v + 1), 300);
-            return () => clearTimeout(t);
+        if (activeLine >= lines.length) return;
+
+        const lineText = lines[activeLine].text;
+
+        if (currentCharPos < lineText.length) {
+            const timeout = setTimeout(() => {
+                setCurrentCharPos(c => c + 1);
+            }, 25 + Math.random() * 20); // typing speed with slight variance
+            return () => clearTimeout(timeout);
+        } else {
+            const timeout = setTimeout(() => {
+                setActiveLine(l => l + 1);
+                setCurrentCharPos(0);
+            }, 500); // pause between lines
+            return () => clearTimeout(timeout);
         }
-    }, [visibleLines]);
+    }, [activeLine, currentCharPos]);
+
     return (
-        <div className="bg-black/50 rounded-2xl p-6 font-mono text-xs border border-white/10 shadow-2xl">
-            <div className="flex items-center gap-2 mb-4">
+        <div className="bg-black/50 rounded-2xl p-6 font-mono text-xs border border-white/10 shadow-2xl min-h-[260px] flex flex-col w-full sm:min-w-[450px]">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4 shrink-0">
                 <div className="w-3 h-3 rounded-full bg-red-500/70" />
                 <div className="w-3 h-3 rounded-full bg-amber-500/70" />
                 <div className="w-3 h-3 rounded-full bg-emerald-500/70" />
-                <span className="text-slate-500 text-[10px] ml-2 font-sans">HTTP Request → Response</span>
+                <span className="text-slate-500 text-[10px] ml-2 font-sans tracking-widest uppercase">HTTP Request → Response</span>
             </div>
-            <div className="space-y-1.5">
-                {lines.slice(0, visibleLines).map((l, i) => (
-                    <p key={i} className={`${l.color} transition-opacity duration-300`}>{l.text || "\u00A0"}</p>
-                ))}
-                {visibleLines < lines.length && <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse" />}
+            <div className="space-y-2 flex-1 w-full overflow-hidden">
+                {lines.map((l, i) => {
+                    if (i > activeLine) return null;
+                    const textToShow = i === activeLine ? l.text.substring(0, currentCharPos) : l.text;
+                    const isBlinkingCursor = i === activeLine && i < lines.length - 1;
+                    const isDone = activeLine >= lines.length && i === lines.length - 1;
+
+                    return (
+                        <p key={i} className={`${l.color} min-h-[16px] break-all leading-relaxed`}>
+                            {textToShow}
+                            {(isBlinkingCursor || isDone) && <span className="inline-block w-1.5 h-3.5 bg-indigo-400 animate-pulse align-middle ml-1" />}
+                        </p>
+                    );
+                })}
             </div>
         </div>
     );
