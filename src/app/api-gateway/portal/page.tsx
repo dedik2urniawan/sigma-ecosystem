@@ -60,8 +60,10 @@ export default function ApiGatewayPortal() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"overview" | "keys" | "logs" | "docs">("overview");
     const [copiedKey, setCopiedKey] = useState(false);
+    const [showKey, setShowKey] = useState(false);
 
-    const DEMO_FULL_KEY = process.env.NEXT_PUBLIC_DEMO_API_KEY || "sigma_live_...[HIDDEN]...";
+    const REAL_KEY = process.env.NEXT_PUBLIC_DEMO_API_KEY || "";
+    const MASKED_KEY = REAL_KEY ? `${REAL_KEY.substring(0, 11)}${'•'.repeat(24)}` : "sigma_live_••••••••••••••••••••••••";
 
     const loadData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -88,7 +90,8 @@ export default function ApiGatewayPortal() {
     };
 
     const copyKey = async () => {
-        await navigator.clipboard.writeText(DEMO_FULL_KEY);
+        const toCopy = REAL_KEY || MASKED_KEY;
+        await navigator.clipboard.writeText(toCopy);
         setCopiedKey(true);
         setTimeout(() => setCopiedKey(false), 2000);
     };
@@ -110,6 +113,7 @@ export default function ApiGatewayPortal() {
     const totalReqToday = keys.reduce((s, k) => s + k.requests_today, 0);
     const activeKeys = keys.filter(k => k.is_active).length;
     const openEndpoints = ENDPOINTS.filter(e => e.status === "OPEN").length;
+    const totalKeys = keys.length;
 
     return (
         <div className="min-h-screen bg-[#0a0f1e] text-white font-sans">
@@ -152,7 +156,7 @@ export default function ApiGatewayPortal() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {[
                         { label: "Endpoint Aktif", val: openEndpoints, sub: `dari ${ENDPOINTS.length} total`, color: "emerald" },
-                        { label: "API Keys", val: activeKeys, sub: `${keys.length} total keys`, color: "indigo" },
+                        { label: "API Keys", val: totalKeys, sub: `${activeKeys} aktif · ${totalKeys - activeKeys} revoked`, color: "indigo" },
                         { label: "Request Hari Ini", val: totalReqToday, sub: "across all keys", color: "purple" },
                         { label: "Status", val: "LIVE", sub: "API Gateway Online", color: "green" },
                     ].map((s, i) => (
@@ -212,7 +216,7 @@ export default function ApiGatewayPortal() {
                                 <p className="text-slate-500"># Contoh request — Indikator Pelayanan Kesehatan</p>
                                 <p className="text-slate-300">curl -X GET \</p>
                                 <p className="text-slate-300 pl-4">'{typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/rcs/v1/pelayanan-kesehatan?tahun=2024&limit=10' \</p>
-                                <p className="text-slate-300 pl-4">-H <span className="text-yellow-300">'{`X-API-Key: ${DEMO_FULL_KEY}`}'</span></p>
+                                <p className="text-slate-300 pl-4">-H <span className="text-yellow-300">'{`X-API-Key: ${REAL_KEY || MASKED_KEY}`}'</span></p>
                             </div>
                         </div>
                     </div>
@@ -220,57 +224,151 @@ export default function ApiGatewayPortal() {
 
                 {/* Keys Tab */}
                 {activeTab === "keys" && (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-white font-bold text-lg">API Keys</h2>
+                            {gwUser?.role === 'superadmin' && (
+                                <span className="text-slate-500 text-xs px-3 py-1 rounded-full border border-white/10 bg-white/5">
+                                    👁 Superadmin View — All Keys
+                                </span>
+                            )}
+                        </div>
+
+                        {keys.length === 0 && (
+                            <div className="text-center py-16 text-slate-500">
+                                <p className="text-4xl mb-3">🔑</p>
+                                <p className="font-semibold">Belum ada API Key</p>
+                                <p className="text-xs mt-1">Hubungi Dinkes untuk mendapatkan API Key Anda</p>
+                            </div>
+                        )}
+
                         {keys.map(key => (
-                            <div key={key.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-white font-bold">{key.name}</h3>
-                                        <p className="text-slate-400 text-xs mt-1 font-mono">
-                                            {key.is_active && gwUser?.role !== 'superadmin'
-                                                ? DEMO_FULL_KEY
-                                                : `${key.key_prefix}••••••••••••••••••••••••`}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${key.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-red-500/20 text-red-400 border-red-500/40'}`}>
-                                            {key.is_active ? "ACTIVE" : "REVOKED"}
-                                        </span>
-                                        {gwUser?.role === 'superadmin' && (
-                                            <button onClick={() => toggleKey(key.id, key.is_active)}
-                                                className={`text-xs px-3 py-1 rounded-lg border transition-all ${key.is_active ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}>
-                                                {key.is_active ? "Revoke" : "Activate"}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white/3 rounded-xl p-3">
-                                        <p className="text-slate-500 text-[10px] uppercase tracking-wider">Request Hari Ini</p>
-                                        <p className="text-white text-lg font-bold mt-1">{key.requests_today}</p>
-                                        <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min((key.requests_today / key.daily_limit) * 100, 100)}%` }} />
+                            <div key={key.id} className={`relative rounded-2xl border overflow-hidden transition-all ${key.is_active
+                                ? 'bg-gradient-to-br from-white/5 to-indigo-500/5 border-indigo-500/20'
+                                : 'bg-white/3 border-white/8 opacity-75'
+                                }`}>
+
+                                {/* Top accent bar */}
+                                <div className={`h-0.5 w-full ${key.is_active ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500' : 'bg-white/10'}`} />
+
+                                <div className="p-6">
+                                    {/* Title row */}
+                                    <div className="flex items-start justify-between mb-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${key.is_active ? 'bg-indigo-500/15 border border-indigo-500/30' : 'bg-white/5 border border-white/10'
+                                                }`}>🔑</div>
+                                            <div>
+                                                <h3 className="text-white font-bold text-base">{key.name}</h3>
+                                                <p className="text-slate-500 text-[11px] font-mono mt-0.5">
+                                                    ID: {key.id.substring(0, 16)}…
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full border ${key.is_active
+                                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                                : 'bg-red-500/15 text-red-400 border-red-500/30'
+                                                }`}>
+                                                {key.is_active ? '● ACTIVE' : '○ REVOKED'}
+                                            </span>
+                                            {gwUser?.role === 'superadmin' && (
+                                                <button
+                                                    onClick={() => toggleKey(key.id, key.is_active)}
+                                                    className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${key.is_active
+                                                        ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
+                                                        : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                                                        }`}>
+                                                    {key.is_active ? 'Revoke' : 'Activate'}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="bg-white/3 rounded-xl p-3">
-                                        <p className="text-slate-500 text-[10px] uppercase tracking-wider">Daily Limit</p>
-                                        <p className="text-white text-lg font-bold mt-1">{key.daily_limit.toLocaleString()}</p>
-                                    </div>
-                                    <div className="bg-white/3 rounded-xl p-3">
-                                        <p className="text-slate-500 text-[10px] uppercase tracking-wider">Dibuat</p>
-                                        <p className="text-white text-sm font-bold mt-1">{new Date(key.created_at).toLocaleDateString("id-ID")}</p>
-                                    </div>
-                                </div>
-                                {(gwUser?.role !== 'superadmin') && key.is_active && (
-                                    <div className="mt-4 flex items-center gap-2">
-                                        <div className="flex-1 bg-black/30 rounded-lg px-3 py-2 font-mono text-sm text-emerald-300 border border-white/5">
-                                            {DEMO_FULL_KEY}
+
+                                    {/* Stats grid */}
+                                    <div className="grid grid-cols-3 gap-3 mb-5">
+                                        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                            <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Request Hari Ini</p>
+                                            <p className="text-white text-xl font-black">{key.requests_today}</p>
+                                            <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
+                                                    style={{ width: `${Math.min((key.requests_today / key.daily_limit) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-slate-600 text-[9px] mt-1">{key.requests_today}/{key.daily_limit} requests</p>
                                         </div>
-                                        <button onClick={copyKey} className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${copiedKey ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'}`}>
-                                            {copiedKey ? "✓ Copied" : "Copy"}
-                                        </button>
+                                        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                            <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Daily Limit</p>
+                                            <p className="text-white text-xl font-black">{key.daily_limit.toLocaleString()}</p>
+                                            <p className="text-slate-600 text-[9px] mt-1">Reset setiap hari pukul 00:00</p>
+                                        </div>
+                                        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                            <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Dibuat</p>
+                                            <p className="text-white text-sm font-black mt-1">{new Date(key.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                            <p className="text-slate-600 text-[9px] mt-1">Tanggal aktivasi</p>
+                                        </div>
                                     </div>
-                                )}
+
+                                    {/* Key display — always visible for Mitra */}
+                                    {gwUser?.role !== 'superadmin' && (
+                                        <div className="space-y-2">
+                                            <p className="text-slate-500 text-[10px] uppercase tracking-widest">API Key Anda</p>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`flex-1 bg-black/40 border rounded-xl px-4 py-3 font-mono text-sm flex items-center justify-between ${key.is_active ? 'border-indigo-500/20 text-emerald-300' : 'border-white/5 text-slate-500'
+                                                    }`}>
+                                                    <span className="select-all tracking-wider">
+                                                        {showKey ? (REAL_KEY || `${key.key_prefix}••••••••••••••••••••••••`) : MASKED_KEY}
+                                                    </span>
+                                                    {!key.is_active && (
+                                                        <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full ml-2 font-sans">Nonaktif</span>
+                                                    )}
+                                                </div>
+                                                {/* Eye toggle */}
+                                                <button
+                                                    onClick={() => setShowKey(v => !v)}
+                                                    title={showKey ? 'Sembunyikan key' : 'Tampilkan key'}
+                                                    className="p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                                                >
+                                                    {showKey ? (
+                                                        // Eye-off icon
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                                            <line x1="1" y1="1" x2="23" y2="23" />
+                                                        </svg>
+                                                    ) : (
+                                                        // Eye icon
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                                {/* Copy button */}
+                                                <button
+                                                    onClick={copyKey}
+                                                    title="Copy API Key"
+                                                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border font-bold text-xs transition-all ${copiedKey
+                                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                                        : 'bg-indigo-600/80 text-white border-indigo-500/50 hover:bg-indigo-500'
+                                                        }`}
+                                                >
+                                                    {copiedKey ? (
+                                                        <><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><polyline points="20 6 9 17 4 12" /></svg> Copied!</>
+                                                    ) : (
+                                                        <><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg> Copy Key</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {!key.is_active && (
+                                                <p className="text-amber-500/80 text-[11px] flex items-center gap-1">
+                                                    ⚠ Key ini sedang dinonaktifkan. Hubungi Dinkes untuk mengaktifkan kembali.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
