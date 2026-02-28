@@ -21,6 +21,12 @@ interface SessionMeta {
     tanggal_kegiatan: string;
     tempat_kegiatan: string;
     status: string;
+    // Signatory — PJ Dinkes
+    pj_dinkes_nama: string;
+    pj_dinkes_nip: string;
+    // Signatory — Kepala Puskesmas
+    kepala_pkm_nama: string;
+    kepala_pkm_nip: string;
 }
 
 interface ProgramRow {
@@ -46,6 +52,8 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
 
     const [meta, setMeta] = useState<SessionMeta>({
         puskesmas_id: '', puskesmas_name: '', tanggal_kegiatan: '', tempat_kegiatan: '', status: 'draft',
+        pj_dinkes_nama: '', pj_dinkes_nip: '',
+        kepala_pkm_nama: '', kepala_pkm_nip: '',
     });
     const [programs, setPrograms] = useState<ProgramData>({});
     const [expandedPrograms, setExpandedPrograms] = useState<Record<string, boolean>>({});
@@ -58,7 +66,7 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
         setLoading(true);
         const { data: s } = await supabase
             .from("ba_bimtek_sessions")
-            .select("puskesmas_id, tanggal_kegiatan, tempat_kegiatan, status")
+            .select("puskesmas_id, tanggal_kegiatan, tempat_kegiatan, status, pj_dinkes_nama, pj_dinkes_nip, kepala_pkm_nama, kepala_pkm_nip")
             .eq("id", sessionId).single();
 
         if (!s) { setLoading(false); return; }
@@ -72,6 +80,10 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
             tanggal_kegiatan: s.tanggal_kegiatan,
             tempat_kegiatan: s.tempat_kegiatan || "",
             status: s.status,
+            pj_dinkes_nama: s.pj_dinkes_nama || "",
+            pj_dinkes_nip: s.pj_dinkes_nip || "",
+            kepala_pkm_nama: s.kepala_pkm_nama || "",
+            kepala_pkm_nip: s.kepala_pkm_nip || "",
         });
 
         // Load items
@@ -145,6 +157,10 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                     tanggal_kegiatan: meta.tanggal_kegiatan,
                     tempat_kegiatan: meta.tempat_kegiatan || null,
                     status: markCompleted ? "completed" : meta.status,
+                    pj_dinkes_nama: meta.pj_dinkes_nama || null,
+                    pj_dinkes_nip: meta.pj_dinkes_nip || null,
+                    kepala_pkm_nama: meta.kepala_pkm_nama || null,
+                    kepala_pkm_nip: meta.kepala_pkm_nip || null,
                     updated_at: new Date().toISOString(),
                 })
                 .eq("id", sessionId);
@@ -286,6 +302,46 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                         <input type="text" placeholder="Contoh: Aula Puskesmas Kepanjen" value={meta.tempat_kegiatan}
                             onChange={e => setMeta(prev => ({ ...prev, tempat_kegiatan: e.target.value }))}
                             className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-teal-400" />
+                    </div>
+
+                    {/* PJ Dinkes */}
+                    <div className="md:col-span-2 pt-2 border-t border-slate-100">
+                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 text-[10px] flex items-center justify-center font-black">I</span>
+                            Penanggung Jawab Program KGM Dinas Kesehatan Kab. Malang
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Lengkap PJ Dinkes</label>
+                        <input type="text" placeholder="dr. Nama Lengkap" value={meta.pj_dinkes_nama}
+                            onChange={e => setMeta(prev => ({ ...prev, pj_dinkes_nama: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-indigo-400" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">NIP PJ Dinkes</label>
+                        <input type="text" placeholder="19801010 200501 1 001" value={meta.pj_dinkes_nip}
+                            onChange={e => setMeta(prev => ({ ...prev, pj_dinkes_nip: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-indigo-400" />
+                    </div>
+
+                    {/* Kepala Puskesmas */}
+                    <div className="md:col-span-2 pt-2 border-t border-slate-100">
+                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] flex items-center justify-center font-black">II</span>
+                            Kepala Puskesmas {meta.puskesmas_name}
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Lengkap Kepala PKM</label>
+                        <input type="text" placeholder="dr. Nama Kepala Puskesmas" value={meta.kepala_pkm_nama}
+                            onChange={e => setMeta(prev => ({ ...prev, kepala_pkm_nama: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-emerald-400" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">NIP Kepala PKM</label>
+                        <input type="text" placeholder="19801010 200501 1 001" value={meta.kepala_pkm_nip}
+                            onChange={e => setMeta(prev => ({ ...prev, kepala_pkm_nip: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-emerald-400" />
                     </div>
                 </div>
             </div>

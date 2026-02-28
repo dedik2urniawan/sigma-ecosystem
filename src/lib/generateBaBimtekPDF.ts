@@ -1,6 +1,6 @@
 /**
  * generateBaBimtekPDF.ts
- * Generates the official BA Bimtek KGM PDF matching the Dinkes Kab. Malang format.
+ * Official BA Bimtek KGM PDF — Dinkes Kabupaten Malang format.
  */
 
 import jsPDF from "jspdf";
@@ -13,6 +13,10 @@ interface SessionMeta {
     tanggal_kegiatan: string;
     tempat_kegiatan: string;
     status: string;
+    pj_dinkes_nama: string;
+    pj_dinkes_nip: string;
+    kepala_pkm_nama: string;
+    kepala_pkm_nip: string;
 }
 
 type ProgramRow = {
@@ -33,7 +37,11 @@ export async function generateBaBimtekPDF({ meta, programs }: PDFInput): Promise
     const contentW = pageW - margin * 2;
     let y = 15;
 
-    // ── Header / Kop Surat ──────────────────────────────────────────────────
+    // ── Logo (left-aligned) ──────────────────────────────────────────────────
+    const logoSize = 26; // mm, larger to match template
+    const logoX = margin;
+    const logoY = y;
+    let logoLoaded = false;
     try {
         const resp = await fetch("/images/logo-kabmalang.png");
         if (resp.ok) {
@@ -41,7 +49,8 @@ export async function generateBaBimtekPDF({ meta, programs }: PDFInput): Promise
             const reader = new FileReader();
             await new Promise<void>(resolve => {
                 reader.onload = () => {
-                    doc.addImage(reader.result as string, "PNG", margin, y, 18, 18);
+                    doc.addImage(reader.result as string, "PNG", logoX, logoY, logoSize, logoSize);
+                    logoLoaded = true;
                     resolve();
                 };
                 reader.readAsDataURL(blob);
@@ -49,40 +58,49 @@ export async function generateBaBimtekPDF({ meta, programs }: PDFInput): Promise
         }
     } catch { /* logo optional */ }
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("PEMERINTAH KABUPATEN MALANG", pageW / 2, y + 4, { align: "center" });
-    doc.setFontSize(12);
-    doc.text("DINAS KESEHATAN", pageW / 2, y + 10, { align: "center" });
+    // ── Kop Surat — text block (centered in page, right of logo) ─────────────
+    // Text center: pageW/2 + slight offset because logo shifts visual balance
+    const textCenterX = (margin + logoSize + pageW - margin) / 2; // midpoint of remaining space
+    const kopY = y;
+
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.text("Jl. Panji No 120 Kepanjen – Telp. (0341) 394120 – Fax. (0341) 395976", pageW / 2, y + 16, { align: "center" });
-    doc.text("Email: dinkeskabmalang@gmail.com  |  Web: dinkeskabmalang.go.id", pageW / 2, y + 20, { align: "center" });
+    doc.setFontSize(10);
+    doc.text("PEMERINTAH KABUPATEN MALANG", textCenterX, kopY + 4, { align: "center" });
 
-    y += 26;
-    // horizontal rule double line
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.8);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("DINAS KESEHATAN", textCenterX, kopY + 10, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("Jalan Panji Nomor 120 Kepanjen, Kabupaten Malang, Jawa Timur", textCenterX, kopY + 16, { align: "center" });
+    doc.text("Telepon (0341) 393730, Faksimile (0341) 393731", textCenterX, kopY + 20, { align: "center" });
+    doc.text("Laman: http://dinkes.malangkab.go.id", textCenterX, kopY + 24, { align: "center" });
+    doc.text("Pos-el: dinkes@malangkab.go.id, Kode Pos 65163", textCenterX, kopY + 28, { align: "center" });
+
+    y = kopY + Math.max(logoSize, 32) + 3;
+
+    // ── Double horizontal rule ────────────────────────────────────────────────
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(1.2);
     doc.line(margin, y, pageW - margin, y);
-    doc.setLineWidth(0.3);
-    doc.line(margin, y + 1.5, pageW - margin, y + 1.5);
-
+    doc.setLineWidth(0.4);
+    doc.line(margin, y + 2, pageW - margin, y + 2);
     y += 8;
 
-    // ── Title ────────────────────────────────────────────────────────────────
+    // ── Title (centered, bold) ────────────────────────────────────────────────
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.text("BERITA ACARA", pageW / 2, y, { align: "center" });
     y += 6;
-    doc.setFontSize(10);
-    const titleLines = doc.splitTextToSize(
-        "HASIL SUPERVISI DAN BIMBINGAN TEKNIS INTEGRASI PROGRAM KESEHATAN KELUARGA DAN GIZI",
-        contentW
-    );
-    doc.text(titleLines, pageW / 2, y, { align: "center" });
-    y += titleLines.length * 5 + 5;
+    doc.setFontSize(12);
+    // Title split into lines manually as in template
+    doc.text("HASIL SUPERVISI DAN BIMBINGAN TEKNIS INTEGRASI PROGRAM", pageW / 2, y, { align: "center" });
+    y += 6;
+    doc.text("KESEHATAN KELUARGA DAN GIZI", pageW / 2, y, { align: "center" });
+    y += 8;
 
-    // ── Pembukaan ─────────────────────────────────────────────────────────────
+    // ── Opening Paragraph ─────────────────────────────────────────────────────
     const tanggalFormatted = meta.tanggal_kegiatan
         ? new Date(meta.tanggal_kegiatan).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
         : "_______________";
@@ -95,39 +113,45 @@ export async function generateBaBimtekPDF({ meta, programs }: PDFInput): Promise
     doc.text(pembukaanLines, margin, y);
     y += pembukaanLines.length * 5 + 3;
 
-    // ── Signatory Block 1 — Penanggung Jawab Dinkes ───────────────────────────
-    const sigItems = [
-        { label: "Nama", value: "___________________________________" },
-        { label: "NIP", value: "___________________________________" },
-        { label: "Jabatan", value: `PJ Program KGM Dinas Kesehatan Kabupaten Malang` },
-    ];
-    const sigItems2 = [
-        { label: "Nama", value: "___________________________________" },
-        { label: "NIP", value: "___________________________________" },
-        { label: "Jabatan", value: `Kepala Puskesmas ${meta.puskesmas_name}` },
-    ];
+    // ── Signatory I — PJ Dinkes ───────────────────────────────────────────────
+    const lineW = 60;
+    const labelCol = margin + 5;
+    const colonCol = margin + 22;
+    const valueCol = margin + 25;
 
-    const renderSigBlock = (items: { label: string; value: string }[], startY: number): number => {
-        let cy = startY;
-        items.forEach(item => {
-            doc.setFont("helvetica", "bold");
-            doc.text(`${item.label}`, margin + 5, cy);
-            doc.setFont("helvetica", "normal");
-            doc.text(`: ${item.value}`, margin + 25, cy);
-            cy += 4.5;
-        });
-        return cy;
+    const renderSig = (label: string, val: string, cy: number): number => {
+        doc.setFont("helvetica", "bold");
+        doc.text(label, labelCol, cy);
+        doc.setFont("helvetica", "normal");
+        doc.text(":", colonCol, cy);
+        if (val && val.trim()) {
+            doc.text(val, valueCol, cy);
+        } else {
+            // blank underline
+            doc.line(valueCol, cy + 0.5, valueCol + lineW, cy + 0.5);
+        }
+        return cy + 4.5;
     };
 
-    doc.setFontSize(9.5);
-    doc.setFont("helvetica", "normal");
     doc.text("I.", margin, y);
-    y = renderSigBlock(sigItems, y) + 2;
+    y = renderSig("Nama", meta.pj_dinkes_nama || "", y);
+    y = renderSig("NIP", meta.pj_dinkes_nip || "", y);
+    doc.setFont("helvetica", "bold"); doc.text("Jabatan", labelCol, y);
+    doc.setFont("helvetica", "normal"); doc.text(":", colonCol, y);
+    doc.text("PJ Program KGM Dinas Kesehatan Kabupaten Malang", valueCol, y);
+    y += 5;
+
     doc.text("II.", margin, y);
-    y = renderSigBlock(sigItems2, y) + 4;
+    y = renderSig("Nama", meta.kepala_pkm_nama || "", y);
+    y = renderSig("NIP", meta.kepala_pkm_nip || "", y);
+    doc.setFont("helvetica", "bold"); doc.text("Jabatan", labelCol, y);
+    doc.setFont("helvetica", "normal"); doc.text(":", colonCol, y);
+    doc.text(`Kepala Puskesmas ${meta.puskesmas_name}`, valueCol, y);
+    y += 7;
 
     // ── Dasar Hukum ───────────────────────────────────────────────────────────
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
     doc.text("Dasar Hukum :", margin, y);
     y += 5;
     doc.setFont("helvetica", "normal");
@@ -138,77 +162,97 @@ export async function generateBaBimtekPDF({ meta, programs }: PDFInput): Promise
     });
     y += 3;
 
-    // ── Opening paragraph for 5 programs ─────────────────────────────────────
-    const openProg = doc.splitTextToSize(
-        `Meninjau Program Pelaksanaan Integrasi Program KGM Tahun berjalan, telah dilakukan Supervisi dan Bimbingan Teknis Integrasi Program Kesehatan Keluarga dan Gizi di Puskesmas ${meta.puskesmas_name}, yang meliputi program-program sebagai berikut:`,
-        contentW
-    );
-    doc.text(openProg, margin, y);
-    y += openProg.length * 4.5 + 3;
+    // ── Menyatakan Bahwa paragraph ────────────────────────────────────────────
+    const menyatakanText = `Menyatakan Bahwa Penanggung Jawab Program KGM Dinas Kesehatan telah melakukan Supervisi dan Bimbingan Teknis Integrasi Program Kesehatan Keluarga dan Gizi kepada Penanggung Jawab Program Puskesmas ${meta.puskesmas_name}. Adapun hasil kegiatan tersebut diantaranya:`;
+    const menyatakanLines = doc.splitTextToSize(menyatakanText, contentW);
+    doc.text(menyatakanLines, margin, y);
+    y += menyatakanLines.length * 4.5 + 4;
 
-    // ── 5 Program Tables ──────────────────────────────────────────────────────
+    // ── 5 Program Tables ── black borders, black text, professional ───────────
     BA_PROGRAMS.forEach((prog, idx) => {
         const rows = programs[prog.id] || [];
-        const tableBody: any[][] = rows.map(r => [
+        const tableBody: string[][] = rows.map(r => [
             r.hasil_supervisi || "",
             r.rencana_tindak_lanjut || "",
         ]);
-        if (tableBody.length === 0) tableBody.push(["", ""]); // at least 1 empty row
+        if (tableBody.length === 0) tableBody.push(["", ""]);
 
-        // Check page break
-        if (y > 240) { doc.addPage(); y = 15; }
+        if (y > 235) { doc.addPage(); y = 15; }
 
         autoTable(doc, {
             startY: y,
-            head: [[
-                { content: `${idx + 1}. ${prog.label.toUpperCase()}`, colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [240, 240, 255], fontSize: 9 } }
+            head: [
+                [{ content: `${idx + 1}. ${prog.label.toUpperCase()}`, colSpan: 2, styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], fontSize: 9, lineColor: [0, 0, 0], lineWidth: 0.4 } }],
+                [
+                    { content: 'HASIL SUPERVISI', styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], fontSize: 8.5, lineColor: [0, 0, 0], lineWidth: 0.3 } },
+                    { content: 'RENCANA TINDAK LANJUT', styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 255, 255], textColor: [0, 0, 0], fontSize: 8.5, lineColor: [0, 0, 0], lineWidth: 0.3 } },
+                ]
             ],
-            [
-                { content: 'HASIL SUPERVISI', styles: { halign: 'center', fontStyle: 'bold', fillColor: [235, 245, 255], fontSize: 8.5 } },
-                { content: 'RENCANA TINDAK LANJUT', styles: { halign: 'center', fontStyle: 'bold', fillColor: [240, 255, 245], fontSize: 8.5 } },
-            ]],
             body: tableBody,
             theme: 'grid',
             columnStyles: {
-                0: { cellWidth: contentW / 2, fontSize: 8.5, cellPadding: 4, minCellHeight: 20 },
-                1: { cellWidth: contentW / 2, fontSize: 8.5, cellPadding: 4, minCellHeight: 20 },
+                0: { cellWidth: contentW / 2, fontSize: 9, cellPadding: 5, minCellHeight: 22, textColor: [0, 0, 0] },
+                1: { cellWidth: contentW / 2, fontSize: 9, cellPadding: 5, minCellHeight: 22, textColor: [0, 0, 0] },
             },
-            styles: { valign: 'top', overflow: 'linebreak' },
+            styles: {
+                valign: 'top',
+                overflow: 'linebreak',
+                lineColor: [0, 0, 0],
+                lineWidth: 0.3,
+                textColor: [0, 0, 0],
+            },
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
+                lineColor: [0, 0, 0],
+                lineWidth: 0.3,
+            },
+            bodyStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
+            },
             margin: { left: margin, right: margin },
         });
 
-        y = (doc as any).lastAutoTable.finalY + 6;
+        y = (doc as any).lastAutoTable.finalY + 5;
     });
 
     // ── Penutup ───────────────────────────────────────────────────────────────
-    if (y > 250) { doc.addPage(); y = 15; }
+    if (y > 255) { doc.addPage(); y = 15; }
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "normal");
     const penutupLines = doc.splitTextToSize(PENUTUP_TEXT, contentW);
     doc.text(penutupLines, margin, y);
     y += penutupLines.length * 5 + 5;
 
-    // ── Tanggal ───────────────────────────────────────────────────────────────
-    const kota = `Kepanjen, ${tanggalFormatted.split(",")[1]?.trim() || tanggalFormatted}`;
-    doc.text(kota, pageW - margin, y, { align: "right" });
+    // ── Tanggal & Tanda Tangan ────────────────────────────────────────────────
+    const tanggalShort = meta.tanggal_kegiatan
+        ? new Date(meta.tanggal_kegiatan).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+        : "_______________";
+    doc.setFont("helvetica", "normal");
+    doc.text(`Kepanjen, ${tanggalShort}`, pageW - margin, y, { align: "right" });
     y += 8;
 
-    // ── Signature area ────────────────────────────────────────────────────────
     const colW = contentW / 2;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text(`KEPALA PUSKESMAS ${meta.puskesmas_name.toUpperCase()}`, margin + colW / 2, y, { align: "center" });
+    doc.text(`KEPALA PUSKESMAS\n${meta.puskesmas_name.toUpperCase()}`, margin + colW / 2, y, { align: "center" });
     doc.text("PJ PROGRAM KESGA GIZI\nDINAS KESEHATAN KABUPATEN\nMALANG", margin + colW + colW / 2, y, { align: "center" });
-    y += 28; // space for signature
+    y += 28;
 
     doc.setFont("helvetica", "normal");
-    doc.text("(____________________________)", margin + colW / 2, y, { align: "center" });
-    doc.text("(____________________________)", margin + colW + colW / 2, y, { align: "center" });
-    y += 4;
-    doc.text("NIP:", margin + colW / 2, y, { align: "center" });
-    doc.text("NIP:", margin + colW + colW / 2, y, { align: "center" });
+    // If name filled → show name, else blank underline
+    const namePKM = meta.kepala_pkm_nama || "____________________________";
+    const nipPKM = meta.kepala_pkm_nip ? `NIP: ${meta.kepala_pkm_nip}` : "NIP:";
+    const nameDinkes = meta.pj_dinkes_nama || "____________________________";
+    const nipDinkes = meta.pj_dinkes_nip ? `NIP: ${meta.pj_dinkes_nip}` : "NIP:";
 
-    // Save
+    doc.text(namePKM, margin + colW / 2, y, { align: "center" });
+    doc.text(nameDinkes, margin + colW + colW / 2, y, { align: "center" });
+    y += 5;
+    doc.text(nipPKM, margin + colW / 2, y, { align: "center" });
+    doc.text(nipDinkes, margin + colW + colW / 2, y, { align: "center" });
+
     const filename = `BA_Bimtek_${meta.puskesmas_name}_${meta.tanggal_kegiatan}.pdf`;
     doc.save(filename);
 }
