@@ -34,6 +34,7 @@ export interface ParsedRow {
     nama: string;
     nomor: string;
     wilayah: string;
+    desa: string;
     sex: SexCode | null;
     birthDate: Date | null;
     measureDate: Date | null;
@@ -49,6 +50,7 @@ export interface MassRowResult {
     nama: string;
     nomor: string;
     wilayah: string;
+    desa: string;
     rawSex: SexCode;
     ageMonths: number;
     birthDateStr: string;
@@ -102,6 +104,18 @@ export interface ZScoreDistPoint {
     bbtb: number;
 }
 
+export interface ZScoreGaussianPoint {
+    binStart: number;
+    binEnd: number;
+    midPoint: number;
+    actualBBU: number;
+    actualTBU: number;
+    actualBBTB: number;
+    normalDistBBU: number;
+    normalDistTBU: number;
+    normalDistBBTB: number;
+}
+
 export interface MassAnalysisResult {
     total: number;
     valid: MassRowResult[];
@@ -122,8 +136,10 @@ export interface MassAnalysisResult {
     bbDist: Array<{ range: string; n: number }>;
     tbDist: Array<{ range: string; n: number }>;
     zscoreDist: ZScoreDistPoint[];
+    zscoreGaussian: ZScoreGaussianPoint[];
     /** Per-wilayah prevalence */
     wilayahPrevalence: WilayahPrevalence[];
+    desaPrevalence: WilayahPrevalence[];
 }
 
 // ============================================================
@@ -264,6 +280,7 @@ export function normalizeRows(rawRows: RawRow[], colMap: ColMap): ParsedRow[] {
             nama: String(get("nama") ?? "").trim() || `Baris ${i + 2}`,
             nomor: String(get("nomor") ?? i + 1).trim(),
             wilayah: String(get("wilayah") ?? "").trim() || "(Tidak Ada Wilayah)",
+            desa: String(get("desa") ?? "").trim() || "(Tidak Ada Desa)",
             sex,
             birthDate,
             measureDate,
@@ -323,6 +340,7 @@ export async function calculateMassAssessment(
                     nama: row.nama,
                     nomor: row.nomor,
                     wilayah: row.wilayah,
+                    desa: row.desa,
                     rawSex: row.sex,
                     ageMonths: assessment.ageMonths,
                     birthDateStr: row.birthDate.toLocaleDateString("id-ID"),
@@ -486,15 +504,48 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         bbtb: valid.filter((r) => r.assessment.bbtb.zscore !== null && r.assessment.bbtb.zscore >= min && r.assessment.bbtb.zscore < max).length,
     }));
 
-    // ---- PER WILAYAH ----
+    // ---- GAUSSIAN CURVE DATA (-5 to +5 per 0.5) ----
+    const zBbins: { min: number, max: number, mid: number }[] = [];
+    for (let i = -5.0; i < 5.0; i += 0.5) {
+        zBbins.push({ min: i, max: i + 0.5, mid: i + 0.25 });
+    }
+
+    const bbuValidN = valid.filter(r => r.assessment.bbu.zscore !== null).length;
+    const tbuValidN = valid.filter(r => r.assessment.tbu.zscore !== null).length;
+    const bbtbValidN = valid.filter(r => r.assessment.bbtb.zscore !== null).length;
+
+    const zscoreGaussian: ZScoreGaussianPoint[] = zBbins.map((b) => {
+        // Normal distribution PDF: (1 / sqrt(2pi)) * e^(-0.5 * x^2)
+        const pdf = (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * b.mid * b.mid);
+        const binWidth = 0.5;
+
+        return {
+            binStart: b.min,
+            binEnd: b.max,
+            midPoint: b.mid,
+            actualBBU: valid.filter((r) => r.assessment.bbu.zscore !== null && r.assessment.bbu.zscore >= b.min && r.assessment.bbu.zscore < b.max).length,
+            actualTBU: valid.filter((r) => r.assessment.tbu.zscore !== null && r.assessment.tbu.zscore >= b.min && r.assessment.tbu.zscore < b.max).length,
+            actualBBTB: valid.filter((r) => r.assessment.bbtb.zscore !== null && r.assessment.bbtb.zscore >= b.min && r.assessment.bbtb.zscore < b.max).length,
+            normalDistBBU: pdf * binWidth * bbuValidN,
+            normalDistTBU: pdf * binWidth * tbuValidN,
+            normalDistBBTB: pdf * binWidth * bbtbValidN,
+        };
+    });
+
+    // ---- PER WILAYAH & DESA ----
     const wilayahMap = new Map<string, MassRowResult[]>();
+    const desaMap = new Map<string, MassRowResult[]>();
     valid.forEach((r) => {
         const w = r.wilayah || "(Tidak Ada Wilayah)";
         if (!wilayahMap.has(w)) wilayahMap.set(w, []);
         wilayahMap.get(w)!.push(r);
+
+        const d = r.desa || "(Tidak Ada Desa)";
+        if (!desaMap.has(d)) desaMap.set(d, []);
+        desaMap.get(d)!.push(r);
     });
 
-    const wilayahPrevalence: WilayahPrevalence[] = Array.from(wilayahMap.entries()).map(([w, rows]) => {
+    const createPrevalence = (name: string, rows: MassRowResult[]): WilayahPrevalence => {
         const wn = rows.length;
         const stunting = rows.filter((r) => ["Pendek", "Sangat Pendek"].includes(r.assessment.tbu.classification)).length;
         const sevStunted = rows.filter((r) => r.assessment.tbu.classification === "Sangat Pendek").length;
@@ -502,7 +553,7 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         const underweight = rows.filter((r) => ["Berat Badan Kurang", "Berat Badan Sangat Kurang"].includes(r.assessment.bbu.classification)).length;
         const ps = rows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
         return {
-            wilayah: w,
+            wilayah: name,
             total: wn,
             stunting,
             stuntingPct: pct(stunting, wn),
@@ -515,7 +566,10 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
             probableStunting: ps,
             probableStuntingPct: pct(ps, wn),
         };
-    }).sort((a, b) => a.wilayah.localeCompare(b.wilayah));
+    };
+
+    const wilayahPrevalence = Array.from(wilayahMap.entries()).map(([w, rows]) => createPrevalence(w, rows)).sort((a, b) => a.wilayah.localeCompare(b.wilayah));
+    const desaPrevalence = Array.from(desaMap.entries()).map(([d, rows]) => createPrevalence(d, rows)).sort((a, b) => a.wilayah.localeCompare(b.wilayah));
 
     return {
         total: totalRows,
@@ -535,7 +589,9 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         bbDist,
         tbDist,
         zscoreDist,
+        zscoreGaussian,
         wilayahPrevalence,
+        desaPrevalence,
     };
 }
 
@@ -605,7 +661,7 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
 
     // Sheet 1: Data Individu
     const rowHeaders = [
-        "No", "Nama", "Wilayah", "JK", "Usia (bln)", "Tgl Lahir", "Tgl Ukur",
+        "No", "Nama", "Wilayah", "Desa", "JK", "Usia (bln)", "Tgl Lahir", "Tgl Ukur",
         "BB (kg)", "TB Input (cm)", "TB Koreksi (cm)", "Cara Ukur",
         "ZScore BBU", "Klasifikasi BBU",
         "ZScore TBU", "Klasifikasi TBU",
@@ -613,7 +669,7 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
         "Weight Age", "Length Age", "CA", "Probable Stunting", "Red Flag",
     ];
     const rowData = result.valid.map((r, i) => [
-        i + 1, r.nama, r.wilayah,
+        i + 1, r.nama, r.wilayah, r.desa,
         r.rawSex === 1 ? "Laki-laki" : "Perempuan",
         r.ageMonths, r.birthDateStr, r.measureDateStr,
         r.weightKg, r.heightCm, r.correctedHeight.toFixed(1),
@@ -667,7 +723,7 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
     utils.book_append_sheet(wb, ws2, "Prevalensi");
 
     // Sheet 3: Per Wilayah
-    if (result.wilayahPrevalence.length > 1) {
+    if (result.wilayahPrevalence.length > 0) {
         const wHeaders = ["Wilayah", "N", "Stunting N", "Stunting %", "Sgt Pendek N", "Sgt Pendek %", "Wasting N", "Wasting %", "Underweight N", "Underweight %", "Prob.Stunting N", "Prob.Stunting %"];
         const wData = result.wilayahPrevalence.map((w) => [
             w.wilayah, w.total, w.stunting, w.stuntingPct, w.severelyStunted, w.severelyStuntedPct,
@@ -678,7 +734,19 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
         utils.book_append_sheet(wb, ws3, "Per Wilayah");
     }
 
-    // Sheet 4: WHO TEAM Distribusi
+    // Sheet 4: Per Desa
+    if (result.desaPrevalence.length > 0) {
+        const dHeaders = ["Desa", "N", "Stunting N", "Stunting %", "Sgt Pendek N", "Sgt Pendek %", "Wasting N", "Wasting %", "Underweight N", "Underweight %", "Prob.Stunting N", "Prob.Stunting %"];
+        const dData = result.desaPrevalence.map((w) => [
+            w.wilayah, w.total, w.stunting, w.stuntingPct, w.severelyStunted, w.severelyStuntedPct,
+            w.wasting, w.wastingPct, w.underweight, w.underweightPct, w.probableStunting, w.probableStuntingPct,
+        ]);
+        const ws4 = utils.aoa_to_sheet([dHeaders, ...dData]);
+        ws4["!cols"] = Array(dHeaders.length).fill({ wch: 16 });
+        utils.book_append_sheet(wb, ws4, "Per Desa");
+    }
+
+    // Sheet 5: WHO TEAM Distribusi
     const team: unknown[][] = [
         ["WHO TEAM DISTRIBUTIONS"],
         [],

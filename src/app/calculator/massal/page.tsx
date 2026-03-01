@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, PieChart, Pie, Cell, Legend
+    ResponsiveContainer, PieChart, Pie, Cell, Legend,
+    ComposedChart, Line
 } from "recharts";
 import { fetchLmsReference, type LmsReference } from "../../../lib/supabase-pkmk";
 import {
@@ -97,6 +98,8 @@ function PrevalenceTable({ title, items, icon }: { title: string; items: { categ
 // ============================================================
 function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onReset: () => void }) {
     const [activeTab, setActiveTab] = useState<"summary" | "prevalensi" | "team" | "data" | "wilayah">("summary");
+    const [areaLevel, setAreaLevel] = useState<"wilayah" | "desa">("wilayah");
+    const [zscoreIndex, setZscoreIndex] = useState<"bbu" | "tbu" | "bbtb">("bbu");
     const [dataPage, setDataPage] = useState(0);
     const [exportingPDF, setExportingPDF] = useState(false);
     const [exportingXLSX, setExportingXLSX] = useState(false);
@@ -268,21 +271,46 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                     </div>
                     {/* ZScore distributions */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                        <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="material-icons-round text-base text-purple-500">leaderboard</span>
-                            Distribusi ZScore per Indeks
-                        </h4>
-                        <ResponsiveContainer width="100%" height={260}>
-                            <BarChart data={result.zscoreDist} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="range" tick={{ fontSize: 9 }} />
-                                <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip />
-                                <Legend wrapperStyle={{ fontSize: 11 }} />
-                                <Bar dataKey="bbu" name="BBU" fill="#6366f1" radius={[3, 3, 0, 0]} />
-                                <Bar dataKey="tbu" name="TBU" fill="#10b981" radius={[3, 3, 0, 0]} />
-                                <Bar dataKey="bbtb" name="BBTB" fill="#f97316" radius={[3, 3, 0, 0]} />
-                            </BarChart>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <span className="material-icons-round text-base text-purple-500">leaderboard</span>
+                                Distribusi ZScore per Indeks (Kurva Gaussian)
+                            </h4>
+                            <div className="flex gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                                <button onClick={() => setZscoreIndex("bbu")} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${zscoreIndex === "bbu" ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:bg-slate-100"}`}>BBU</button>
+                                <button onClick={() => setZscoreIndex("tbu")} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${zscoreIndex === "tbu" ? "bg-white shadow-sm text-emerald-600" : "text-slate-500 hover:bg-slate-100"}`}>TBU</button>
+                                <button onClick={() => setZscoreIndex("bbtb")} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${zscoreIndex === "bbtb" ? "bg-white shadow-sm text-amber-600" : "text-slate-500 hover:bg-slate-100"}`}>BBTB</button>
+                            </div>
+                        </div>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <ComposedChart data={result.zscoreGaussian} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                <XAxis dataKey="midPoint" type="number" domain={[-5, 5]} ticks={[-4, -3, -2, -1, 0, 1, 2, 3, 4]} tick={{ fontSize: 10 }} tickLine={false} />
+                                <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    labelFormatter={(v: any) => `ZScore: ~${Number(v).toFixed(2)}`}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    formatter={(v: any, name: any) => [Number(v).toFixed(String(name).includes("Normal") ? 1 : 0), name]}
+                                />
+                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: "10px" }} />
+                                <Bar
+                                    dataKey={zscoreIndex === "bbu" ? "actualBBU" : zscoreIndex === "tbu" ? "actualTBU" : "actualBBTB"}
+                                    name={`Distribusi ${zscoreIndex.toUpperCase()} Observasi`}
+                                    fill={zscoreIndex === "bbu" ? "#6366f1" : zscoreIndex === "tbu" ? "#10b981" : "#f59e0b"}
+                                    opacity={0.8}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey={zscoreIndex === "bbu" ? "normalDistBBU" : zscoreIndex === "tbu" ? "normalDistTBU" : "normalDistBBTB"}
+                                    name="Kurva Distribusi Normal"
+                                    stroke="#1e293b"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={false}
+                                    activeDot={{ r: 4 }}
+                                />
+                            </ComposedChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -291,23 +319,32 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
             {/* ─── PER WILAYAH ─── */}
             {activeTab === "wilayah" && (
                 <div className="space-y-4">
-                    {result.wilayahPrevalence.length <= 1 && result.wilayahPrevalence[0]?.wilayah === "(Tidak Ada Wilayah)" ? (
+                    <div className="flex justify-end gap-2 mb-2">
+                        <button onClick={() => setAreaLevel("wilayah")} className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors ${areaLevel === "wilayah" ? "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"}`}>
+                            Kecamatan / Wilayah Utama
+                        </button>
+                        <button onClick={() => setAreaLevel("desa")} className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors ${areaLevel === "desa" ? "bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"}`}>
+                            Desa / Kelurahan
+                        </button>
+                    </div>
+
+                    {(areaLevel === "wilayah" ? result.wilayahPrevalence : result.desaPrevalence).length <= 1 && (areaLevel === "wilayah" ? result.wilayahPrevalence : result.desaPrevalence)[0]?.wilayah.includes("Tidak Ada") ? (
                         <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
                             <span className="material-icons-round text-3xl mb-2 block text-slate-300">location_off</span>
-                            Data wilayah tidak tersedia. Tambahkan kolom <strong>Wilayah/Kecamatan</strong> di file Excel untuk analisis per wilayah.
+                            Data agregasi tidak tersedia. Tambahkan kolom <strong>{areaLevel === "wilayah" ? "Wilayah/Kecamatan" : "Desa/Kelurahan"}</strong> di file Excel untuk melihat analisis per area.
                         </div>
                     ) : (
                         <>
                             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                                 <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
                                     <span className="material-icons-round text-base text-indigo-500">bar_chart</span>
-                                    Prevalensi Stunting per Wilayah
+                                    Prevalensi Status Gizi per {areaLevel === "wilayah" ? "Wilayah" : "Desa"}
                                 </h4>
-                                <ResponsiveContainer width="100%" height={Math.max(200, result.wilayahPrevalence.length * 45)}>
-                                    <BarChart data={result.wilayahPrevalence} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
+                                <ResponsiveContainer width="100%" height={Math.max(200, (areaLevel === "wilayah" ? result.wilayahPrevalence : result.desaPrevalence).length * 45)}>
+                                    <BarChart data={areaLevel === "wilayah" ? result.wilayahPrevalence : result.desaPrevalence} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                         <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
-                                        <YAxis type="category" dataKey="wilayah" tick={{ fontSize: 10 }} width={100} />
+                                        <YAxis type="category" dataKey="wilayah" tick={{ fontSize: 10 }} width={120} />
                                         <Tooltip
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             formatter={(v: any) => [`${v}%`]}
@@ -320,16 +357,16 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                                 </ResponsiveContainer>
                             </div>
                             <div className="overflow-x-auto rounded-2xl border border-slate-100 shadow-sm">
-                                <table className="w-full text-xs">
+                                <table className="w-full text-xs min-w-[700px]">
                                     <thead className="bg-slate-50 border-b border-slate-100">
                                         <tr>
-                                            {["Wilayah", "N", "Stunting %", "Sgt Pendek %", "Wasting %", "Underweight %", "Prob.Stunting %"].map((h) => (
-                                                <th key={h} className="px-4 py-3 text-left text-slate-600 font-bold">{h}</th>
+                                            {[{ w: "Wilayah", d: "Desa" }, "N", "Stunting %", "Sgt Pendek %", "Wasting %", "Underweight %", "Prob.Stunting %"].map((h, i) => (
+                                                <th key={i} className="px-4 py-3 text-left text-slate-600 font-bold">{typeof h === "string" ? h : h[areaLevel === "wilayah" ? "w" : "d"]}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {result.wilayahPrevalence.map((w, i) => (
+                                        {(areaLevel === "wilayah" ? result.wilayahPrevalence : result.desaPrevalence).map((w, i) => (
                                             <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
                                                 <td className="px-4 py-3 font-bold text-slate-800">{w.wilayah}</td>
                                                 <td className="px-4 py-3 font-mono">{w.total}</td>
@@ -364,7 +401,7 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                         <table className="w-full text-xs min-w-[900px]">
                             <thead className="bg-slate-900 text-white">
                                 <tr>
-                                    {["No", "Nama", "Wilayah", "JK", "Usia", "BB (kg)", "TB (cm)", "ZScore BBU", "Klas. BBU", "ZScore TBU", "Klas. TBU", "ZScore BBTB", "Klas. BBTB", "Prob.Stunting", "Flag"].map((h) => (
+                                    {["No", "Nama", "Wilayah", "Desa", "JK", "Usia", "BB (kg)", "TB (cm)", "ZScore BBU", "Klas. BBU", "ZScore TBU", "Klas. TBU", "ZScore BBTB", "Klas. BBTB", "Prob.Stunting", "Flag"].map((h) => (
                                         <th key={h} className="px-3 py-3 text-left font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
@@ -375,6 +412,7 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                                         <td className="px-3 py-2 font-mono text-slate-400">{dataPage * PAGE_SIZE + i + 1}</td>
                                         <td className="px-3 py-2 font-medium text-slate-800 max-w-[120px] truncate">{r.nama}</td>
                                         <td className="px-3 py-2 text-slate-500 max-w-[100px] truncate">{r.wilayah}</td>
+                                        <td className="px-3 py-2 text-slate-500 max-w-[100px] truncate">{r.desa !== "(Tidak Ada Desa)" ? r.desa : "-"}</td>
                                         <td className="px-3 py-2">{r.rawSex === 1 ? "♂" : "♀"}</td>
                                         <td className="px-3 py-2 font-mono">{r.ageMonths} bln</td>
                                         <td className="px-3 py-2 font-mono">{r.weightKg}</td>
@@ -587,7 +625,8 @@ export default function MassalCalculatorPage() {
                                     { col: "Berat Badan", fmt: "Angka (kg), titik sebagai desimal — contoh: 12.5", req: true },
                                     { col: "Tinggi/Panjang Badan", fmt: "Angka (cm), titik sebagai desimal — contoh: 98.0", req: true },
                                     { col: "Cara Ukur", fmt: "l atau L = Terlentang/Recumbent · h atau H = Berdiri/Standing", req: true },
-                                    { col: "Wilayah/Kecamatan", fmt: "Teks bebas — untuk agregasi prevalensi per wilayah", req: false },
+                                    { col: "Wilayah/Kecamatan", fmt: "Teks bebas — agregasi prevalensi utama", req: false },
+                                    { col: "Desa/Kelurahan", fmt: "Teks bebas — agregasi level desa (opsional)", req: false },
                                     { col: "Nama Anak", fmt: "Teks bebas — untuk identifikasi di laporan", req: false },
                                 ].map((f, i) => (
                                     <div key={i} className="flex gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
