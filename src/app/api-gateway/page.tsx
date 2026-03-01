@@ -69,7 +69,7 @@ const HOW_STEPS = [
 function CodeDemo() {
     const lines = [
         { text: "GET /api/rcs/v1/pelayanan-kesehatan?tahun=2024", color: "text-emerald-300" },
-        { text: "Host: sigma-ecosystem.vercel.app", color: "text-slate-400" },
+        { text: "Host: sigma-malangkab.app", color: "text-slate-400" },
         { text: "X-API-Key: sigma_live_*************************", color: "text-yellow-300" },
         { text: "", color: "" },
         { text: '{ "success": true,', color: "text-slate-300" },
