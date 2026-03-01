@@ -65,9 +65,9 @@ const calculatorFeatures = [
         description:
             "Hitung kandungan gizi makanan dan bandingkan dengan Angka Kecukupan Gizi (AKG/RDA). Analisis asupan gizi harian dan identifikasi defisiensi nutrisi spesifik.",
         icon: "restaurant_menu",
-        status: "Segera Hadir",
+        status: "Tersedia",
         statusColor: "blue",
-        link: "#",
+        link: "/calculator/fct",
         features: [
             "Database Pangan Indonesia",
             "Perbandingan dengan AKG",
@@ -80,8 +80,8 @@ const calculatorFeatures = [
         border: "border-blue-100",
         badgeBg: "bg-blue-50 text-blue-700 border-blue-200",
         badgeDot: "bg-blue-500",
-        btnClass: "bg-slate-200 text-slate-500 cursor-not-allowed",
-        available: false,
+        btnClass: "bg-blue-600 hover:bg-blue-700 shadow-blue-200",
+        available: true,
     },
 ];
 
