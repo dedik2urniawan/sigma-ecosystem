@@ -25,6 +25,7 @@ interface Session {
 export default function SupervisiList() {
     const { user } = useAuth();
     const effectiveRole = user?.role === "admin_puskesmas" ? "admin_puskesmas" : "superadmin";
+    const isStakeholder = user?.role === "stakeholder";
 
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
@@ -122,6 +123,7 @@ export default function SupervisiList() {
 
     // Create new session
     const handleCreateNew = async () => {
+        if (isStakeholder) return;
         const pkmId = effectiveRole === "admin_puskesmas" ? user?.puskesmas_id : filterPuskesmas !== "ALL" ? filterPuskesmas : null;
         if (!pkmId) {
             alert("Pilih Puskesmas terlebih dahulu.");
@@ -150,6 +152,7 @@ export default function SupervisiList() {
 
     // Delete session
     const handleDelete = async (sessionId: string) => {
+        if (isStakeholder) return;
         if (!confirm("Yakin ingin menghapus sesi supervisi ini beserta semua data terkait?")) return;
         const { error } = await supabase.from("supervisi_sessions").delete().eq("id", sessionId);
         if (error) {
@@ -213,13 +216,15 @@ export default function SupervisiList() {
                         />
                     </div>
                 </div>
-                <button
-                    onClick={handleCreateNew}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200/50"
-                >
-                    <Plus className="w-4 h-4" />
-                    Tambah Supervisi Baru
-                </button>
+                {!isStakeholder && (
+                    <button
+                        onClick={handleCreateNew}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200/50"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Tambah Supervisi Baru
+                    </button>
+                )}
             </div>
 
             {/* Loading */}
@@ -234,7 +239,7 @@ export default function SupervisiList() {
                         <span className="material-icons-round text-indigo-400 text-3xl">assignment</span>
                     </div>
                     <h3 className="text-lg font-bold text-slate-700 mb-2">Belum ada data supervisi</h3>
-                    <p className="text-sm text-slate-500 mb-6">Klik tombol "Tambah Supervisi Baru" untuk memulai.</p>
+                    {!isStakeholder && <p className="text-sm text-slate-500 mb-6">Klik tombol "Tambah Supervisi Baru" untuk memulai.</p>}
                 </div>
             ) : (
                 /* Session Cards */
@@ -299,16 +304,18 @@ export default function SupervisiList() {
                                             onClick={() => setActiveSessionId(s.id)}
                                             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-100"
                                         >
-                                            {isCompleted ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-                                            {isCompleted ? "Lihat" : "Edit"}
+                                            {isCompleted || isStakeholder ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                                            {isCompleted || isStakeholder ? "Lihat" : "Edit"}
                                         </button>
-                                        <button
-                                            onClick={() => handleDelete(s.id)}
-                                            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                            Hapus
-                                        </button>
+                                        {!isStakeholder && (
+                                            <button
+                                                onClick={() => handleDelete(s.id)}
+                                                className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                Hapus
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

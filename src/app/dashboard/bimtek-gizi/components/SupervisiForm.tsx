@@ -36,6 +36,8 @@ interface SessionMeta {
 export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: Props) {
     const { user } = useAuth();
     const effectiveRole = user?.role === "admin_puskesmas" ? "admin_puskesmas" : "superadmin";
+    const isStakeholder = user?.role === "stakeholder";
+
     const [meta, setMeta] = useState<SessionMeta>({
         puskesmas_id: "",
         tanggal_supervisi: new Date().toISOString().split("T")[0],
@@ -107,10 +109,12 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
     }, [sessionId]);
 
     const handleMetaChange = (key: keyof SessionMeta, value: string) => {
+        if (isStakeholder) return;
         setMeta(prev => ({ ...prev, [key]: value }));
     };
 
     const handleItemChange = (section: string, itemNumber: number, field: keyof ItemData, value: string | number | null) => {
+        if (isStakeholder) return;
         setItems(prev =>
             prev.map(item =>
                 item.section === section && item.item_number === itemNumber
@@ -121,6 +125,7 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
     };
 
     const handleUploadBukti = async (section: string, itemNumber: number, file: File) => {
+        if (isStakeholder) return;
         const itemKey = `${section}_${itemNumber}`;
         setUploadingItem(itemKey);
         try {
@@ -136,6 +141,7 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
     };
 
     const handleSave = async (markCompleted = false) => {
+        if (isStakeholder) return;
         setSaving(true);
         try {
             const { error: metaErr } = await supabase
@@ -233,15 +239,19 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
                         <Download className="w-4 h-4" />
                         {generatingPDF ? "Generating..." : "PDF"}
                     </button>
-                    <button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 border border-indigo-100 disabled:opacity-50">
-                        <Save className="w-4 h-4" />
-                        {saving ? "Menyimpan..." : "Simpan"}
-                    </button>
-                    {meta.status !== "completed" && (
-                        <button onClick={() => handleSave(true)} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 shadow-md disabled:opacity-50">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Selesai
-                        </button>
+                    {!isStakeholder && (
+                        <>
+                            <button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 border border-indigo-100 disabled:opacity-50">
+                                <Save className="w-4 h-4" />
+                                {saving ? "Menyimpan..." : "Simpan"}
+                            </button>
+                            {meta.status !== "completed" && (
+                                <button onClick={() => handleSave(true)} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 shadow-md disabled:opacity-50">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Selesai
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
@@ -444,17 +454,21 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
                 </div>
                 <div className="flex gap-3">
                     <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200">Kembali</button>
-                    <button onClick={() => handleSave(false)} disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 border border-indigo-100 disabled:opacity-50">
-                        <Save className="w-4 h-4" />
-                        {saving ? "Menyimpan..." : "Simpan"}
-                    </button>
-                    {meta.status !== "completed" && (
-                        <button onClick={() => handleSave(true)} disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 shadow-md disabled:opacity-50">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Selesai
-                        </button>
+                    {!isStakeholder && (
+                        <>
+                            <button onClick={() => handleSave(false)} disabled={saving}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 border border-indigo-100 disabled:opacity-50">
+                                <Save className="w-4 h-4" />
+                                {saving ? "Menyimpan..." : "Simpan"}
+                            </button>
+                            {meta.status !== "completed" && (
+                                <button onClick={() => handleSave(true)} disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 shadow-md disabled:opacity-50">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Selesai
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

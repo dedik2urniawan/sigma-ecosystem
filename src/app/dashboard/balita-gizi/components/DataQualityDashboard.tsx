@@ -22,7 +22,7 @@ import {
 
 export default function DataQualityDashboard() {
     const { user } = useAuth();
-    const isSuperadmin = user?.role === "superadmin";
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "stakeholder";
 
     const [activeTab, setActiveTab] = useState<"compliance" | "completeness">("compliance");
     const [loading, setLoading] = useState(true);

@@ -49,6 +49,7 @@ const PROGRAM_COLORS = [
 export default function BaBimtekForm({ sessionId, onBack }: Props) {
     const { user } = useAuth();
     const isSuperadmin = user?.role === "superadmin" || user?.role !== "admin_puskesmas";
+    const isStakeholder = user?.role === "stakeholder";
 
     const [meta, setMeta] = useState<SessionMeta>({
         puskesmas_id: '', puskesmas_name: '', tanggal_kegiatan: '', tempat_kegiatan: '', status: 'draft',
@@ -245,17 +246,21 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                         <Download className="w-4 h-4" />
                         {generatingPDF ? "Generating..." : "PDF"}
                     </button>
-                    <button onClick={() => handleSave(false)} disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
-                        <Save className="w-4 h-4" />
-                        {saving ? "Menyimpan..." : "Simpan"}
-                    </button>
-                    {meta.status !== "completed" && (
-                        <button onClick={() => handleSave(true)} disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-md disabled:opacity-50">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Selesai
-                        </button>
+                    {!isStakeholder && (
+                        <>
+                            <button onClick={() => handleSave(false)} disabled={saving}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
+                                <Save className="w-4 h-4" />
+                                {saving ? "Menyimpan..." : "Simpan"}
+                            </button>
+                            {meta.status !== "completed" && (
+                                <button onClick={() => handleSave(true)} disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-md disabled:opacity-50">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Selesai
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
@@ -455,13 +460,15 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                     ))}
 
                                     {/* Add Row Button */}
-                                    <div className="p-3 border-t border-slate-50 flex justify-center">
-                                        <button onClick={() => addRow(prog.id)}
-                                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border border-dashed transition-colors ${color.border} ${color.bg} text-slate-500 hover:text-slate-700`}>
-                                            <Plus className="w-3.5 h-3.5" />
-                                            Tambah Baris
-                                        </button>
-                                    </div>
+                                    {!isStakeholder && (
+                                        <div className="p-3 border-t border-slate-50 flex justify-center">
+                                            <button onClick={() => addRow(prog.id)}
+                                                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border border-dashed transition-colors ${color.border} ${color.bg} text-slate-500 hover:text-slate-700`}>
+                                                <Plus className="w-3.5 h-3.5" />
+                                                Tambah Baris
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -478,17 +485,21 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                 </div>
                 <div className="flex gap-3">
                     <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200">Kembali</button>
-                    <button onClick={() => handleSave(false)} disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
-                        <Save className="w-4 h-4" />
-                        {saving ? "Menyimpan..." : "Simpan"}
-                    </button>
-                    {meta.status !== "completed" && (
-                        <button onClick={() => handleSave(true)} disabled={saving}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-md disabled:opacity-50">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Selesai & Simpan
-                        </button>
+                    {!isStakeholder && (
+                        <>
+                            <button onClick={() => handleSave(false)} disabled={saving}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
+                                <Save className="w-4 h-4" />
+                                {saving ? "Menyimpan..." : "Simpan"}
+                            </button>
+                            {meta.status !== "completed" && (
+                                <button onClick={() => handleSave(true)} disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-md disabled:opacity-50">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Selesai & Simpan
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

@@ -389,7 +389,9 @@ export default function DashboardLayout({
                                     <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
                                         {user?.role === "superadmin"
                                             ? "Super Admin"
-                                            : "Admin PKM"}
+                                            : user?.role === "stakeholder"
+                                                ? "Stakeholder Dinkes"
+                                                : "Admin PKM"}
                                     </p>
                                 </div>
                                 <button

@@ -23,6 +23,8 @@ export default function BaBimtekList({ onOpenForm }: Props) {
     const { user } = useAuth();
     const isAdmin = user?.role === "admin_puskesmas";
 
+    const isStakeholder = user?.role === "stakeholder";
+
     const [sessions, setSessions] = useState<Session[]>([]);
     const [pkmOptions, setPkmOptions] = useState<{ id: string; nama: string }[]>([]);
     const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function BaBimtekList({ onOpenForm }: Props) {
 
     // Create new session
     const handleCreate = async () => {
-        if (creating) return;
+        if (creating || isStakeholder) return;
         const pkmId = isAdmin ? user?.puskesmas_id : (filterPKM !== "all" ? filterPKM : pkmOptions[0]?.id);
         if (!pkmId) { alert("Pilih Puskesmas terlebih dahulu."); return; }
 
@@ -87,6 +89,7 @@ export default function BaBimtekList({ onOpenForm }: Props) {
 
     // Delete session
     const handleDelete = async (id: string) => {
+        if (isStakeholder) return;
         if (!confirm("Hapus Berita Acara ini? Semua data akan terhapus.")) return;
         await supabase.from("ba_bimtek_sessions").delete().eq("id", id);
         await loadSessions();
@@ -108,13 +111,15 @@ export default function BaBimtekList({ onOpenForm }: Props) {
                         </select>
                     </div>
                 )}
-                <div className="ml-auto">
-                    <button onClick={handleCreate} disabled={creating}
-                        className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl hover:from-teal-700 hover:to-emerald-700 shadow-md shadow-teal-200/50 disabled:opacity-60 transition-all">
-                        <Plus className="w-4 h-4" />
-                        {creating ? "Membuat..." : "Buat Berita Acara"}
-                    </button>
-                </div>
+                {!isStakeholder && (
+                    <div className="ml-auto">
+                        <button onClick={handleCreate} disabled={creating}
+                            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl hover:from-teal-700 hover:to-emerald-700 shadow-md shadow-teal-200/50 disabled:opacity-60 transition-all">
+                            <Plus className="w-4 h-4" />
+                            {creating ? "Membuat..." : "Buat Berita Acara"}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Sessions List */}
@@ -129,7 +134,7 @@ export default function BaBimtekList({ onOpenForm }: Props) {
                         <FileText className="w-8 h-8 text-teal-400" />
                     </div>
                     <p className="text-slate-600 font-semibold">Belum ada Berita Acara</p>
-                    <p className="text-slate-400 text-sm mt-1">Klik "Buat Berita Acara" untuk membuat dokumen baru.</p>
+                    {!isStakeholder && <p className="text-slate-400 text-sm mt-1">Klik "Buat Berita Acara" untuk membuat dokumen baru.</p>}
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -171,12 +176,14 @@ export default function BaBimtekList({ onOpenForm }: Props) {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                                <button onClick={() => handleDelete(s.id)}
-                                    className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {!isStakeholder && (
+                                <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                                    <button onClick={() => handleDelete(s.id)}
+                                        className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
