@@ -124,11 +124,17 @@ export interface MassAnalysisResult {
     prevalenceBBU: PrevalenceItem[];
     prevalenceTBU: PrevalenceItem[];
     prevalenceBBTB: PrevalenceItem[];
+    /** Proporsi PS dari populasi stunting */
     prevalenceProbableStunting: PrevalenceItem[];
+    /** Breakdown PS per sub-jenis stunting (Pendek / Sangat Pendek) — denominatornya total sampel */
+    prevalenceProbableStuntingByCategory: PrevalenceItem[];
     stuntingPct: number;
     wastingPct: number;
     underweightPct: number;
+    /** Proporsi PS / populasi stunting */
     probableStuntingPct: number;
+    /** Prevalensi PS = kasus stunting yg positif PS / total balita */
+    probableStuntingPrevalencePct: number;
     redFlagCount: number;
     /** WHO TEAM distributions */
     ageGroupDist: Array<{ group: AgeGroup; n: number; pct: number }>;
@@ -426,12 +432,26 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
     const underweightN = countClassification(valid, (r) => r.assessment.bbu.classification, "Berat Badan Kurang") +
         countClassification(valid, (r) => r.assessment.bbu.classification, "Berat Badan Sangat Kurang");
 
-    // ---- PROBABLE STUNTING (Kasus Stunting Saja) ----
+    // ---- PROBABLE STUNTING ----
     const psYes = stuntedRows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
     const psNo = stuntingN - psYes;
+
+    // Proporsi PS dari populasi stunting (denominator = stuntingN)
     const prevalenceProbableStunting: PrevalenceItem[] = [
         { category: "Terindikasi PS (dari Stunting)", n: psYes, pct: pct(psYes, stuntingN) },
         { category: "Stunting Tanpa Indikasi PS", n: psNo, pct: pct(psNo, stuntingN) },
+    ];
+
+    // Prevalensi PS per sub-kategori TBU (denominator = total balita n)
+    const pendekRows = valid.filter((r) => r.assessment.tbu.classification === "Pendek");
+    const sangPendekRows = valid.filter((r) => r.assessment.tbu.classification === "Sangat Pendek");
+    const psPendek = pendekRows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
+    const psSangPendek = sangPendekRows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
+    const prevalenceProbableStuntingByCategory: PrevalenceItem[] = [
+        { category: "Pendek + Probable Stunting", n: psPendek, pct: pct(psPendek, n) },
+        { category: "Sangat Pendek + Probable Stunting", n: psSangPendek, pct: pct(psSangPendek, n) },
+        { category: "Pendek (Tanpa PS)", n: pendekRows.length - psPendek, pct: pct(pendekRows.length - psPendek, n) },
+        { category: "Sangat Pendek (Tanpa PS)", n: sangPendekRows.length - psSangPendek, pct: pct(sangPendekRows.length - psSangPendek, n) },
     ];
 
     // ---- AGE GROUP ----
@@ -565,7 +585,8 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
             underweight,
             underweightPct: pct(underweight, wn),
             probableStunting: ps,
-            probableStuntingPct: pct(ps, stunting),
+            // Prevalensi PS = PS positif / total balita wilayah
+            probableStuntingPct: pct(ps, wn),
         };
     };
 
@@ -580,10 +601,12 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         prevalenceTBU,
         prevalenceBBTB,
         prevalenceProbableStunting,
+        prevalenceProbableStuntingByCategory,
         stuntingPct: pct(stuntingN, n),
         wastingPct: pct(wastingN, n),
         underweightPct: pct(underweightN, n),
         probableStuntingPct: pct(psYes, stuntingN),
+        probableStuntingPrevalencePct: pct(psYes, n),
         redFlagCount: valid.filter((r) => r.assessment.hasAnyRedFlag).length,
         ageGroupDist,
         sexDist,

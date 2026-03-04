@@ -161,11 +161,31 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                         <StatCard label="Sampel Valid" value={result.valid.length} sub={`dari ${result.total} baris`} icon="people" color="border-indigo-200 bg-indigo-50 text-indigo-700" />
                         <StatCard label="Prevalensi Stunting" value={`${result.stuntingPct}%`} sub="TBU Pendek+Sangat Pendek" icon="height" color="border-red-200 bg-red-50 text-red-700" />
                         <StatCard label="Prevalensi Wasting" value={`${result.wastingPct}%`} sub="BBTB Gizi Kurang+Buruk" icon="monitor_weight" color="border-orange-200 bg-orange-50 text-orange-700" />
-                        <StatCard label="Probable Stunting" value={`${result.probableStuntingPct}%`} sub="Growth Age Equivalent" icon="child_care" color="border-amber-200 bg-amber-50 text-amber-700" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <StatCard label="Underweight" value={`${result.underweightPct}%`} sub="BBU Kurang+Sangat Kurang" icon="monitor_weight" color="border-yellow-200 bg-yellow-50 text-yellow-700" />
-                        <StatCard label="Red Flag" value={result.redFlagCount} sub="Plausibilitas perlu dicek" icon="report" color="border-rose-200 bg-rose-50 text-rose-700" />
+                    </div>
+                    {/* Probable Stunting Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5">
+                            <span className="material-icons-round text-2xl mb-2 block opacity-80 text-amber-700">child_care</span>
+                            <div className="text-3xl font-black font-mono text-amber-700">{result.probableStuntingPct}%</div>
+                            <div className="text-xs font-bold mt-1 text-amber-700">Proporsi Probable Stunting</div>
+                            <div className="text-[10px] opacity-60 mt-0.5 font-mono text-amber-700">dari total kasus Stunting (TBU &lt;-2SD)</div>
+                        </div>
+                        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-5">
+                            <span className="material-icons-round text-2xl mb-2 block opacity-80 text-rose-700">troubleshoot</span>
+                            <div className="text-3xl font-black font-mono text-rose-700">{result.probableStuntingPrevalencePct}%</div>
+                            <div className="text-xs font-bold mt-1 text-rose-700">Prevalensi Probable Stunting</div>
+                            <div className="text-[10px] opacity-60 mt-0.5 font-mono text-rose-700">Stunting + Positif PS / Total Balita</div>
+                        </div>
+                        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-5">
+                            <span className="material-icons-round text-2xl mb-2 block opacity-80 text-rose-700">report</span>
+                            <div className="text-3xl font-black font-mono text-rose-700">{result.redFlagCount}</div>
+                            <div className="text-xs font-bold mt-1 text-rose-700">Red Flag</div>
+                            <div className="text-[10px] opacity-60 mt-0.5 font-mono text-rose-700">Plausibilitas perlu dicek</div>
+                        </div>
+                    </div>
+                    {/* Skipped rows */}
+                    <div className="flex gap-4 justify-end">
                         <StatCard label="Data Di-skip" value={result.skipped.length} sub="Error atau data tidak valid" icon="warning" color="border-slate-200 bg-slate-50 text-slate-700" />
                     </div>
                     {result.skipped.length > 0 && (
@@ -188,11 +208,50 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
 
             {/* ─── PREVALENSI ─── */}
             {activeTab === "prevalensi" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PrevalenceTable title="BBU — Berat Badan / Umur" icon="monitor_weight" items={result.prevalenceBBU} />
-                    <PrevalenceTable title="TBU — Tinggi Badan / Umur (Stunting)" icon="height" items={result.prevalenceTBU} />
-                    <PrevalenceTable title="BBTB — Berat / Tinggi (Wasting)" icon="straighten" items={result.prevalenceBBTB} />
-                    <PrevalenceTable title="Analisis Probable Stunting" icon="child_care" items={result.prevalenceProbableStunting} />
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <PrevalenceTable title="BBU — Berat Badan / Umur" icon="monitor_weight" items={result.prevalenceBBU} />
+                        <PrevalenceTable title="TBU — Tinggi Badan / Umur (Stunting)" icon="height" items={result.prevalenceTBU} />
+                        <PrevalenceTable title="BBTB — Berat / Tinggi (Wasting)" icon="straighten" items={result.prevalenceBBTB} />
+                        {/* Proporsi PS dari stunting */}
+                        <PrevalenceTable title="Proporsi Probable Stunting (dari Stunting)" icon="child_care" items={result.prevalenceProbableStunting} />
+                    </div>
+                    {/* Breakdown prevalensi PS per sub-kategori TBU */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <h4 className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                            <span className="material-icons-round text-base text-rose-500">troubleshoot</span>
+                            Prevalensi Probable Stunting per Sub-Kategori TBU
+                        </h4>
+                        <p className="text-[11px] text-slate-400 mb-4 font-mono">Denominator = Total Balita Diukur · [Stunting + Positif PS] / N Total</p>
+                        <div className="space-y-3">
+                            {result.prevalenceProbableStuntingByCategory.map((item, i) => {
+                                const colors = [
+                                    "from-rose-500 to-rose-400",
+                                    "from-red-700 to-red-600",
+                                    "from-orange-400 to-orange-300",
+                                    "from-amber-500 to-amber-400",
+                                ];
+                                const maxPct = Math.max(...result.prevalenceProbableStuntingByCategory.map(x => x.pct), 0.1);
+                                return (
+                                    <div key={i}>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="font-medium text-slate-700">{item.category}</span>
+                                            <span className="font-mono font-bold text-slate-600">{item.n} ({item.pct}%)</span>
+                                        </div>
+                                        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full bg-gradient-to-r ${colors[i % colors.length]} transition-all`}
+                                                style={{ width: `${maxPct > 0 ? (item.pct / maxPct) * 100 : 0}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="mt-4 text-[10px] text-slate-400 border-t border-slate-50 pt-3">
+                            <span className="font-bold">Keterangan:</span> Baris 1-2 = stunting positif probable stunting (kasus yang terkonfirmasi). Baris 3-4 = stunting tanpa probable stunting.
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -360,7 +419,7 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                                 <table className="w-full text-xs min-w-[700px]">
                                     <thead className="bg-slate-50 border-b border-slate-100">
                                         <tr>
-                                            {[{ w: "Wilayah", d: "Desa" }, "N", "Stunting %", "Sgt Pendek %", "Wasting %", "Underweight %", "Prob.Stunting %"].map((h, i) => (
+                                            {[{ w: "Wilayah", d: "Desa" }, "N", "Stunting %", "Sgt Pendek %", "Wasting %", "Underweight %", "Prev.PS %"].map((h, i) => (
                                                 <th key={i} className="px-4 py-3 text-left text-slate-600 font-bold">{typeof h === "string" ? h : h[areaLevel === "wilayah" ? "w" : "d"]}</th>
                                             ))}
                                         </tr>
@@ -374,7 +433,7 @@ function ResultsDashboard({ result, onReset }: { result: MassAnalysisResult; onR
                                                 <td className="px-4 py-3 text-red-500">{w.severelyStuntedPct}%</td>
                                                 <td className="px-4 py-3 font-bold text-orange-600">{w.wastingPct}%</td>
                                                 <td className="px-4 py-3 text-amber-600">{w.underweightPct}%</td>
-                                                <td className="px-4 py-3 text-amber-700">{w.probableStuntingPct}%</td>
+                                                <td className="px-4 py-3 text-rose-700 font-bold">{w.probableStuntingPct}%</td>
                                             </tr>
                                         ))}
                                     </tbody>
