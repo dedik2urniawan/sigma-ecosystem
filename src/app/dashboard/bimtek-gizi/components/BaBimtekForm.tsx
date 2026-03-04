@@ -7,7 +7,7 @@ import { BA_PROGRAMS, DASAR_HUKUM, PEMBUKAAN_TEXT, PENUTUP_TEXT } from "@/lib/ba
 import { generateBaBimtekPDF } from "@/lib/generateBaBimtekPDF";
 import {
     ArrowLeft, Save, CheckCircle2, Plus, Trash2, Download,
-    FileText, Calendar, MapPin, ChevronDown, Lock, Unlock
+    FileText, Calendar, MapPin, ChevronDown, Lock, Unlock, RotateCcw
 } from "lucide-react";
 
 interface Props {
@@ -200,6 +200,19 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
         }
     };
 
+    const handleRevertToDraft = async () => {
+        if (!confirm("Kembalikan Berita Acara ini ke Draft? Tim Puskesmas akan dapat mengedit kembali form ini.")) return;
+        setSaving(true);
+        const { error } = await supabase.from("ba_bimtek_sessions").update({ status: "draft" }).eq("id", sessionId);
+        if (error) {
+            alert("Gagal mengembalikan ke Draft: " + error.message);
+        } else {
+            setMeta(prev => ({ ...prev, status: "draft" }));
+            alert("Berhasil dikembalikan ke Draft!");
+        }
+        setSaving(false);
+    };
+
     // Generate PDF
     const handleGeneratePDF = async () => {
         setGeneratingPDF(true);
@@ -253,12 +266,21 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                 <Save className="w-4 h-4" />
                                 {saving ? "Menyimpan..." : "Simpan"}
                             </button>
-                            {meta.status !== "completed" && (
+                            {meta.status !== "completed" ? (
                                 <button onClick={() => handleSave(true)} disabled={saving}
                                     className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-md disabled:opacity-50">
                                     <CheckCircle2 className="w-4 h-4" />
                                     Selesai
                                 </button>
+                            ) : (
+                                isSuperadmin && (
+                                    <button onClick={handleRevertToDraft} disabled={saving}
+                                        title="Kembalikan form ke mode draf untuk diedit ulang"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-200 disabled:opacity-50 transition-all">
+                                        <RotateCcw className="w-4 h-4" />
+                                        Kembalikan ke Draft
+                                    </button>
+                                )
                             )}
                         </>
                     )}
@@ -492,12 +514,21 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                 <Save className="w-4 h-4" />
                                 {saving ? "Menyimpan..." : "Simpan"}
                             </button>
-                            {meta.status !== "completed" && (
+                            {meta.status !== "completed" ? (
                                 <button onClick={() => handleSave(true)} disabled={saving}
                                     className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-md disabled:opacity-50">
                                     <CheckCircle2 className="w-4 h-4" />
                                     Selesai & Simpan
                                 </button>
+                            ) : (
+                                isSuperadmin && (
+                                    <button onClick={handleRevertToDraft} disabled={saving}
+                                        title="Kembalikan form ke mode draf untuk diedit ulang"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-200 disabled:opacity-50 transition-all">
+                                        <RotateCcw className="w-4 h-4" />
+                                        Kembalikan ke Draft
+                                    </button>
+                                )
                             )}
                         </>
                     )}

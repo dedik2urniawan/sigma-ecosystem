@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/dashboard/layout";
-import { Plus, Trash2, FileText, Calendar, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, FileText, Calendar, MapPin, Clock, CheckCircle2, RotateCcw } from "lucide-react";
 
 interface Props {
     onOpenForm: (sessionId: string) => void;
@@ -95,6 +95,20 @@ export default function BaBimtekList({ onOpenForm }: Props) {
         await loadSessions();
     };
 
+    // Revert session to draft
+    const handleRevert = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isAdmin || isStakeholder) return;
+        if (!confirm("Kembalikan Berita Acara ini ke Draft? Tim Puskesmas akan dapat mengedit kembali form ini.")) return;
+
+        const { error } = await supabase.from("ba_bimtek_sessions").update({ status: "draft" }).eq("id", id);
+        if (error) {
+            alert("Gagal mengembalikan ke Draft: " + error.message);
+        } else {
+            await loadSessions();
+        }
+    };
+
     const formatDate = (d: string) => new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
     return (
@@ -177,9 +191,17 @@ export default function BaBimtekList({ onOpenForm }: Props) {
 
                             {/* Actions */}
                             {!isStakeholder && (
-                                <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                                    <button onClick={() => handleDelete(s.id)}
-                                        className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {!isAdmin && s.status === "completed" && (
+                                        <button onClick={(e) => handleRevert(s.id, e)}
+                                            title="Kembalikan ke Draft"
+                                            className="p-2 rounded-xl hover:bg-amber-50 text-slate-300 hover:text-amber-500 transition-colors border border-transparent hover:border-amber-100 flex items-center justify-center">
+                                            <RotateCcw className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+                                        title="Hapus Berita Acara"
+                                        className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors border border-transparent hover:border-red-100 flex items-center justify-center">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
