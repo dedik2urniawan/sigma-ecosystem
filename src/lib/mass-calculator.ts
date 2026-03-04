@@ -418,21 +418,21 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         return { category: cat, n: count, pct: pct(count, n) };
     });
 
-    // ---- PROBABLE STUNTING ----
-    const psYes = valid.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
-    const psNo = n - psYes;
-    const prevalenceProbableStunting: PrevalenceItem[] = [
-        { category: "Terindikasi PS", n: psYes, pct: pct(psYes, n) },
-        { category: "Tidak Terindikasi", n: psNo, pct: pct(psNo, n) },
-    ];
-
     // Key prevalence rates
-    const stuntingN = countClassification(valid, (r) => r.assessment.tbu.classification, "Pendek") +
-        countClassification(valid, (r) => r.assessment.tbu.classification, "Sangat Pendek");
+    const stuntedRows = valid.filter((r) => ["Pendek", "Sangat Pendek"].includes(r.assessment.tbu.classification));
+    const stuntingN = stuntedRows.length;
     const wastingN = countClassification(valid, (r) => r.assessment.bbtb.classification, "Gizi Kurang") +
         countClassification(valid, (r) => r.assessment.bbtb.classification, "Gizi Buruk");
     const underweightN = countClassification(valid, (r) => r.assessment.bbu.classification, "Berat Badan Kurang") +
         countClassification(valid, (r) => r.assessment.bbu.classification, "Berat Badan Sangat Kurang");
+
+    // ---- PROBABLE STUNTING (Kasus Stunting Saja) ----
+    const psYes = stuntedRows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
+    const psNo = stuntingN - psYes;
+    const prevalenceProbableStunting: PrevalenceItem[] = [
+        { category: "Terindikasi PS (dari Stunting)", n: psYes, pct: pct(psYes, stuntingN) },
+        { category: "Stunting Tanpa Indikasi PS", n: psNo, pct: pct(psNo, stuntingN) },
+    ];
 
     // ---- AGE GROUP ----
     const ageGroupMap = new Map<AgeGroup, number>();
@@ -547,11 +547,12 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
 
     const createPrevalence = (name: string, rows: MassRowResult[]): WilayahPrevalence => {
         const wn = rows.length;
-        const stunting = rows.filter((r) => ["Pendek", "Sangat Pendek"].includes(r.assessment.tbu.classification)).length;
+        const stuntingRows = rows.filter((r) => ["Pendek", "Sangat Pendek"].includes(r.assessment.tbu.classification));
+        const stunting = stuntingRows.length;
         const sevStunted = rows.filter((r) => r.assessment.tbu.classification === "Sangat Pendek").length;
         const wasting = rows.filter((r) => ["Gizi Kurang", "Gizi Buruk"].includes(r.assessment.bbtb.classification)).length;
         const underweight = rows.filter((r) => ["Berat Badan Kurang", "Berat Badan Sangat Kurang"].includes(r.assessment.bbu.classification)).length;
-        const ps = rows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
+        const ps = stuntingRows.filter((r) => r.assessment.probableStunting.isProbableStunting).length;
         return {
             wilayah: name,
             total: wn,
@@ -564,7 +565,7 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
             underweight,
             underweightPct: pct(underweight, wn),
             probableStunting: ps,
-            probableStuntingPct: pct(ps, wn),
+            probableStuntingPct: pct(ps, stunting),
         };
     };
 
@@ -582,7 +583,7 @@ export function computeAnalysis(valid: MassRowResult[], skipped: SkippedRow[], t
         stuntingPct: pct(stuntingN, n),
         wastingPct: pct(wastingN, n),
         underweightPct: pct(underweightN, n),
-        probableStuntingPct: pct(psYes, n),
+        probableStuntingPct: pct(psYes, stuntingN),
         redFlagCount: valid.filter((r) => r.assessment.hasAnyRedFlag).length,
         ageGroupDist,
         sexDist,

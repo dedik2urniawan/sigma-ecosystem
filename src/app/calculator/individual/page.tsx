@@ -373,27 +373,30 @@ function ResultsPanel({
             addSep();
 
             // ---- PROBABLE STUNTING ----
-            addLine("ANALISIS PROBABLE STUNTING", 10, true, [99, 102, 241]);
-            y += 2;
-            const ps = result.probableStunting;
-            const psFields: [string, string][] = [
-                ["Weight Age (WA)", ps.weightAge !== null ? `${ps.weightAge} bulan` : "—"],
-                ["Length Age (LA)", ps.lengthAge !== null ? `${ps.lengthAge} bulan` : "—"],
-                ["Chronological Age (CA)", `${ps.chronologicalAge} bulan`],
-                ["Logika", `WA(${ps.weightAge ?? "—"}) ${ps.weightAge !== null && ps.lengthAge !== null && ps.weightAge < ps.lengthAge ? "<" : "≥"} LA(${ps.lengthAge ?? "—"}) ${ps.lengthAge !== null && ps.lengthAge < ps.chronologicalAge ? "<" : "≥"} CA(${ps.chronologicalAge})`],
-                ["Status", ps.isProbableStunting ? "TERINDIKASI Probable Stunting" : "Tidak Terindikasi Probable Stunting"],
-            ];
-            psFields.forEach(([label, val]) => {
-                if (y > 275) { pdf.addPage(); y = 14; }
-                const isStatus = label === "Status";
-                pdf.setFontSize(9.5); pdf.setFont("helvetica", "bold"); pdf.setTextColor(71, 85, 105);
-                pdf.text(label, 14, y);
-                pdf.setFont("helvetica", isStatus ? "bold" : "normal");
-                pdf.setTextColor(...(isStatus && ps.isProbableStunting ? [217, 119, 6] as [number, number, number] : isStatus ? [22, 163, 74] as [number, number, number] : [30, 30, 30] as [number, number, number]));
-                pdf.text(val, 75, y);
-                y += 5.5;
-            });
-            y += 3;
+            const isStunted = result.tbu.zscore !== null && result.tbu.zscore < -2;
+            if (isStunted) {
+                addLine("ANALISIS PROBABLE STUNTING", 10, true, [99, 102, 241]);
+                y += 2;
+                const ps = result.probableStunting;
+                const psFields: [string, string][] = [
+                    ["Weight Age (WA)", ps.weightAge !== null ? `${ps.weightAge} bulan` : "—"],
+                    ["Length Age (LA)", ps.lengthAge !== null ? `${ps.lengthAge} bulan` : "—"],
+                    ["Chronological Age (CA)", `${ps.chronologicalAge} bulan`],
+                    ["Logika", `WA(${ps.weightAge ?? "—"}) ${ps.weightAge !== null && ps.lengthAge !== null && ps.weightAge < ps.lengthAge ? "<" : "≥"} LA(${ps.lengthAge ?? "—"}) ${ps.lengthAge !== null && ps.lengthAge < ps.chronologicalAge ? "<" : "≥"} CA(${ps.chronologicalAge})`],
+                    ["Status", ps.isProbableStunting ? "TERINDIKASI Probable Stunting" : "Tidak Terindikasi Probable Stunting"],
+                ];
+                psFields.forEach(([label, val]) => {
+                    if (y > 275) { pdf.addPage(); y = 14; }
+                    const isStatus = label === "Status";
+                    pdf.setFontSize(9.5); pdf.setFont("helvetica", "bold"); pdf.setTextColor(71, 85, 105);
+                    pdf.text(label, 14, y);
+                    pdf.setFont("helvetica", isStatus ? "bold" : "normal");
+                    pdf.setTextColor(...(isStatus && ps.isProbableStunting ? [217, 119, 6] as [number, number, number] : isStatus ? [22, 163, 74] as [number, number, number] : [30, 30, 30] as [number, number, number]));
+                    pdf.text(val, 75, y);
+                    y += 5.5;
+                });
+                y += 3;
+            }
 
             if (result.hasAnyRedFlag) {
                 addSep();
@@ -440,12 +443,14 @@ function ResultsPanel({
                 ["TBU (Tinggi/Umur)", result.tbu.zscore?.toFixed(2) ?? "-", result.tbu.classification, result.tbu.isRedFlag ? "YA" : "Tidak"],
                 ["BBTB (Berat/Tinggi)", result.bbtb.zscore?.toFixed(2) ?? "-", result.bbtb.classification, result.bbtb.isRedFlag ? "YA" : "Tidak"],
                 [],
-                ["ANALISIS PROBABLE STUNTING"],
-                ["Weight Age (bulan)", result.probableStunting.weightAge ?? "-"],
-                ["Length Age (bulan)", result.probableStunting.lengthAge ?? "-"],
-                ["Chronological Age (bulan)", result.probableStunting.chronologicalAge],
-                ["Status Probable Stunting", result.probableStunting.isProbableStunting ? "TERINDIKASI" : "TIDAK TERINDIKASI"],
-                [],
+                ...(result.tbu.zscore !== null && result.tbu.zscore < -2 ? [
+                    ["ANALISIS PROBABLE STUNTING"],
+                    ["Weight Age (bulan)", result.probableStunting.weightAge ?? "-"],
+                    ["Length Age (bulan)", result.probableStunting.lengthAge ?? "-"],
+                    ["Chronological Age (bulan)", result.probableStunting.chronologicalAge],
+                    ["Status Probable Stunting", result.probableStunting.isProbableStunting ? "TERINDIKASI" : "TIDAK TERINDIKASI"],
+                    [],
+                ] : []),
                 ["RED FLAG STATUS"],
                 ["Ada Red Flag", result.hasAnyRedFlag ? "YA" : "TIDAK"],
                 ...result.redFlags.map((f) => ["Detail", f]),
@@ -568,8 +573,10 @@ function ResultsPanel({
                     })}
                 </div>
 
-                {/* Probable Stunting */}
-                <ProbableStuntingCard result={result} />
+                {/* Probable Stunting (Only if TBU < -2 SD / Stunted) */}
+                {result.tbu.zscore !== null && result.tbu.zscore < -2 && (
+                    <ProbableStuntingCard result={result} />
+                )}
 
                 {/* Growth Charts */}
                 <div>
