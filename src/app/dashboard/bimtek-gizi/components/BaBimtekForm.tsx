@@ -60,6 +60,9 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
     const [expandedPrograms, setExpandedPrograms] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [savingProgram, setSavingProgram] = useState<string | null>(null); // which program card is saving
+    const [savedPrograms, setSavedPrograms] = useState<Record<string, boolean>>({}); // per-card save status
+    const [dirtyPrograms, setDirtyPrograms] = useState<Record<string, boolean>>({}); // tracks unsaved changes per card
     const [generatingPDF, setGeneratingPDF] = useState(false);
 
     // Load session data
@@ -138,20 +141,62 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
         });
     };
 
-    // Update cell value
+    // Update cell value — also marks program as dirty
     const updateCell = (programId: string, idx: number, field: 'hasil_supervisi' | 'rencana_tindak_lanjut', value: string) => {
         setPrograms(prev => {
             const rows = [...(prev[programId] || [])];
             rows[idx] = { ...rows[idx], [field]: value };
             return { ...prev, [programId]: rows };
         });
+        setSavedPrograms(prev => ({ ...prev, [programId]: false }));
+        setDirtyPrograms(prev => ({ ...prev, [programId]: true }));
     };
 
-    // Save all data
-    const handleSave = async (markCompleted = false) => {
+    // ─── Per-Program Isolated Save ────────────────────────────────────────────
+    // Hanya menyimpan 1 program saja (bukan semua), mencegah race-condition
+    // ketika beberapa PJ menggunakan akun superadmin secara bersamaan.
+    const handleSaveProgram = async (programId: string, progLabel: string) => {
+        setSavingProgram(programId);
+        try {
+            const rows = programs[programId] || [];
+
+            // Hapus hanya rows milik program ini — BUKAN semua program
+            const { error: delErr } = await supabase
+                .from("ba_bimtek_items")
+                .delete()
+                .eq("session_id", sessionId)
+                .eq("program", programId);
+            if (delErr) throw delErr;
+
+            // Insert ulang rows untuk program ini saja
+            const insertRows = rows.map((row, idx) => ({
+                session_id: sessionId,
+                program: programId,
+                program_label: progLabel,
+                item_order: idx + 1,
+                hasil_supervisi: row.hasil_supervisi || null,
+                rencana_tindak_lanjut: row.rencana_tindak_lanjut || null,
+            }));
+
+            if (insertRows.length > 0) {
+                const { error: insErr } = await supabase.from("ba_bimtek_items").insert(insertRows);
+                if (insErr) throw insErr;
+            }
+
+            setSavedPrograms(prev => ({ ...prev, [programId]: true }));
+            setDirtyPrograms(prev => ({ ...prev, [programId]: false }));
+        } catch (err: any) {
+            alert("Gagal menyimpan program: " + (err?.message || "Terjadi kesalahan."));
+        } finally {
+            setSavingProgram(null);
+        }
+    };
+
+    // ─── Metadata-Only Save ───────────────────────────────────────────────────
+    // Menyimpan informasi kegiatan (tanggal, tempat, PJ Dinkes, Kepala PKM)
+    const handleSaveMeta = async (markCompleted = false) => {
         setSaving(true);
         try {
-            // Update session meta
             const { error: metaErr } = await supabase
                 .from("ba_bimtek_sessions")
                 .update({
@@ -167,32 +212,9 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                 .eq("id", sessionId);
             if (metaErr) throw metaErr;
 
-            // Delete existing items and re-insert (simplest approach for dynamic rows)
-            await supabase.from("ba_bimtek_items").delete().eq("session_id", sessionId);
-
-            const insertRows: any[] = [];
-            BA_PROGRAMS.forEach(prog => {
-                const rows = programs[prog.id] || [];
-                rows.forEach((row, idx) => {
-                    insertRows.push({
-                        session_id: sessionId,
-                        program: prog.id,
-                        program_label: prog.label,
-                        item_order: idx + 1,
-                        hasil_supervisi: row.hasil_supervisi || null,
-                        rencana_tindak_lanjut: row.rencana_tindak_lanjut || null,
-                    });
-                });
-            });
-
-            if (insertRows.length > 0) {
-                const { error: insertErr } = await supabase.from("ba_bimtek_items").insert(insertRows);
-                if (insertErr) throw insertErr;
-            }
-
             if (markCompleted) setMeta(prev => ({ ...prev, status: "completed" }));
-            alert(markCompleted ? "Berita Acara berhasil disimpan dan ditandai selesai!" : "Data berhasil disimpan!");
-            await loadSession();
+            if (!markCompleted) alert("Informasi kegiatan berhasil disimpan!");
+            else alert("Berita Acara berhasil ditandai Selesai!");
         } catch (err: any) {
             alert("Gagal menyimpan: " + (err?.message || "Terjadi kesalahan."));
         } finally {
@@ -261,13 +283,15 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                     </button>
                     {!isStakeholder && (
                         <>
-                            <button onClick={() => handleSave(false)} disabled={saving}
+                            <button onClick={() => handleSaveMeta(false)} disabled={saving}
+                                title="Simpan informasi kegiatan, PJ Dinkes, dan Kepala Puskesmas"
                                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
                                 <Save className="w-4 h-4" />
-                                {saving ? "Menyimpan..." : "Simpan"}
+                                {saving ? "Menyimpan..." : "Simpan Info"}
                             </button>
                             {meta.status !== "completed" ? (
-                                <button onClick={() => handleSave(true)} disabled={saving}
+                                <button onClick={() => handleSaveMeta(true)} disabled={saving}
+                                    title="Tandai BA ini sebagai selesai (semua program harus sudah tersimpan)"
                                     className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-md disabled:opacity-50">
                                     <CheckCircle2 className="w-4 h-4" />
                                     Selesai
@@ -481,13 +505,33 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                                         </div>
                                     ))}
 
-                                    {/* Add Row Button */}
+                                    {/* Card Footer: Add Row + Per-Program Save */}
                                     {!isStakeholder && (
-                                        <div className="p-3 border-t border-slate-50 flex justify-center">
+                                        <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-3">
                                             <button onClick={() => addRow(prog.id)}
                                                 className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border border-dashed transition-colors ${color.border} ${color.bg} text-slate-500 hover:text-slate-700`}>
                                                 <Plus className="w-3.5 h-3.5" />
                                                 Tambah Baris
+                                            </button>
+
+                                            {/* Per-Program Save button — prevents concurrent save conflicts */}
+                                            <button
+                                                onClick={() => handleSaveProgram(prog.id, prog.label)}
+                                                disabled={savingProgram === prog.id}
+                                                title={`Simpan data ${prog.label} saja`}
+                                                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border transition-all ${savedPrograms[prog.id] && !dirtyPrograms[prog.id]
+                                                        ? 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                                                        : dirtyPrograms[prog.id]
+                                                            ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100 animate-pulse'
+                                                            : 'text-teal-600 bg-teal-50 border-teal-200 hover:bg-teal-100'
+                                                    } disabled:opacity-50`}>
+                                                {savingProgram === prog.id ? (
+                                                    <><div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />Menyimpan...</>
+                                                ) : savedPrograms[prog.id] && !dirtyPrograms[prog.id] ? (
+                                                    <><CheckCircle2 className="w-3.5 h-3.5" />Tersimpan</>
+                                                ) : (
+                                                    <><Save className="w-3.5 h-3.5" />Simpan Program Ini</>
+                                                )}
                                             </button>
                                         </div>
                                     )}
@@ -509,13 +553,15 @@ export default function BaBimtekForm({ sessionId, onBack }: Props) {
                     <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200">Kembali</button>
                     {!isStakeholder && (
                         <>
-                            <button onClick={() => handleSave(false)} disabled={saving}
+                            <button onClick={() => handleSaveMeta(false)} disabled={saving}
+                                title="Simpan informasi kegiatan, PJ Dinkes, dan Kepala Puskesmas"
                                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 border border-teal-100 disabled:opacity-50">
                                 <Save className="w-4 h-4" />
-                                {saving ? "Menyimpan..." : "Simpan"}
+                                {saving ? "Menyimpan..." : "Simpan Info"}
                             </button>
                             {meta.status !== "completed" ? (
-                                <button onClick={() => handleSave(true)} disabled={saving}
+                                <button onClick={() => handleSaveMeta(true)} disabled={saving}
+                                    title="Tandai BA ini sebagai selesai"
                                     className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-md disabled:opacity-50">
                                     <CheckCircle2 className="w-4 h-4" />
                                     Selesai & Simpan
