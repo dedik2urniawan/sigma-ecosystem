@@ -5,13 +5,9 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 // ─── Configuration ────────────────────────────────────────────────────────────
-// TEST MODE: 1 minute timeout, 20 second warning
-const TIMEOUT_DURATION = 1 * 60 * 1000;       // 1 minute  (change to 60 * 60 * 1000 for 1 hour)
-const WARNING_DURATION = 20 * 1000;            // 20 seconds (change to 5 * 60 * 1000 for 5 min warning)
-
-// PRODUCTION MODE (uncomment below & comment above):
-// const TIMEOUT_DURATION = 60 * 60 * 1000;
-// const WARNING_DURATION = 5 * 60 * 1000;
+// PRODUCTION MODE: 1 hour timeout, 5 minute warning
+const TIMEOUT_DURATION = 60 * 60 * 1000;      // 1 hour
+const WARNING_DURATION = 5 * 60 * 1000;      // 5 minute warning
 
 const CHECK_INTERVAL = 1000;                 // Tick every 1 second
 const ACTIVITY_THROTTLE = 500;                 // Throttle activity events
