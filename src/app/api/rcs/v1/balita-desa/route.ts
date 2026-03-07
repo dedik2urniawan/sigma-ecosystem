@@ -5,7 +5,7 @@
  * Query params: tahun, bulan, puskesmas, kelurahan, limit (default 100), page (default 1)
  *
  * Data source: data_bultim_desa (Pelayanan Kesehatan Level Desa/Kelurahan)
- * Uploaded via: SIGIZI KESGA file upload
+ * Uploaded via: file upload SIGIZI KESGA
  */
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, apiResponse } from "@/lib/apiKeyMiddleware";
@@ -31,18 +31,10 @@ export async function GET(req: NextRequest) {
     const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
     const offset = (page - 1) * limit;
 
+    // Use select("*") to avoid hardcoding column names that may differ by case
     let query = supabase
         .from("data_bultim_desa")
-        .select(
-            `tahun, bulan, puskesmas, kelurahan,
-            data_sasaran_l, data_sasaran_p,
-            bbsangat_kurang, bb_kurang, berat_badan_normal, risiko_lebih,
-            sangat_pendek, pendek, tb_normal, tinggi,
-            gizi_buruk, gizi_kurang, normal, risiko_gizi_lebih, gizi_lebih, obesitas,
-            stunting, wasting, underweight,
-            jumlah_timbang, jumlah_ukur, jumlah_timbang_ukur`,
-            { count: "exact" }
-        )
+        .select("*", { count: "exact" })
         .order("tahun", { ascending: false })
         .order("bulan", { ascending: false })
         .range(offset, offset + limit - 1);
@@ -70,20 +62,18 @@ export async function GET(req: NextRequest) {
             limit,
             filters: { tahun, bulan, puskesmas, kelurahan },
             fields_description: {
-                Tahun: "Tahun data bulanan",
-                Bulan: "Bulan data (1–12)",
-                Puskesmas: "Nama Puskesmas",
-                Kelurahan: "Nama Desa / Kelurahan",
-                data_sasaran_L: "Jumlah sasaran balita laki-laki",
-                data_sasaran_P: "Jumlah sasaran balita perempuan",
-                Stunting: "Jumlah balita stunting (Sangat Pendek + Pendek)",
-                Wasting: "Jumlah balita wasting (Gizi Buruk + Gizi Kurang)",
-                Underweight: "Jumlah balita underweight (BB sangat kurang + BB kurang)",
+                tahun: "Tahun data bulanan",
+                bulan: "Bulan data (1–12)",
+                puskesmas: "Nama Puskesmas",
+                kelurahan: "Nama Desa / Kelurahan",
+                data_sasaran_l: "Jumlah sasaran balita laki-laki",
+                data_sasaran_p: "Jumlah sasaran balita perempuan",
+                stunting: "Jumlah balita stunting (Sangat Pendek + Pendek)",
+                wasting: "Jumlah balita wasting (Gizi Buruk + Gizi Kurang)",
+                underweight: "Jumlah balita underweight (BB sangat kurang + BB kurang)",
                 jumlah_timbang: "Jumlah balita ditimbang bulan ini",
                 jumlah_ukur: "Jumlah balita diukur tinggi badannya",
                 jumlah_timbang_ukur: "Jumlah balita ditimbang dan diukur sekaligus",
-                Gizi_Buruk: "Status gizi buruk",
-                BBSangat_Kurang: "Berat badan sangat kurang",
             },
             data_source: "data_bultim_desa",
             last_updated: new Date().toISOString(),
