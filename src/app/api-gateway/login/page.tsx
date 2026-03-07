@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
-export default function ApiGatewayLogin() {
+function ApiGatewayLoginContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -158,5 +158,18 @@ export default function ApiGatewayLogin() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ApiGatewayLogin() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0a0f1e] flex flex-col items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin mb-4"></div>
+                <p className="text-indigo-400 text-sm font-bold animate-pulse">Memuat portal...</p>
+            </div>
+        }>
+            <ApiGatewayLoginContent />
+        </Suspense>
     );
 }

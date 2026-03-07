@@ -51,3 +51,5 @@ google-credentials.json
 
 test-schemas.mjs
 schema-output.json
+
+google-credentials-base64.txt
