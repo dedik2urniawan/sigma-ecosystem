@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
@@ -9,7 +9,18 @@ export default function ApiGatewayLogin() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showTimeoutBanner, setShowTimeoutBanner] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get("timeout") === "true") {
+            setShowTimeoutBanner(true);
+            // Auto-dismiss after 10 seconds
+            const t = setTimeout(() => setShowTimeoutBanner(false), 10000);
+            return () => clearTimeout(t);
+        }
+    }, [searchParams]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,6 +55,29 @@ export default function ApiGatewayLogin() {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
             {/* Glow */}
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+
+            {/* Timeout Banner */}
+            {showTimeoutBanner && (
+                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5
+                    bg-gradient-to-r from-amber-900/80 to-amber-800/60 border border-amber-500/40 rounded-2xl
+                    shadow-xl shadow-amber-900/40 backdrop-blur-md max-w-sm w-full mx-4 animate-fade-in">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-amber-300 text-sm font-bold">Sesi Berakhir</p>
+                        <p className="text-amber-400/70 text-xs">Anda telah logout otomatis karena tidak ada aktivitas.</p>
+                    </div>
+                    <button onClick={() => setShowTimeoutBanner(false)}
+                        className="text-amber-500/60 hover:text-amber-300 transition-colors">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
 
             <div className="relative z-10 w-full max-w-md">
                 {/* Header */}
