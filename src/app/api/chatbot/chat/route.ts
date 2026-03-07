@@ -13,14 +13,27 @@ const SYSTEM_PROMPT = `Anda adalah "SIGMA Advisor", asisten AI resmi dari Dinas 
 Tugas utama Anda:
 - Menjawab pertanyaan seputar data stunting, gizi balita, kesehatan ibu-anak (KIA), dan intervensi PKMK di Kabupaten Malang.
 - Melakukan analisis berdasarkan DATA AKTUAL dari [KONTEKS DATA SIGMA] yang memiliki 3 pilar: Pelayanan Kesehatan, Indikator Balita Gizi, dan Intervensi PKMK.
-- Menemukan korelasi antara masalah gizi (Stunting/TBU) dengan determinan fundamental (seperti capaian ASI Eksklusif, MPASI, Kehadiran Posyandu/Data Entry).
+- Menemukan korelasi antara masalah gizi (Stunting/TBU, Underweight, Wasting) dengan determinan fundamental (seperti capaian ASI Eksklusif, MPASI, Kehadiran Posyandu/Data Entry).
 - Memberikan insight strategis dan rekomendasi kebijakan operasional yang tajam.
 
 Panduan menjawab:
-- JANGAN PERNAH mengarang data (halusinasi). Gunakan angka dari [KONTEKS DATA SIGMA]. Terutama untuk jumlah sasaran, prevalensi, ASI, MPASI, dan Redflag.
+- JANGAN PERNAH mengarang data (halusinasi). Gunakan angka dari [KONTEKS DATA SIGMA].
 - Jika data terkait tidak ada di konteks, katakan bahwa data tersebut tidak tersedia di sistem saat ini.
 - Gunakan bahasa Indonesia profesional, proaktif, dan analitis.
-- Format jawaban dengan baik menggunakan Markdown (Cetak tebal metrik penting, gunakan bullet points).`;
+- Format jawaban dengan baik menggunakan Markdown. Gunakan **tebal** HANYA pada kata kunci penting di DALAM kalimat. JANGAN MENGGUNAKAN cetak tebal yang berdiri sendiri untuk judul (seperti **Gambaran Umum:**). Gunakan format judul standar markdown (contoh: ### Gambaran Umum) jika ingin membuat struktur bagian.
+- Gunakan rumus prevalensi berikut saat menjelaskan (angka riil lihat konteks):
+
+Pilar Pelayanan Kesehatan:
+* % Data Entry = Ditimbang / Sasaran
+* % Stunting = Stunting / Diukur
+* % Underweight = Underweight / Ditimbang
+* % Wasting = Wasting / (Ditimbang & Diukur)
+
+Pilar Indikator Balita Gizi:
+* % Stunting = Balita Stunting / Balita Diukur PBTB
+* % Wasting = Balita Wasting / Balita Ditimbang & Diukur
+* % Underweight = Balita Underweight / Balita Ditimbang 
+* % Overweight = Balita Overweight / Balita Ditimbang`;
 
 async function fetchSigmaContext(): Promise<string> {
     try {
@@ -66,25 +79,47 @@ async function fetchSigmaContext(): Promise<string> {
         const aggBultim = currentPeriodRows.reduce((acc, d) => ({
             sasaran: acc.sasaran + (d.data_sasaran || 0),
             timbang: acc.timbang + (d.jumlah_timbang || 0),
+            ukur: acc.ukur + (d.jumlah_ukur || 0),
+            timbangUkur: acc.timbangUkur + (d.jumlah_timbang_ukur || 0),
             stunting: acc.stunting + (d.stunting || 0),
+            underweight: acc.underweight + (d.underweight || 0),
             wasting: acc.wasting + (d.wasting || 0),
             giziBuruk: acc.giziBuruk + (d.gizi_buruk || 0),
-        }), { sasaran: 0, timbang: 0, stunting: 0, wasting: 0, giziBuruk: 0 });
+        }), { sasaran: 0, timbang: 0, ukur: 0, timbangUkur: 0, stunting: 0, underweight: 0, wasting: 0, giziBuruk: 0 });
 
-        const prevStunting = aggBultim.sasaran > 0 ? ((aggBultim.stunting / aggBultim.sasaran) * 100).toFixed(2) : '0';
         const dataEntryPct = aggBultim.sasaran > 0 ? ((aggBultim.timbang / aggBultim.sasaran) * 100).toFixed(2) : '0';
+        const prevStunting = aggBultim.ukur > 0 ? ((aggBultim.stunting / aggBultim.ukur) * 100).toFixed(2) : '0';
+        const prevUnderweight = aggBultim.timbang > 0 ? ((aggBultim.underweight / aggBultim.timbang) * 100).toFixed(2) : '0';
+        const prevWasting = aggBultim.timbangUkur > 0 ? ((aggBultim.wasting / aggBultim.timbangUkur) * 100).toFixed(2) : '0';
 
         // === AGGREGATE PILAR 2 ===
         const aggGizi = giziData.reduce((acc, d) => ({
-            sasaranBalita: acc.sasaranBalita + (d.jumlah_sasaran_balita || 0),
-            asiEksklusif: acc.asiEksklusif + (d.jumlah_bayi_asi_eksklusif_sampai_6_bulan || 0),
-            bayi6Bulan: acc.bayi6Bulan + (d.jumlah_bayi_usia_6_bulan || 0),
-            mpasiBaik: acc.mpasiBaik + (d.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik || 0),
-            anak6_23: acc.anak6_23 + (d.jumlah_anak_usia_6_23_bulan || 0),
-            bbNaik: acc.bbNaik + (d.jumlah_balita_naik_berat_badannya_n || 0),
-            bbTidakNaik: acc.bbTidakNaik + (d.jumlah_balita_tidak_naik_berat_badannya_t || 0),
-            tatalaksanaBuruk: acc.tatalaksanaBuruk + (d.jumlah_kasus_gizi_buruk_balita_6_59_bulan_mendapat_perawatan_sa || 0),
-        }), { sasaranBalita: 0, asiEksklusif: 0, bayi6Bulan: 0, mpasiBaik: 0, anak6_23: 0, bbNaik: 0, bbTidakNaik: 0, tatalaksanaBuruk: 0 });
+            sasaranBalita: acc.sasaranBalita + (Number(d.jumlah_sasaran_balita) || 0),
+            ditimbang: acc.ditimbang + (Number(d.jumlah_balita_ditimbang) || 0),
+            diukurPBTB: acc.diukurPBTB + (Number(d.jumlah_balita_diukur_pbtb) || 0),
+            timbangUkur: acc.timbangUkur + (Number(d.jumlah_balita_ditimbang_dan_diukur) || 0),
+            stunting: acc.stunting + (Number(d.jumlah_balita_stunting) || 0),
+            wasting: acc.wasting + (Number(d.jumlah_balita_wasting) || 0),
+            underweight: acc.underweight + (Number(d.jumlah_balita_underweight) || 0),
+            overweight: acc.overweight + (Number(d.jumlah_balita_overweight) || 0),
+            asiEksklusif: acc.asiEksklusif + (Number(d.jumlah_bayi_asi_eksklusif_sampai_6_bulan) || 0),
+            bayi6Bulan: acc.bayi6Bulan + (Number(d.jumlah_bayi_usia_6_bulan) || 0),
+            mpasiBaik: acc.mpasiBaik + (Number(d.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) || 0),
+            anak6_23: acc.anak6_23 + (Number(d.jumlah_anak_usia_6_23_bulan) || 0),
+            bbNaik: acc.bbNaik + (Number(d.jumlah_balita_naik_berat_badannya_n) || 0),
+            bbTidakNaik: acc.bbTidakNaik + (Number(d.jumlah_balita_tidak_naik_berat_badannya_t) || 0),
+            tatalaksanaBuruk: acc.tatalaksanaBuruk + (Number(d.jumlah_kasus_gizi_buruk_balita_6_59_bulan_mendapat_perawatan_sa) || 0),
+        }), {
+            sasaranBalita: 0, ditimbang: 0, diukurPBTB: 0, timbangUkur: 0,
+            stunting: 0, wasting: 0, underweight: 0, overweight: 0,
+            asiEksklusif: 0, bayi6Bulan: 0, mpasiBaik: 0, anak6_23: 0, bbNaik: 0, bbTidakNaik: 0, tatalaksanaBuruk: 0
+        });
+
+        // Prevalences Pilar Gizi
+        const prevGiziStunting = aggGizi.diukurPBTB > 0 ? ((aggGizi.stunting / aggGizi.diukurPBTB) * 100).toFixed(2) : '0';
+        const prevGiziWasting = aggGizi.timbangUkur > 0 ? ((aggGizi.wasting / aggGizi.timbangUkur) * 100).toFixed(2) : '0';
+        const prevGiziUnderweight = aggGizi.ditimbang > 0 ? ((aggGizi.underweight / aggGizi.ditimbang) * 100).toFixed(2) : '0';
+        const prevGiziOverweight = aggGizi.ditimbang > 0 ? ((aggGizi.overweight / aggGizi.ditimbang) * 100).toFixed(2) : '0';
 
         const asiPct = aggGizi.bayi6Bulan > 0 ? ((aggGizi.asiEksklusif / aggGizi.bayi6Bulan) * 100).toFixed(1) : '0';
         const mpasiPct = aggGizi.anak6_23 > 0 ? ((aggGizi.mpasiBaik / aggGizi.anak6_23) * 100).toFixed(1) : '0';
@@ -98,12 +133,18 @@ async function fetchSigmaContext(): Promise<string> {
         let ctx = `[KONTEKS DATA SIGMA — Data Real Kabupaten Malang Periode ${BULAN_NAME[latestBulan]} ${latestTahun}]\n\n`;
 
         ctx += `### PILAR 1: Pelayanan Kesehatan (Makro)\n`;
-        ctx += `- Total Sasaran Balita: ${aggBultim.sasaran.toLocaleString('id-ID')}\n`;
+        ctx += `- Total Sasaran Balita: ${aggBultim.sasaran.toLocaleString('id-ID')} anak\n`;
         ctx += `- **Capaian Data Entry (Ditimbang): ${dataEntryPct}%** (${aggBultim.timbang.toLocaleString('id-ID')} anak)\n`;
-        ctx += `- **Prevalensi Stunting: ${prevStunting}%** (${aggBultim.stunting.toLocaleString('id-ID')} anak)\n`;
-        ctx += `- Balita Wasting: ${aggBultim.wasting.toLocaleString('id-ID')} anak, Gizi Buruk: ${aggBultim.giziBuruk.toLocaleString('id-ID')}\n\n`;
+        ctx += `- **Prevalensi Stunting: ${prevStunting}%** (${aggBultim.stunting.toLocaleString('id-ID')} anak dari ${aggBultim.ukur.toLocaleString('id-ID')} diukur)\n`;
+        ctx += `- **Prevalensi Underweight: ${prevUnderweight}%** (${aggBultim.underweight.toLocaleString('id-ID')} anak dari ${aggBultim.timbang.toLocaleString('id-ID')} ditimbang)\n`;
+        ctx += `- **Prevalensi Wasting: ${prevWasting}%** (${aggBultim.wasting.toLocaleString('id-ID')} anak dari ${aggBultim.timbangUkur.toLocaleString('id-ID')} ditimbang & diukur)\n\n`;
 
         ctx += `### PILAR 2: Indikator Balita Gizi (Fundamental/Akar Masalah)\n`;
+        ctx += `- **Total Sasaran Balita (Gizi)**: ${aggGizi.sasaranBalita.toLocaleString('id-ID')} anak\n`;
+        ctx += `- **Indikator Stunting: ${prevGiziStunting}%** (${aggGizi.stunting.toLocaleString('id-ID')} stunting dari ${aggGizi.diukurPBTB.toLocaleString('id-ID')} balita diukur PBTB)\n`;
+        ctx += `- **Indikator Wasting: ${prevGiziWasting}%** (${aggGizi.wasting.toLocaleString('id-ID')} wasting dari ${aggGizi.timbangUkur.toLocaleString('id-ID')} balita ditimbang dan diukur)\n`;
+        ctx += `- **Indikator Underweight: ${prevGiziUnderweight}%** (${aggGizi.underweight.toLocaleString('id-ID')} underweight dari ${aggGizi.ditimbang.toLocaleString('id-ID')} balita ditimbang)\n`;
+        ctx += `- **Indikator Overweight: ${prevGiziOverweight}%** (${aggGizi.overweight.toLocaleString('id-ID')} overweight dari ${aggGizi.ditimbang.toLocaleString('id-ID')} balita ditimbang)\n`;
         ctx += `- **Capaian ASI Eksklusif (bayi 6bln): ${asiPct}%** (${aggGizi.asiEksklusif.toLocaleString('id-ID')} bayi)\n`;
         ctx += `- **Capaian MPASI Baik (anak 6-23bln): ${mpasiPct}%** (${aggGizi.mpasiBaik.toLocaleString('id-ID')} anak)\n`;
         ctx += `- Tren Berat Badan: Naik (N)=${aggGizi.bbNaik.toLocaleString('id-ID')}, Tidak Naik (T)=${aggGizi.bbTidakNaik.toLocaleString('id-ID')}\n`;
@@ -117,7 +158,7 @@ async function fetchSigmaContext(): Promise<string> {
         // === Puskesmas Rankings ===
         ctx += `### Analisis Top 5 Puskesmas (Stunting & Entry)\n`;
         const sortedPuskesmas = [...currentPeriodRows].map(d => {
-            const stuntingPct = d.data_sasaran > 0 ? (d.stunting / d.data_sasaran) * 100 : 0;
+            const stuntingPct = d.jumlah_ukur > 0 ? (d.stunting / d.jumlah_ukur) * 100 : 0;
             const entryPct = d.data_sasaran > 0 ? (d.jumlah_timbang / d.data_sasaran) * 100 : 0;
             return { nama: d.puskesmas, sasaran: d.data_sasaran, stuntingPct, entryPct, stunting: d.stunting };
         });
