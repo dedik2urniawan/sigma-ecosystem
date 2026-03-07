@@ -631,12 +631,10 @@ export default function Home() {
                 <span className="material-icons-round text-lg group-hover:translate-y-1 transition-transform">keyboard_arrow_down</span>
               </a>
               <a
-                href="https://pkmk-malangkab.app/login"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/rcs"
                 className="flex-1 px-8 py-4 rounded-xl bg-white text-slate-700 font-bold text-xs uppercase tracking-widest border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm hover:shadow-md hover:-translate-y-1 flex items-center justify-center gap-2"
               >
-                Dashboard Area
+                Dashboard KPI Gizi
                 <span className="material-icons-round text-lg text-slate-400">login</span>
               </a>
             </div>

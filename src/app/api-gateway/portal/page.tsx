@@ -35,6 +35,7 @@ interface ReqLog {
 
 const ENDPOINTS = [
     { id: "pelayanan-kesehatan", label: "Indikator Pelayanan Kesehatan", path: "/api/rcs/v1/pelayanan-kesehatan", status: "OPEN", color: "emerald" },
+    { id: "balita-desa", label: "Data Balita Desa / Kelurahan", path: "/api/rcs/v1/balita-desa", status: "OPEN", color: "emerald" },
     { id: "balita-gizi", label: "Indikator Balita Gizi", path: "/api/rcs/v1/balita-gizi", status: "ON_PROCESS", color: "amber" },
     { id: "balita-kia", label: "Indikator Balita KIA", path: "/api/rcs/v1/balita-kia", status: "ON_DEV", color: "slate" },
     { id: "ibu-hamil", label: "Indikator Ibu Hamil", path: "/api/rcs/v1/ibu-hamil", status: "ON_DEV", color: "slate" },
@@ -447,9 +448,21 @@ export default function ApiGatewayPortal() {
                                             <p className="text-slate-300">?tahun=2024          <span className="text-slate-500">// Filter tahun (integer)</span></p>
                                             <p className="text-slate-300">?bulan=1             <span className="text-slate-500">// Filter bulan 1-12</span></p>
                                             <p className="text-slate-300">?puskesmas=kepanjen  <span className="text-slate-500">// Filter nama puskesmas (partial match)</span></p>
+                                            {ep.id === "balita-desa" && (
+                                                <p className="text-slate-300">?kelurahan=oro-oro   <span className="text-slate-500">// Filter nama desa/kelurahan (partial match)</span></p>
+                                            )}
                                             <p className="text-slate-300">?limit=100           <span className="text-slate-500">// Records per page (max 500)</span></p>
                                             <p className="text-slate-300">?page=1              <span className="text-slate-500">// Page number</span></p>
                                         </div>
+                                        {ep.id === "balita-desa" && (
+                                            <div className="mt-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                                                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-1">📊 Field Utama</p>
+                                                <p className="text-slate-400 text-xs">Puskesmas, Kelurahan, Tahun, Bulan · Stunting, Wasting, Underweight</p>
+                                                <p className="text-slate-400 text-xs">BB Status (Sangat_Kurang → Risiko_Lebih) · TB Status (Sangat_Pendek → Tinggi)</p>
+                                                <p className="text-slate-400 text-xs">Gizi Status (Buruk → Obesitas) · jumlah_timbang, jumlah_ukur, jumlah_timbang_ukur</p>
+                                                <p className="text-slate-500 text-xs mt-1.5">Sumber: <span className="font-mono">data_bultim_desa</span> — Upload SIGIZI KESGA (Level Desa)</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
 
