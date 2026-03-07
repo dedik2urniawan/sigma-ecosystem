@@ -34,23 +34,23 @@ export async function GET(req: NextRequest) {
     let query = supabase
         .from("data_bultim_desa")
         .select(
-            `Tahun, Bulan, Puskesmas, Kelurahan,
-            data_sasaran_L, data_sasaran_P,
-            BBSangat_Kurang, BB_Kurang, Berat_Badan_Normal, Risiko_Lebih,
-            Sangat_Pendek, Pendek, TB_Normal, Tinggi,
-            Gizi_Buruk, Gizi_Kurang, Normal, Risiko_Gizi_Lebih, Gizi_Lebih, Obesitas,
-            Stunting, Wasting, Underweight,
+            `tahun, bulan, puskesmas, kelurahan,
+            data_sasaran_l, data_sasaran_p,
+            bbsangat_kurang, bb_kurang, berat_badan_normal, risiko_lebih,
+            sangat_pendek, pendek, tb_normal, tinggi,
+            gizi_buruk, gizi_kurang, normal, risiko_gizi_lebih, gizi_lebih, obesitas,
+            stunting, wasting, underweight,
             jumlah_timbang, jumlah_ukur, jumlah_timbang_ukur`,
             { count: "exact" }
         )
-        .order("Tahun", { ascending: false })
-        .order("Bulan", { ascending: false })
+        .order("tahun", { ascending: false })
+        .order("bulan", { ascending: false })
         .range(offset, offset + limit - 1);
 
-    if (tahun) query = query.eq("Tahun", parseInt(tahun));
-    if (bulan) query = query.eq("Bulan", parseInt(bulan));
-    if (puskesmas) query = query.ilike("Puskesmas", `%${puskesmas}%`);
-    if (kelurahan) query = query.ilike("Kelurahan", `%${kelurahan}%`);
+    if (tahun) query = query.eq("tahun", parseInt(tahun));
+    if (bulan) query = query.eq("bulan", parseInt(bulan));
+    if (puskesmas) query = query.ilike("puskesmas", `%${puskesmas}%`);
+    if (kelurahan) query = query.ilike("kelurahan", `%${kelurahan}%`);
 
     const { data, error, count } = await query;
 
