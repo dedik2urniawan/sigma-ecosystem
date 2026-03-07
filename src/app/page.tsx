@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import "./globals.css"; // Ensure global styles are imported if not already contextually available
 
 // Add smooth scrolling to HTML tag via global CSS or inline if possible, 
@@ -735,13 +736,23 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-slate-500 mb-3 group-hover:text-slate-800 transition-colors">{app.title}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">{app.desc}</p>
                   <div className="mt-auto">
-                    <button
-                      onClick={() => handleOpenModal(app.title)}
-                      className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
-                    >
-                      <span className="material-icons-round text-sm">construction</span>
-                      {app.cta}
-                    </button>
+                    {app.title === "Chatbot AI" ? (
+                      <Link
+                        href="/chatbot"
+                        className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-purple-600 hover:border-purple-200 transition-all shadow-sm"
+                      >
+                        <span className="material-icons-round text-sm">rocket_launch</span>
+                        {app.cta}
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => handleOpenModal(app.title)}
+                        className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
+                      >
+                        <span className="material-icons-round text-sm">construction</span>
+                        {app.cta}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -45,3 +45,9 @@ next-env.d.ts
 # local scripts with potential secrets
 list-models.js
 test-gemini.js
+
+# Google Cloud Credentials
+google-credentials.json
+
+test-schemas.mjs
+schema-output.json

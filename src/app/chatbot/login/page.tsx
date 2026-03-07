@@ -1,0 +1,359 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
+// ─── Animated Particles Background ──────────────────────────────────────────
+const ParticlesBackground = () => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        let width = 0;
+        let height = 0;
+        let animId: number;
+
+        interface Particle {
+            x: number;
+            y: number;
+            vx: number;
+            vy: number;
+            size: number;
+            alpha: number;
+        }
+
+        const particles: Particle[] = [];
+
+        const setSize = () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            particles.length = 0;
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    size: Math.random() * 2 + 0.5,
+                    alpha: Math.random() * 0.3 + 0.1,
+                });
+            }
+        };
+        setSize();
+
+        const draw = () => {
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach((p) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                ctx.fillStyle = `rgba(147, 51, 234, ${p.alpha})`; // Purple tinted for chatbot
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw connections
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.strokeStyle = `rgba(147, 51, 234, ${0.04 * (1 - dist / 150)})`;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            animId = requestAnimationFrame(draw);
+        };
+
+        animId = requestAnimationFrame(draw);
+        window.addEventListener("resize", setSize);
+        return () => {
+            cancelAnimationFrame(animId);
+            window.removeEventListener("resize", setSize);
+        };
+    }, []);
+
+    return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+};
+
+// ─── Login Page ─────────────────────────────────────────────────────────────
+export default function ChatbotLoginPage() {
+    const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setIsLoading(true);
+
+        try {
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (authError) {
+                if (authError.message.includes("Invalid login")) {
+                    setError("Email atau password salah. Silakan coba lagi.");
+                } else {
+                    setError(authError.message);
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            if (data.user) {
+                // Auth succeeded — redirect to chatbot app
+                window.location.href = "/chatbot/app";
+                return;
+            }
+        } catch {
+            setError("Terjadi kesalahan. Silakan coba lagi.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex min-h-screen bg-slate-50 font-display selection:bg-purple-100 selection:text-purple-900">
+
+            {/* ─── Left Panel: Branding ──────────────────────────── */}
+            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
+                <ParticlesBackground />
+
+                {/* Decorative gradient orbs */}
+                <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[100px]"></div>
+
+                <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+                    {/* Top: Logo */}
+                    <Link href="/" className="flex items-center gap-3 group w-fit">
+                        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/10 p-1 group-hover:bg-white/20 transition-colors">
+                            <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
+                        </div>
+                        <div>
+                            <span className="font-extrabold text-xl text-white tracking-tight">SIGMA</span>
+                            <span className="text-purple-400 font-bold text-xs ml-2 tracking-widest uppercase font-mono">ADVISOR</span>
+                        </div>
+                    </Link>
+
+                    {/* Center: Headline */}
+                    <div className="max-w-xl">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-8">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400"></span>
+                            </span>
+                            <span className="text-[10px] font-bold tracking-[0.2em] text-purple-400 uppercase font-mono">
+                                AI Assistant Login
+                            </span>
+                        </div>
+
+                        <h1 className="text-4xl xl:text-5xl font-extrabold text-white mb-6 tracking-tight leading-tight">
+                            Masuk ke<br />
+                            <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent">
+                                SIGMA Advisor
+                            </span>
+                        </h1>
+
+                        <p className="text-lg text-slate-400 leading-relaxed mb-10">
+                            Akses asisten pintar untuk mengeksplorasi data stunting, pelayanan gizi, dan intervensi PKMK dengan mudah melalui percakapan alami.
+                        </p>
+
+                        {/* Feature pills */}
+                        <div className="flex flex-wrap gap-3">
+                            {[
+                                { icon: "smart_toy", label: "Powered by AI" },
+                                { icon: "lock", label: "Secure Access" },
+                                { icon: "database", label: "RCS & PKMK Data" },
+                            ].map((f) => (
+                                <div key={f.label} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <span className="material-icons-round text-purple-400 text-sm">{f.icon}</span>
+                                    <span className="text-xs font-bold text-white/70 uppercase tracking-wider">{f.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Bottom: Footer */}
+                    <div className="text-xs text-slate-500">
+                        © 2026 Dinas Kesehatan Kabupaten Malang • SIGMA Ecosystem v2.0
+                        <br />
+                        Crafted with <span className="text-purple-400">♥</span> by <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-purple-400 hover:text-purple-300 transition-colors">DK</a>
+                    </div>
+                </div>
+            </div>
+
+            {/* ─── Right Panel: Login Form ──────────────────────── */}
+            <div className="w-full lg:w-[45%] flex items-center justify-center relative px-6 py-12">
+                <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]"></div>
+
+                <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+
+                    <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white border border-slate-100 shadow-lg p-1">
+                            <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
+                        </div>
+                        <div>
+                            <span className="font-extrabold text-2xl text-slate-900 tracking-tight">SIGMA</span>
+                            <span className="text-purple-600 font-bold text-sm ml-2">ADVISOR</span>
+                        </div>
+                    </div>
+
+                    <div className="mb-10">
+                        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+                            Masuk Chatbot AI
+                        </h2>
+                        <p className="text-slate-500 text-sm">
+                            Gunakan kredensial dashboard (Puskesmas/Dinkes) untuk masuk ke Chatbot.
+                        </p>
+                    </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-in">
+                            <span className="material-icons-round text-red-500 text-lg shrink-0 mt-0.5">error</span>
+                            <div>
+                                <p className="text-sm font-semibold text-red-800">{error}</p>
+                            </div>
+                            <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-600 shrink-0">
+                                <span className="material-icons-round text-lg">close</span>
+                            </button>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleLogin} className="space-y-5">
+                        <div>
+                            <label htmlFor="email" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
+                                Email
+                            </label>
+                            <div className="relative group">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                    <span className="material-icons-round text-slate-400 text-lg group-focus-within:text-purple-500 transition-colors">mail</span>
+                                </div>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                                    placeholder="email@dinkes.go.id"
+                                    required
+                                    autoComplete="email"
+                                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all text-sm shadow-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
+                                Password
+                            </label>
+                            <div className="relative group">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                    <span className="material-icons-round text-slate-400 text-lg group-focus-within:text-purple-500 transition-colors">lock</span>
+                                </div>
+                                <input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                                    placeholder="••••••••"
+                                    required
+                                    autoComplete="current-password"
+                                    className="w-full pl-12 pr-12 py-4 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all text-sm shadow-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    <span className="material-icons-round text-lg">
+                                        {showPassword ? "visibility_off" : "visibility"}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading || !email || !password}
+                            className="w-full py-4 px-6 rounded-xl bg-purple-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-200 hover:shadow-purple-300 hover:-translate-y-0.5 flex items-center justify-center gap-3 group"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Memverifikasi...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-icons-round text-lg">login</span>
+                                    Mulai Percakapan
+                                    <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="flex items-center gap-4 my-8">
+                        <div className="flex-1 h-px bg-slate-200"></div>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold font-mono">Informasi</span>
+                        <div className="flex-1 h-px bg-slate-200"></div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-100 flex items-start gap-3">
+                            <span className="material-icons-round text-purple-600 text-lg shrink-0 mt-0.5">info</span>
+                            <div>
+                                <p className="text-xs font-semibold text-purple-800 mb-0.5">Mendukung RBAC</p>
+                                <p className="text-[11px] text-purple-600/80">Hak akses mengikuti sistem registrasi SIGMA Ecosystem. Gunakan email saat ini.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 text-center flex flex-col items-center gap-3">
+                        <Link href="/chatbot" className="text-sm text-slate-400 hover:text-purple-600 transition-colors inline-flex items-center gap-1 group">
+                            <span className="material-icons-round text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                            Kembali ke Landing Page
+                        </Link>
+                        <Link href="/" className="text-sm text-slate-400 hover:text-indigo-600 transition-colors inline-flex items-center gap-1 group">
+                            <span className="material-icons-round text-sm group-hover:-translate-x-1 transition-transform">home</span>
+                            Kembali ke SIGMA Ecosystem
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
