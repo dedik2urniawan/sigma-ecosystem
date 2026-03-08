@@ -222,7 +222,7 @@ export default function ChatbotLanding() {
                             </span>
                         </div>
 
-                        <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-slate-900 mb-6 tracking-tighter leading-none relative drop-shadow-sm select-none">
+                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-6 tracking-tight leading-tight relative drop-shadow-sm select-none">
                             SIGMA<br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500">
                                 ADVISOR
