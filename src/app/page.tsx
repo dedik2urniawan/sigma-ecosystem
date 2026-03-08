@@ -718,9 +718,35 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Chatbot AI + Mobile App — still coming soon */}
+              {/* Chatbot AI — LIVE, links directly to chatbot */}
+              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-purple-200/60 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100 group">
+                <CornerAccent />
+                <div className="absolute top-0 right-0 p-8">
+                  <span className="bg-purple-50 text-purple-600 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-purple-100 tracking-wider font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+                    Live
+                  </span>
+                </div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-200">
+                  <span className="material-icons-round text-3xl">smart_toy</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-700 mb-3 group-hover:text-purple-600 transition-colors">Chatbot AI</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">
+                  AI-powered nutrition assistant for instant queries and data analysis.
+                </p>
+                <div className="mt-auto">
+                  <a
+                    href="/chatbot"
+                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-200"
+                  >
+                    <span className="material-icons-round text-sm">rocket_launch</span>
+                    Access Chatbot
+                  </a>
+                </div>
+              </div>
+
+              {/* Mobile App — still coming soon */}
               {[
-                { title: "Chatbot AI", desc: "AI-powered nutrition assistant for instant queries.", icon: "smart_toy", status: "Beta Soon", cta: "Try Beta" },
                 { title: "Mobile App", desc: "Field reporting PWA for Posyandu cadres.", icon: "smartphone", status: "Roadmap", cta: "Download" }
               ].map((app, i) => (
                 <div key={i} className="bg-slate-50/50 rounded-[2rem] p-8 border border-dashed border-slate-200 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-slate-300 hover:shadow-lg group">
@@ -736,23 +762,13 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-slate-500 mb-3 group-hover:text-slate-800 transition-colors">{app.title}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">{app.desc}</p>
                   <div className="mt-auto">
-                    {app.title === "Chatbot AI" ? (
-                      <Link
-                        href="/chatbot"
-                        className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-purple-600 hover:border-purple-200 transition-all shadow-sm"
-                      >
-                        <span className="material-icons-round text-sm">rocket_launch</span>
-                        {app.cta}
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => handleOpenModal(app.title)}
-                        className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
-                      >
-                        <span className="material-icons-round text-sm">construction</span>
-                        {app.cta}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleOpenModal(app.title)}
+                      className="w-full py-4 px-6 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
+                    >
+                      <span className="material-icons-round text-sm">construction</span>
+                      {app.cta}
+                    </button>
                   </div>
                 </div>
               ))}
