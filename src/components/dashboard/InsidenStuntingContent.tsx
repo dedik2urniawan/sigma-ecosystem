@@ -684,7 +684,7 @@ export default function InsidenStuntingContent() {
                             <YAxis yAxisId="right" orientation="right" label={{ value: 'Proporsi Kasus (%)', angle: 90, position: 'insideRight', style: { fill: '#64748b', fontSize: 11 } }} domain={[0, 100]} />
                             <Tooltip
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: number | undefined, name: string | number | undefined) => [value ? value.toFixed(2) + '%' : '0%', name]}
+                                formatter={(value: any, name: any) => [value ? Number(value).toFixed(2) + '%' : '0%', name]}
                             />
                             <Legend />
                             <Area yAxisId="left" type="monotone" dataKey="ir" name="Incidence Rate (Total)" fill="#8b5cf6" fillOpacity={0.1} stroke="#8b5cf6" strokeWidth={3} />

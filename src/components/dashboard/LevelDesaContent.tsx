@@ -306,7 +306,7 @@ export default function LevelDesaContent() {
                         : chartMetric === "wasting" ? (r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0)
                             : chartMetric === "underweight" ? (r.jumlah_timbang_ukur > 0 ? (r.underweight / r.jumlah_timbang_ukur) * 100 : 0)
                                 : (r.jumlah_timbang_ukur > 0 ? (r.obesitas / r.jumlah_timbang_ukur) * 100 : 0);
-                return { name: r.kelurahan, value: parseFloat(metricVal.toFixed(2)), type: "desa" as const };
+                return { name: r.kelurahan, value: parseFloat(metricVal.toFixed(2)), type: "desa" as "puskesmas" | "desa" };
             }).sort((a, b) => b.value - a.value);
         }
 
