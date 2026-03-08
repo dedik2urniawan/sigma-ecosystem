@@ -409,7 +409,13 @@ export default function SupervisiForm({ sessionId, puskesmasOptions, onBack }: P
                                                 <div className="flex-1 min-w-[150px]">
                                                     <input
                                                         type="text"
-                                                        placeholder={isIntegerSection ? "Keterangan tambahan..." : "Catatan..."}
+                                                        placeholder={(() => {
+                                                            if (item.section === "perencanaan_program") {
+                                                                if (item.item_number === 1) return "RUK Gizi, Uraian Analisis Makroplanning Program Gizi Puskesmas dll.";
+                                                                if (item.item_number === 2) return "RUK Gizi Naratif, Profil Proker Gizi, dan AnSit Program Gizi dll.";
+                                                            }
+                                                            return isIntegerSection ? "Keterangan tambahan..." : "Catatan...";
+                                                        })()}
                                                         value={item.catatan || ""}
                                                         onChange={(e) => handleItemChange(item.section, item.item_number, "catatan", e.target.value || null)}
                                                         className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"

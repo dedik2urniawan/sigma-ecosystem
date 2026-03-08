@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/dashboard/layout";
-import { SUPERVISI_SECTIONS } from "@/lib/supervisiConfig";
+import { SUPERVISI_SECTIONS, TOTAL_ITEMS } from "@/lib/supervisiConfig";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Session {
@@ -242,7 +242,7 @@ export default function MonevDashboard() {
                     tanggal: session.tanggal_supervisi,
                     status: session.status,
                     ya, tidak,
-                    percentage: Math.round(((ya + tidak) / 32) * 100),
+                    percentage: Math.round(((ya + tidak) / TOTAL_ITEMS) * 100),
                 };
             }).sort((a, b) => b.percentage - a.percentage);
             setPkmTable(rows);
@@ -256,7 +256,7 @@ export default function MonevDashboard() {
     // ── Derived stats ──────────────────────────────────────────────────────
     const totalYa = sectionStats.reduce((a, s) => a + s.yaCount, 0);
     const totalTidak = sectionStats.reduce((a, s) => a + s.tidakCount, 0);
-    const totalPossible = 32 * Math.max(aggregatedSessionIds.length, 1);
+    const totalPossible = TOTAL_ITEMS * Math.max(aggregatedSessionIds.length, 1);
     const overallPct = Math.round(((totalYa + totalTidak) / totalPossible) * 100);
     const yaOnlyPct = Math.round((totalYa / totalPossible) * 100);
 

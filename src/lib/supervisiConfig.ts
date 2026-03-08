@@ -20,7 +20,7 @@ export interface SupervisiSection {
 }
 
 /** Sections where catatan field is numeric (integer analysis) */
-export const INTEGER_SECTIONS = ['sumber_daya_manusia', 'sarana_prasarana', 'stok_obat_program'];
+export const INTEGER_SECTIONS = ['sumber_daya_manusia', 'sarana_prasarana', 'stok_obat_program', 'stok_obat_program_2026'];
 
 export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     {
@@ -28,7 +28,7 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
         title: 'Perencanaan Program',
         inputType: 'text',
         items: [
-            { number: 1, label: 'Tahunan Program Gizi' },
+            { number: 1, label: 'Rencana Tahunan Program Gizi' },
             { number: 2, label: 'Perencanaan berbasis analisis situasi wilayah' },
             { number: 3, label: 'Menggunakan data (ePPGBM dan SIGIZI) untuk dianalisa' },
             { number: 4, label: 'Ada microplanning per desa' },
@@ -60,7 +60,23 @@ export const SUPERVISI_SECTIONS: SupervisiSection[] = [
     },
     {
         id: 'stok_obat_program',
-        title: 'Stok Obat Program',
+        title: 'Stok Obat Program Gizi Akhir Tahun 2025',
+        inputType: 'integer',
+        items: [
+            { number: 1, label: 'Vitamin A biru' },
+            { number: 2, label: 'Vitamin A merah' },
+            { number: 3, label: 'Tablet Tambah Darah' },
+            { number: 4, label: 'MMS' },
+            { number: 5, label: 'Taburia' },
+            { number: 6, label: 'ZInc' },
+            { number: 7, label: 'PKMK <1 th' },
+            { number: 8, label: 'PKMK >1 th' },
+            { number: 9, label: 'PMT Ibu Hamil' },
+        ],
+    },
+    {
+        id: 'stok_obat_program_2026',
+        title: 'Stok Obat Program Gizi Sampai Bulan Ini Tahun 2026',
         inputType: 'integer',
         items: [
             { number: 1, label: 'Vitamin A biru' },
