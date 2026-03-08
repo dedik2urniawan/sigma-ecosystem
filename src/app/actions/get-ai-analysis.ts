@@ -1,8 +1,6 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
+import { GoogleAuth } from "google-auth-library";
 
 export interface AnalysisContext {
     filterTahun: number | null;
@@ -29,27 +27,53 @@ export interface AnalysisContext {
 }
 
 export async function generateHealthAnalysis(context: AnalysisContext) {
-    console.log("Generating analysis with context:", {
+    console.log("Generating analysis with Vertex AI context:", {
         tahun: context.filterTahun,
         bulan: context.filterBulan,
         puskesmas: context.filterPuskesmas
     });
 
-    if (!process.env.GOOGLE_API_KEY) {
-        console.error("GOOGLE_API_KEY is missing in process.env");
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+
+    if (!projectId) {
+        console.error("Missing Vertex AI Credentials (GOOGLE_CLOUD_PROJECT)");
         return {
             success: false,
-            error: "API Key not configured. Please add GOOGLE_API_KEY to .env.local",
+            error: "Konfigurasi server (GCP Project ID) tidak lengkap.",
         };
     }
-    console.log("API Key is present (starts with):", process.env.GOOGLE_API_KEY.substring(0, 5) + "...");
 
     try {
-        // Use gemini-flash-latest (confirmed available in user's model list)
-        // gemini-1.5-flash check failed (404), gemini-2.0-flash check failed (429)
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        let auth;
+        // Check if we have Base64 credentials for Vercel deployment
+        if (process.env.GOOGLE_CREDENTIALS_BASE64) {
+            try {
+                const credsStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
+                const credentials = JSON.parse(credsStr);
+                auth = new GoogleAuth({
+                    credentials,
+                    scopes: 'https://www.googleapis.com/auth/cloud-platform'
+                });
+            } catch (err) {
+                console.error("Failed to parse GOOGLE_CREDENTIALS_BASE64", err);
+                return { success: false, error: "Konfigurasi Base64 Kredensial tidak valid." };
+            }
+        }
+        // Fallback to local file path mapping if no Base64
+        else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+            auth = new GoogleAuth({
+                scopes: 'https://www.googleapis.com/auth/cloud-platform'
+            });
+        }
+        else {
+            console.error("Missing Vertex AI Credentials");
+            return { success: false, error: "Konfigurasi Kredensial GCP tidak ditemukan." };
+        }
 
-        const prompt = `
+        const accessToken = await auth.getAccessToken();
+
+        const fullSystemPrompt = `
       You are SIGMA Advisor, an expert Health Policy Analyst for Kabupaten Malang.
       Analyze the following health service data and provide strategic recommendations.
       
@@ -77,29 +101,48 @@ export async function generateHealthAnalysis(context: AnalysisContext) {
       Output in Bahasa Indonesia.
     `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/gemini-2.0-flash:generateContent`;
 
-        return { success: true, data: text };
-    } catch (error: any) {
-        console.error("Gemini API Error Full Object:", JSON.stringify(error, null, 2));
-        console.error("Gemini API Error Message:", error.message);
+        const response = await fetch(vertexEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Asisten Analis Kebijakan Kesehatan." }] },
+                contents: [{ role: "user", parts: [{ text: fullSystemPrompt }] }],
+                generationConfig: {
+                    temperature: 0.3,
+                    topP: 0.8,
+                    maxOutputTokens: 1024,
+                }
+            }),
+        });
 
-        let errorMessage = "Gagal menghubungkan ke AI Service. Coba lagi nanti.";
+        const responseData = await response.json();
 
-        if (error.message?.includes("API key not valid")) {
-            errorMessage = "API Key tidak valid. Cek .env.local";
-        } else if (error.message?.includes("User location is not supported")) {
-            errorMessage = "Lokasi tidak didukung (Gunakan VPN server US/Singapore jika perlu).";
-        } else if (error.message?.includes("429") || error.message?.includes("Quota") || error.message?.includes("quota")) {
-            errorMessage = "Limit Kuota Tercapai (429). Tunggu 1 menit.";
+        if (!response.ok || responseData.error) {
+            const errMsg = responseData.error?.message || 'Unknown error';
+            console.error("Vertex AI Error:", errMsg);
+
+            if (response.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED')) {
+                return { success: false, error: "⏳ **SIGMA Advisor sedang sibuk.** Batas Vertex AI tercapai." };
+            }
+
+            return { success: false, error: "Layanan Vertex AI tidak tersedia: " + errMsg };
         }
 
+        const aiText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respons dari AI.";
+        return { success: true, data: aiText };
+
+    } catch (error: any) {
+        console.error("=== API ANALYSIS ERROR ===", error.message);
         return {
             success: false,
-            error: errorMessage,
-            debugInfo: error.message // Sending debug info to client temporarily
+            error: "Terjadi kesalahan koneksi ke Vertex AI.",
+            debugInfo: error.message
         };
     }
 }
+

@@ -36,7 +36,7 @@ Pilar Indikator Balita Gizi:
 * % Underweight = Balita Underweight / Balita Ditimbang 
 * % Overweight = Balita Overweight / Balita Ditimbang`;
 
-async function fetchSigmaContext(): Promise<string> {
+export async function fetchSigmaContext(puskesmasFilter?: string): Promise<string> {
     try {
         const pkmkAdmin = createClient(
             process.env.NEXT_PUBLIC_PKMK_SUPABASE_URL!,
@@ -44,15 +44,23 @@ async function fetchSigmaContext(): Promise<string> {
         );
 
         // 1. Fetch historical data bultim and gizi (>= 2025)
-        const bultimPromise = supabaseAdmin
+        let bultimQuery = supabaseAdmin
             .from('data_bultim')
             .select('*')
             .gte('tahun', 2025);
 
-        const giziPromise = supabaseAdmin
+        let giziQuery = supabaseAdmin
             .from('data_balita_gizi')
             .select('*')
             .gte('tahun', 2025);
+
+        if (puskesmasFilter && puskesmasFilter !== "all") {
+            bultimQuery = bultimQuery.ilike('puskesmas', puskesmasFilter);
+            giziQuery = giziQuery.ilike('puskesmas', puskesmasFilter);
+        }
+
+        const bultimPromise = bultimQuery;
+        const giziPromise = giziQuery;
 
         // 2. Pilar 3: PKMK Data (Snapshot Realtime)
         const redflagPromise = pkmkAdmin.from('balita').select('id', { count: 'exact', head: true }).eq('redflag_any', true);
@@ -64,7 +72,7 @@ async function fetchSigmaContext(): Promise<string> {
         const giziData = giziRes.data || [];
 
         if (bultimData.length === 0 && giziData.length === 0) {
-            return `[KONTEKS DATA SIGMA]\nData tidak dapat dimuat.\n[Akhir Konteks]`;
+            return `[KONTEKS DATA SIGMA]\nData tidak dapat dimuat atau kosong.\n[Akhir Konteks]`;
         }
 
         const countRedflag = redflagRes.count || 0;
@@ -85,8 +93,8 @@ async function fetchSigmaContext(): Promise<string> {
 
         let ctx = `[KONTEKS DATA SIGMA - HISTORIS (2025-2026)]\n\n`;
 
-        // === 1. TREN MAKRO KABUPATEN ===
-        ctx += `### Tren Agregat Kabupaten (Bulan ke Bulan)\n`;
+        // === 1. TREN MAKRO ===
+        ctx += `### Tren Agregat (Bulan ke Bulan)\n`;
         for (const period of periods) {
             const bultimPeriod = bultimData.filter(d => d.tahun === period.tahun && d.bulan === period.bulan);
             const giziPeriod = giziData.filter(d => d.tahun === period.tahun && d.bulan === period.bulan);
@@ -121,7 +129,7 @@ async function fetchSigmaContext(): Promise<string> {
         }
 
         ctx += `\n### Detail Per-Puskesmas (Kompresi Teks Khusus)\n`;
-        ctx += `*(Format: [Bln Thn] PUSKESMAS | Entry:X% | Pelyan(Stunt:X% Und:X% Wast:X%) | Gizi(Stunt:X% ASI:X% MPASI:X%))*\n`;
+        ctx += `*(Format: [Bln Thn] PUSKESMAS | Entry:X% | Pelyan(S:X% U:X% W:X%) | Gizi(S:X% ASI:X% MP:X%))*\n`;
 
         // Group by puskesmas, then period
         const puskesmasSet = Array.from(new Set([...bultimData, ...giziData].map(d => d.puskesmas))).filter(Boolean).sort();
@@ -140,26 +148,28 @@ async function fetchSigmaContext(): Promise<string> {
                 const wasP = (b && b.jumlah_timbang_ukur > 0) ? ((b.wasting / b.jumlah_timbang_ukur) * 100).toFixed(1) : '0';
 
                 // Gizi Calc
-                const asiP = (g && Number(g.jumlah_bayi_usia_6_bulan) > 0) ? ((Number(g.jumlah_bayi_asi_eksklusif_sampai_6_bulan) / Number(g.jumlah_bayi_usia_6_bulan)) * 100).toFixed(1) : '0';
-                const mpaP = (g && Number(g.jumlah_anak_usia_6_23_bulan) > 0) ? ((Number(g.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) / Number(g.jumlah_anak_usia_6_23_bulan)) * 100).toFixed(1) : '0';
-                const stgP = (g && Number(g.jumlah_balita_diukur_pbtb) > 0) ? ((Number(g.jumlah_balita_stunting) / Number(g.jumlah_balita_diukur_pbtb)) * 100).toFixed(1) : '0';
+                const pASI = (g && Number(g.jumlah_bayi_usia_6_bulan) > 0) ? ((Number(g.jumlah_bayi_asi_eksklusif_sampai_6_bulan) / Number(g.jumlah_bayi_usia_6_bulan)) * 100).toFixed(1) : '0';
+                const pMPASI = (g && Number(g.jumlah_anak_usia_6_23_bulan) > 0) ? ((Number(g.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) / Number(g.jumlah_anak_usia_6_23_bulan)) * 100).toFixed(1) : '0';
+                const pStG = (g && Number(g.jumlah_balita_diukur_pbtb) > 0) ? ((Number(g.jumlah_balita_stunting) / Number(g.jumlah_balita_diukur_pbtb)) * 100).toFixed(1) : '0';
 
-                ctx += `[${BULAN_NAME[period.bulan]} ${period.tahun.toString().slice(-2)}] ${pusk} | Entry:${entP}% | Pelyan(Stunt:${stP}% Und:${unP}% Wast:${wasP}%) | Gizi(Stunt:${stgP}% ASI:${asiP}% MPASI:${mpaP}%)\n`;
+                ctx += `[${BULAN_NAME[period.bulan]} ${period.tahun}] ${pusk.padEnd(16, ' ')} | Entry:${entP.padStart(4, ' ')}% | Pelyan(S:${stP}% U:${unP}% W:${wasP}%) | Gizi(S:${pStG}% ASI:${pASI}% MP:${pMPASI}%)\n`;
             }
         }
 
-        // === PKMK Add-on ===
-        ctx += `\n### Pilar 3: Intervensi PKMK (Kondisi Realtime)\n`;
-        ctx += `- Total Balita Terindikasi **Redflag**: ${countRedflag.toLocaleString('id-ID')} anak\n`;
-        ctx += `- Total Balita dalam **Kohort Aktif (Monitoring PKMK)**: ${countKohort.toLocaleString('id-ID')} anak\n`;
-
-        ctx += `\n[Akhir Konteks Data SIGMA]\n`;
+        ctx += `\n[KONTEKS DATA PKMK - REALTIME SNAPSHOT]\n`;
+        // Only include PKMK totals if we are analyzing ALL regions (PKMK doesn't have identical puskesmas_id mapping in this minimal context)
+        if (!puskesmasFilter || puskesmasFilter === "all") {
+            ctx += `* Balita dalam pantauan aktif PKMK saat ini: ${countKohort} balita\n`;
+            ctx += `* Balita terindikasi memiliki Redflag medis: ${countRedflag} balita\n`;
+        } else {
+            ctx += `* (Data detail PKMK tingkat individu tidak disertakan di laporan agregrat puskesmas otomatis)\n`;
+        }
+        ctx += `\n[Akhir Konteks]\n`;
 
         return ctx;
-
-    } catch (err: any) {
-        console.error("RAG Error:", err.message);
-        return `[KONTEKS DATA SIGMA]\nSistem gagal mengumpulkan data RAG terpadu: ${err.message}\n[Akhir Konteks]`;
+    } catch (error) {
+        console.error("Error formatting SIGMA Context", error);
+        return `[KONTEKS DATA SIGMA]\nGagal memuat konteks.\n[Akhir Konteks]\n`;
     }
 }
 

@@ -72,7 +72,7 @@ const menuItems = [
         label: "AI Analytics",
         icon: "auto_awesome",
         href: "/dashboard/ai-analytics",
-        ready: false,
+        ready: true,
     },
 ];
 
