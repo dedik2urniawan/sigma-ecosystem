@@ -19,6 +19,7 @@ Tugas utama Anda:
 Panduan menjawab:
 - JANGAN PERNAH mengarang data (halusinasi). Gunakan angka dari [KONTEKS DATA SIGMA].
 - Jika data terkait tidak ada di konteks, katakan bahwa data tersebut tidak tersedia di sistem saat ini.
+- Analisis Tren Waktu: Anda diberikan data Historis (Bulan ke Bulan) tingkat Kabupaten dan detail kompresi per-Puskesmas. Jawab dengan cerdas jika user meminta perbandingan progres antar bulan (contoh: penurunan/kenaikan stunting dari Januari ke Februari 2026).
 - Gunakan bahasa Indonesia profesional, proaktif, dan analitis.
 - Format jawaban dengan baik menggunakan Markdown. Gunakan **tebal** HANYA pada kata kunci penting di DALAM kalimat. JANGAN MENGGUNAKAN cetak tebal yang berdiri sendiri untuk judul (seperti **Gambaran Umum:**). Gunakan format judul standar markdown (contoh: ### Gambaran Umum) jika ingin membuat struktur bagian.
 - Gunakan rumus prevalensi berikut saat menjelaskan (angka riil lihat konteks):
@@ -42,144 +43,118 @@ async function fetchSigmaContext(): Promise<string> {
             process.env.PKMK_SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // 1. Fetch Pilar 1: Pelayanan Kesehatan (bultim) - 1 Month Latest
-        const { data: bultimData, error: errBultim } = await supabaseAdmin
+        // 1. Fetch historical data bultim and gizi (>= 2025)
+        const bultimPromise = supabaseAdmin
             .from('data_bultim')
             .select('*')
-            .order('tahun', { ascending: false })
-            .order('bulan', { ascending: false })
-            .limit(39); // Approx 1 month for 39 puskesmas
+            .gte('tahun', 2025);
 
-        if (errBultim || !bultimData || bultimData.length === 0) {
-            return `[KONTEKS DATA SIGMA]\nData tidak dapat dimuat.\n[Akhir Konteks]`;
-        }
-
-        const latestTahun = bultimData[0].tahun;
-        const latestBulan = bultimData[0].bulan;
-        const currentPeriodRows = bultimData.filter(d => d.tahun === latestTahun && d.bulan === latestBulan);
-
-        // 2. Pilar 2: Indikator Balita Gizi (Parallel)
         const giziPromise = supabaseAdmin
             .from('data_balita_gizi')
             .select('*')
-            .eq('tahun', latestTahun)
-            .eq('bulan', latestBulan);
+            .gte('tahun', 2025);
 
-        // 3. Pilar 3: PKMK Data (Parallel)
+        // 2. Pilar 3: PKMK Data (Snapshot Realtime)
         const redflagPromise = pkmkAdmin.from('balita').select('id', { count: 'exact', head: true }).eq('redflag_any', true);
         const kohortPromise = pkmkAdmin.from('kohort').select('id', { count: 'exact', head: true }).eq('status', 'AKTIF');
 
-        const [giziRes, redflagRes, kohortRes] = await Promise.all([giziPromise, redflagPromise, kohortPromise]);
+        const [bultimRes, giziRes, redflagRes, kohortRes] = await Promise.all([bultimPromise, giziPromise, redflagPromise, kohortPromise]);
 
+        const bultimData = bultimRes.data || [];
         const giziData = giziRes.data || [];
+
+        if (bultimData.length === 0 && giziData.length === 0) {
+            return `[KONTEKS DATA SIGMA]\nData tidak dapat dimuat.\n[Akhir Konteks]`;
+        }
+
         const countRedflag = redflagRes.count || 0;
         const countKohort = kohortRes.count || 0;
 
-        // === AGGREGATE PILAR 1 ===
-        const aggBultim = currentPeriodRows.reduce((acc, d) => ({
-            sasaran: acc.sasaran + (d.data_sasaran || 0),
-            timbang: acc.timbang + (d.jumlah_timbang || 0),
-            ukur: acc.ukur + (d.jumlah_ukur || 0),
-            timbangUkur: acc.timbangUkur + (d.jumlah_timbang_ukur || 0),
-            stunting: acc.stunting + (d.stunting || 0),
-            underweight: acc.underweight + (d.underweight || 0),
-            wasting: acc.wasting + (d.wasting || 0),
-            giziBuruk: acc.giziBuruk + (d.gizi_buruk || 0),
-        }), { sasaran: 0, timbang: 0, ukur: 0, timbangUkur: 0, stunting: 0, underweight: 0, wasting: 0, giziBuruk: 0 });
-
-        const dataEntryPct = aggBultim.sasaran > 0 ? ((aggBultim.timbang / aggBultim.sasaran) * 100).toFixed(2) : '0';
-        const prevStunting = aggBultim.ukur > 0 ? ((aggBultim.stunting / aggBultim.ukur) * 100).toFixed(2) : '0';
-        const prevUnderweight = aggBultim.timbang > 0 ? ((aggBultim.underweight / aggBultim.timbang) * 100).toFixed(2) : '0';
-        const prevWasting = aggBultim.timbangUkur > 0 ? ((aggBultim.wasting / aggBultim.timbangUkur) * 100).toFixed(2) : '0';
-
-        // === AGGREGATE PILAR 2 ===
-        const aggGizi = giziData.reduce((acc, d) => ({
-            sasaranBalita: acc.sasaranBalita + (Number(d.jumlah_sasaran_balita) || 0),
-            ditimbang: acc.ditimbang + (Number(d.jumlah_balita_ditimbang) || 0),
-            diukurPBTB: acc.diukurPBTB + (Number(d.jumlah_balita_diukur_pbtb) || 0),
-            timbangUkur: acc.timbangUkur + (Number(d.jumlah_balita_ditimbang_dan_diukur) || 0),
-            stunting: acc.stunting + (Number(d.jumlah_balita_stunting) || 0),
-            wasting: acc.wasting + (Number(d.jumlah_balita_wasting) || 0),
-            underweight: acc.underweight + (Number(d.jumlah_balita_underweight) || 0),
-            overweight: acc.overweight + (Number(d.jumlah_balita_overweight) || 0),
-            asiEksklusif: acc.asiEksklusif + (Number(d.jumlah_bayi_asi_eksklusif_sampai_6_bulan) || 0),
-            bayi6Bulan: acc.bayi6Bulan + (Number(d.jumlah_bayi_usia_6_bulan) || 0),
-            mpasiBaik: acc.mpasiBaik + (Number(d.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) || 0),
-            anak6_23: acc.anak6_23 + (Number(d.jumlah_anak_usia_6_23_bulan) || 0),
-            bbNaik: acc.bbNaik + (Number(d.jumlah_balita_naik_berat_badannya_n) || 0),
-            bbTidakNaik: acc.bbTidakNaik + (Number(d.jumlah_balita_tidak_naik_berat_badannya_t) || 0),
-            tatalaksanaBuruk: acc.tatalaksanaBuruk + (Number(d.jumlah_kasus_gizi_buruk_balita_6_59_bulan_mendapat_perawatan_sa) || 0),
-        }), {
-            sasaranBalita: 0, ditimbang: 0, diukurPBTB: 0, timbangUkur: 0,
-            stunting: 0, wasting: 0, underweight: 0, overweight: 0,
-            asiEksklusif: 0, bayi6Bulan: 0, mpasiBaik: 0, anak6_23: 0, bbNaik: 0, bbTidakNaik: 0, tatalaksanaBuruk: 0
-        });
-
-        // Prevalences Pilar Gizi
-        const prevGiziStunting = aggGizi.diukurPBTB > 0 ? ((aggGizi.stunting / aggGizi.diukurPBTB) * 100).toFixed(2) : '0';
-        const prevGiziWasting = aggGizi.timbangUkur > 0 ? ((aggGizi.wasting / aggGizi.timbangUkur) * 100).toFixed(2) : '0';
-        const prevGiziUnderweight = aggGizi.ditimbang > 0 ? ((aggGizi.underweight / aggGizi.ditimbang) * 100).toFixed(2) : '0';
-        const prevGiziOverweight = aggGizi.ditimbang > 0 ? ((aggGizi.overweight / aggGizi.ditimbang) * 100).toFixed(2) : '0';
-
-        const asiPct = aggGizi.bayi6Bulan > 0 ? ((aggGizi.asiEksklusif / aggGizi.bayi6Bulan) * 100).toFixed(1) : '0';
-        const mpasiPct = aggGizi.anak6_23 > 0 ? ((aggGizi.mpasiBaik / aggGizi.anak6_23) * 100).toFixed(1) : '0';
-
         const BULAN_NAME: Record<number, string> = {
-            1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni',
-            7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+            1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
+            7: 'Jul', 8: 'Ags', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
         };
 
-        // === COMPILE MARKDOWN CONTEXT ===
-        let ctx = `[KONTEKS DATA SIGMA — Data Real Kabupaten Malang Periode ${BULAN_NAME[latestBulan]} ${latestTahun}]\n\n`;
+        // Get unique periods (tahun-bulan combination) sorted chronologically
+        const periods = Array.from(new Set([...bultimData, ...giziData].map(d => `${d.tahun}-${d.bulan}`)))
+            .map(p => {
+                const [t, b] = p.split('-');
+                return { tahun: Number(t), bulan: Number(b) };
+            })
+            .sort((a, b) => a.tahun === b.tahun ? a.bulan - b.bulan : a.tahun - b.tahun);
 
-        ctx += `### PILAR 1: Pelayanan Kesehatan (Makro)\n`;
-        ctx += `- Total Sasaran Balita: ${aggBultim.sasaran.toLocaleString('id-ID')} anak\n`;
-        ctx += `- **Capaian Data Entry (Ditimbang): ${dataEntryPct}%** (${aggBultim.timbang.toLocaleString('id-ID')} anak)\n`;
-        ctx += `- **Prevalensi Stunting: ${prevStunting}%** (${aggBultim.stunting.toLocaleString('id-ID')} anak dari ${aggBultim.ukur.toLocaleString('id-ID')} diukur)\n`;
-        ctx += `- **Prevalensi Underweight: ${prevUnderweight}%** (${aggBultim.underweight.toLocaleString('id-ID')} anak dari ${aggBultim.timbang.toLocaleString('id-ID')} ditimbang)\n`;
-        ctx += `- **Prevalensi Wasting: ${prevWasting}%** (${aggBultim.wasting.toLocaleString('id-ID')} anak dari ${aggBultim.timbangUkur.toLocaleString('id-ID')} ditimbang & diukur)\n\n`;
+        let ctx = `[KONTEKS DATA SIGMA - HISTORIS (2025-2026)]\n\n`;
 
-        ctx += `### PILAR 2: Indikator Balita Gizi (Fundamental/Akar Masalah)\n`;
-        ctx += `- **Total Sasaran Balita (Gizi)**: ${aggGizi.sasaranBalita.toLocaleString('id-ID')} anak\n`;
-        ctx += `- **Indikator Stunting: ${prevGiziStunting}%** (${aggGizi.stunting.toLocaleString('id-ID')} stunting dari ${aggGizi.diukurPBTB.toLocaleString('id-ID')} balita diukur PBTB)\n`;
-        ctx += `- **Indikator Wasting: ${prevGiziWasting}%** (${aggGizi.wasting.toLocaleString('id-ID')} wasting dari ${aggGizi.timbangUkur.toLocaleString('id-ID')} balita ditimbang dan diukur)\n`;
-        ctx += `- **Indikator Underweight: ${prevGiziUnderweight}%** (${aggGizi.underweight.toLocaleString('id-ID')} underweight dari ${aggGizi.ditimbang.toLocaleString('id-ID')} balita ditimbang)\n`;
-        ctx += `- **Indikator Overweight: ${prevGiziOverweight}%** (${aggGizi.overweight.toLocaleString('id-ID')} overweight dari ${aggGizi.ditimbang.toLocaleString('id-ID')} balita ditimbang)\n`;
-        ctx += `- **Capaian ASI Eksklusif (bayi 6bln): ${asiPct}%** (${aggGizi.asiEksklusif.toLocaleString('id-ID')} bayi)\n`;
-        ctx += `- **Capaian MPASI Baik (anak 6-23bln): ${mpasiPct}%** (${aggGizi.mpasiBaik.toLocaleString('id-ID')} anak)\n`;
-        ctx += `- Tren Berat Badan: Naik (N)=${aggGizi.bbNaik.toLocaleString('id-ID')}, Tidak Naik (T)=${aggGizi.bbTidakNaik.toLocaleString('id-ID')}\n`;
-        ctx += `- Tatalaksana: ${aggGizi.tatalaksanaBuruk.toLocaleString('id-ID')} balita gizi buruk mendapat perawatan.\n\n`;
+        // === 1. TREN MAKRO KABUPATEN ===
+        ctx += `### Tren Agregat Kabupaten (Bulan ke Bulan)\n`;
+        for (const period of periods) {
+            const bultimPeriod = bultimData.filter(d => d.tahun === period.tahun && d.bulan === period.bulan);
+            const giziPeriod = giziData.filter(d => d.tahun === period.tahun && d.bulan === period.bulan);
 
-        ctx += `### PILAR 3: Intervensi PKMK (Analytical Add-on)\n`;
-        ctx += `*(Gunakan data ini untuk analisis penanganan kasus spesifik/kuratif)*\n`;
-        ctx += `- Jumlah Balita Terindikasi **Redflag**: ${countRedflag.toLocaleString('id-ID')} anak\n`;
-        ctx += `- Jumlah Balita dalam **Kohort Aktif (Monitoring PKMK)**: ${countKohort.toLocaleString('id-ID')} anak\n\n`;
+            // Bultim Aggregate
+            const aggB = bultimPeriod.reduce((acc, d) => ({
+                sasaran: acc.sasaran + (d.data_sasaran || 0), timbang: acc.timbang + (d.jumlah_timbang || 0),
+                ukur: acc.ukur + (d.jumlah_ukur || 0), timbangUkur: acc.timbangUkur + (d.jumlah_timbang_ukur || 0),
+                stunting: acc.stunting + (d.stunting || 0), underweight: acc.underweight + (d.underweight || 0), wasting: acc.wasting + (d.wasting || 0)
+            }), { sasaran: 0, timbang: 0, ukur: 0, timbangUkur: 0, stunting: 0, underweight: 0, wasting: 0 });
 
-        // === Puskesmas Rankings ===
-        ctx += `### Analisis Top 5 Puskesmas (Stunting & Entry)\n`;
-        const sortedPuskesmas = [...currentPeriodRows].map(d => {
-            const stuntingPct = d.jumlah_ukur > 0 ? (d.stunting / d.jumlah_ukur) * 100 : 0;
-            const entryPct = d.data_sasaran > 0 ? (d.jumlah_timbang / d.data_sasaran) * 100 : 0;
-            return { nama: d.puskesmas, sasaran: d.data_sasaran, stuntingPct, entryPct, stunting: d.stunting };
-        });
+            const entPct = aggB.sasaran > 0 ? ((aggB.timbang / aggB.sasaran) * 100).toFixed(1) : '0';
+            const stPct = aggB.ukur > 0 ? ((aggB.stunting / aggB.ukur) * 100).toFixed(1) : '0';
+            const unPct = aggB.timbang > 0 ? ((aggB.underweight / aggB.timbang) * 100).toFixed(1) : '0';
+            const wasPct = aggB.timbangUkur > 0 ? ((aggB.wasting / aggB.timbangUkur) * 100).toFixed(1) : '0';
 
-        // Stunting Tertinggi
-        const topStunting = [...sortedPuskesmas].sort((a, b) => b.stuntingPct - a.stuntingPct).slice(0, 5);
-        ctx += `**Puskesmas dgn Prevalensi Stunting TERTINGGI:**\n`;
-        topStunting.forEach((p, i) => ctx += `${i + 1}. ${p.nama}: ${p.stuntingPct.toFixed(1)}% (${p.stunting} anak)\n`);
+            // Gizi Aggregate
+            const aggG = giziPeriod.reduce((acc, d) => ({
+                asi: acc.asi + (Number(d.jumlah_bayi_asi_eksklusif_sampai_6_bulan) || 0),
+                b6: acc.b6 + (Number(d.jumlah_bayi_usia_6_bulan) || 0),
+                mpasi: acc.mpasi + (Number(d.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) || 0),
+                a623: acc.a623 + (Number(d.jumlah_anak_usia_6_23_bulan) || 0),
+                st: acc.st + (Number(d.jumlah_balita_stunting) || 0),
+                ukPBTB: acc.ukPBTB + (Number(d.jumlah_balita_diukur_pbtb) || 0)
+            }), { asi: 0, b6: 0, mpasi: 0, a623: 0, st: 0, ukPBTB: 0 });
 
-        // Entry Terendah & Tertinggi
-        const sortedEntry = [...sortedPuskesmas].sort((a, b) => b.entryPct - a.entryPct);
-        const topEntry = sortedEntry.slice(0, 5);
-        const bottomEntry = sortedEntry.slice(-5).reverse();
+            const asiPct = aggG.b6 > 0 ? ((aggG.asi / aggG.b6) * 100).toFixed(1) : '0';
+            const mpaPct = aggG.a623 > 0 ? ((aggG.mpasi / aggG.a623) * 100).toFixed(1) : '0';
+            const stgPct = aggG.ukPBTB > 0 ? ((aggG.st / aggG.ukPBTB) * 100).toFixed(1) : '0';
 
-        ctx += `\n**Puskesmas dgn Capaian Data Entry TERTINGGI:**\n`;
-        topEntry.forEach((p, i) => ctx += `${i + 1}. ${p.nama}: ${p.entryPct.toFixed(1)}%\n`);
+            ctx += `- [${BULAN_NAME[period.bulan]} ${period.tahun}] Bultim(Entry:${entPct}% Stunt:${stPct}% Und:${unPct}% Wasting:${wasPct}%) | Gizi(Stunt:${stgPct}% ASI:${asiPct}% MPASI:${mpaPct}%)\n`;
+        }
 
-        ctx += `\n**Puskesmas dgn Capaian Data Entry TERENDAH:**\n`;
-        bottomEntry.forEach((p, i) => ctx += `${i + 1}. ${p.nama}: ${p.entryPct.toFixed(1)}%\n`);
+        ctx += `\n### Detail Per-Puskesmas (Kompresi Teks Khusus)\n`;
+        ctx += `*(Format: [Bln Thn] PUSKESMAS | Entry:X% | Pelyan(Stunt:X% Und:X% Wast:X%) | Gizi(Stunt:X% ASI:X% MPASI:X%))*\n`;
+
+        // Group by puskesmas, then period
+        const puskesmasSet = Array.from(new Set([...bultimData, ...giziData].map(d => d.puskesmas))).filter(Boolean).sort();
+
+        for (const pusk of puskesmasSet) {
+            for (const period of periods) {
+                const b = bultimData.find(d => d.puskesmas === pusk && d.tahun === period.tahun && d.bulan === period.bulan);
+                const g = giziData.find(d => d.puskesmas === pusk && d.tahun === period.tahun && d.bulan === period.bulan);
+
+                if (!b && !g) continue;
+
+                // Bultim Calc
+                const entP = (b && b.data_sasaran > 0) ? ((b.jumlah_timbang / b.data_sasaran) * 100).toFixed(1) : '0';
+                const stP = (b && b.jumlah_ukur > 0) ? ((b.stunting / b.jumlah_ukur) * 100).toFixed(1) : '0';
+                const unP = (b && b.jumlah_timbang > 0) ? ((b.underweight / b.jumlah_timbang) * 100).toFixed(1) : '0';
+                const wasP = (b && b.jumlah_timbang_ukur > 0) ? ((b.wasting / b.jumlah_timbang_ukur) * 100).toFixed(1) : '0';
+
+                // Gizi Calc
+                const asiP = (g && Number(g.jumlah_bayi_usia_6_bulan) > 0) ? ((Number(g.jumlah_bayi_asi_eksklusif_sampai_6_bulan) / Number(g.jumlah_bayi_usia_6_bulan)) * 100).toFixed(1) : '0';
+                const mpaP = (g && Number(g.jumlah_anak_usia_6_23_bulan) > 0) ? ((Number(g.jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik) / Number(g.jumlah_anak_usia_6_23_bulan)) * 100).toFixed(1) : '0';
+                const stgP = (g && Number(g.jumlah_balita_diukur_pbtb) > 0) ? ((Number(g.jumlah_balita_stunting) / Number(g.jumlah_balita_diukur_pbtb)) * 100).toFixed(1) : '0';
+
+                ctx += `[${BULAN_NAME[period.bulan]} ${period.tahun.toString().slice(-2)}] ${pusk} | Entry:${entP}% | Pelyan(Stunt:${stP}% Und:${unP}% Wast:${wasP}%) | Gizi(Stunt:${stgP}% ASI:${asiP}% MPASI:${mpaP}%)\n`;
+            }
+        }
+
+        // === PKMK Add-on ===
+        ctx += `\n### Pilar 3: Intervensi PKMK (Kondisi Realtime)\n`;
+        ctx += `- Total Balita Terindikasi **Redflag**: ${countRedflag.toLocaleString('id-ID')} anak\n`;
+        ctx += `- Total Balita dalam **Kohort Aktif (Monitoring PKMK)**: ${countKohort.toLocaleString('id-ID')} anak\n`;
 
         ctx += `\n[Akhir Konteks Data SIGMA]\n`;
+
         return ctx;
 
     } catch (err: any) {
