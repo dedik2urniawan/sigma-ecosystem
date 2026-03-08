@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
     id: string;
@@ -217,18 +219,26 @@ export default function ChatbotAppPage() {
                                 className={
                                     msg.role === 'user'
                                         ? 'px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap bg-[#1e293b] text-[#ffffff] rounded-tr-sm shadow-md'
-                                        : 'px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap bg-[#f8fafc] border border-[#cbd5e1] text-[#000000] font-medium rounded-tl-sm shadow-sm'
+                                        : 'px-6 py-4 rounded-2xl text-sm leading-relaxed bg-white border border-[#cbd5e1] text-[#000000] rounded-tl-sm shadow-sm prose prose-sm prose-slate max-w-full prose-headings:font-bold prose-headings:text-slate-800 prose-a:text-purple-600 prose-strong:text-slate-900 prose-ul:pl-4 prose-li:my-0.5'
                                 }
                             >
-                                {msg.content}
+                                {msg.role === 'user' ? (
+                                    msg.content
+                                ) : (
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {msg.content}
+                                    </ReactMarkdown>
+                                )}
                             </div>
                         </div>
 
-                        {msg.role === 'user' && (
-                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-1 overflow-hidden border border-slate-300">
-                                <span className="material-icons-round text-slate-500 text-lg">person</span>
-                            </div>
-                        )}
+                        {
+                            msg.role === 'user' && (
+                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-1 overflow-hidden border border-slate-300">
+                                    <span className="material-icons-round text-slate-500 text-lg">person</span>
+                                </div>
+                            )
+                        }
                     </div>
                 ))}
 
@@ -283,6 +293,6 @@ export default function ChatbotAppPage() {
                     SIGMA Advisor dapat membuat kesalahan. Harap verifikasi info teknis layanan kesehatan gizi.
                 </p>
             </div>
-        </div>
+        </div >
     );
 }
