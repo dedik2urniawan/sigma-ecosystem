@@ -65,7 +65,7 @@ const menuItems = [
         label: "Analisis Pertumbuhan",
         icon: "query_stats",
         href: "/dashboard/analisis-pertumbuhan",
-        ready: false,
+        ready: true,
     },
     {
         id: "ai-analytics",

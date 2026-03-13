@@ -49,16 +49,15 @@ export default function AnalisisPertumbuhanPage() {
                 .single();
             if (lastData?.created_at) setLastUpdated(lastData.created_at);
 
-            // If admin_puskesmas, lock puskesmas to their own
+            // If admin_puskesmas, lock puskesmas to their own via ref_puskesmas table
             if (!isSuperadmin && user?.puskesmas_id) {
-                // Fetch puskesmas name by id
                 const { data: pkm } = await supabase
-                    .from("puskesmas")
-                    .select("nama_puskesmas")
+                    .from("ref_puskesmas")
+                    .select("nama")
                     .eq("id", user.puskesmas_id)
                     .single();
-                if (pkm?.nama_puskesmas) {
-                    setSelectedPuskesmas(pkm.nama_puskesmas);
+                if (pkm?.nama) {
+                    setSelectedPuskesmas(pkm.nama);
                 }
             }
         }
