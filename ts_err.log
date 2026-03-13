@@ -1,0 +1,46 @@
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(218,52): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(218,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(218,120): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(219,39): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(244,52): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(244,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(244,92): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(245,39): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(291,33): error TS2657: JSX expressions must have one parent element.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(295,58): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(295,180): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(295,181): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(297,43): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(298,39): error TS17002: Expected corresponding JSX closing tag for 'tr'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(303,58): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(303,179): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(303,180): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(305,43): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(306,37): error TS1005: ')' expected.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(306,39): error TS17002: Expected corresponding JSX closing tag for 'tbody'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(308,46): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(308,163): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(308,164): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(310,27): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(311,23): error TS17002: Expected corresponding JSX closing tag for 'table'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(313,42): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(313,212): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(313,213): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(315,23): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(316,19): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(317,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(318,31): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(319,11): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(320,21): error TS1005: ')' expected.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(321,17): error TS1109: Expression expected.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(322,13): error TS1109: Expression expected.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(323,9): error TS1109: Expression expected.
+src/app/dashboard/analisis-pertumbuhan/components/InformasiDataTab.tsx(324,5): error TS1109: Expression expected.
+src/app/dashboard/analisis-pertumbuhan/page.tsx(121,36): error TS1127: Invalid character.
+src/app/dashboard/analisis-pertumbuhan/page.tsx(125,20): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/page.tsx(126,21): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/dashboard/analisis-pertumbuhan/page.tsx(129,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/dashboard/analisis-pertumbuhan/page.tsx(130,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/dashboard/analisis-pertumbuhan/page.tsx(133,13): error TS1005: ')' expected.
+src/app/dashboard/analisis-pertumbuhan/page.tsx(141,9): error TS1128: Declaration or statement expected.
+src/app/dashboard/analisis-pertumbuhan/page.tsx(142,5): error TS1109: Expression expected.

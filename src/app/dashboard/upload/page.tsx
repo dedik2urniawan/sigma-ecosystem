@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "../layout";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
+import Papa from "papaparse";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface UploadConfig {
@@ -391,22 +392,55 @@ export default function UploadPage() {
         setUploadResult(null);
 
         try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
-
-            if (jsonData.length === 0) {
-                setUploadResult({ success: false, message: "File kosong atau format tidak sesuai." });
+            // Check if it's a CSV first using extension or simply trying PapaParse
+            if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    dynamicTyping: true,
+                    complete: function (results) {
+                        const jsonData = results.data as Record<string, unknown>[];
+                        if (jsonData.length === 0) {
+                            setUploadResult({ success: false, message: "File kosong atau format CSV tidak sesuai." });
+                            return;
+                        }
+                        setFullParsedData(jsonData);
+                        setPreviewData(jsonData.slice(0, 5));
+                        setSelectedConfig(config);
+                    },
+                    error: function(err) {
+                        setUploadResult({ success: false, message: "Gagal memproses file CSV: " + err.message });
+                    }
+                });
+                if (fileInputRef.current) fileInputRef.current.value = "";
                 return;
             }
 
-            // Store full data in state so we don't need to re-read
+            // Fallback to XLSX for .xlsx and .xls
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: 'array' });
+            let jsonData: Record<string, unknown>[] = [];
+            
+            for (const sheetName of workbook.SheetNames) {
+                const sheet = workbook.Sheets[sheetName];
+                const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: null }) as Record<string, unknown>[];
+                if (parsedData.length > 0) {
+                    jsonData = parsedData;
+                    break;
+                }
+            }
+
+            if (jsonData.length === 0) {
+                setUploadResult({ success: false, message: "File kosong atau format tidak sesuai. Pastikan sheet berisi data." });
+                return;
+            }
+
             setFullParsedData(jsonData);
             setPreviewData(jsonData.slice(0, 5));
             setSelectedConfig(config);
-        } catch {
-            setUploadResult({ success: false, message: "Gagal membaca file. Pastikan format Excel (.xlsx) yang benar." });
+        } catch (error: any) {
+            console.error("Parse Error:", error);
+            setUploadResult({ success: false, message: "Gagal membaca file. Pastikan format file data sudah benar." });
         }
 
         // Reset input
@@ -461,20 +495,26 @@ export default function UploadPage() {
                         } else if (dbCol === "tahun" || dbCol === "bulan") {
                             mapped[dbCol] = Number(value);
                         } else if (dbCol === "usia_saatukur") {
+                            // Fallback string parsing if dates are missing Date mapping
                             if (typeof value === 'string') {
-                                const match = value.match(/(\d+)\s*Tahun\s*-\s*(\d+)\s*Bulan/i);
-                                if (match) {
-                                    mapped[dbCol] = parseInt(match[1]) * 12 + parseInt(match[2]);
-                                } else {
-                                    mapped[dbCol] = Number(value) || 0;
-                                }
+                                const yearMatch = value.match(/(\d+)\s*Tahun/i);
+                                const monthMatch = value.match(/(\d+)\s*Bulan/i);
+                                let totalMonths = 0;
+                                if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
+                                if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
+                                mapped[dbCol] = totalMonths || (Number(value) || 0);
                             } else {
                                 mapped[dbCol] = Number(value) || 0;
                             }
                         } else {
                             if (typeof value === 'string' && value.trim() === '') mapped[dbCol] = null;
-                            else if (typeof value === 'string' && !isNaN(Number(value.replace(',', '.')))) {
-                                mapped[dbCol] = Number(value.replace(',', '.'));
+                            else if (typeof value === 'string') {
+                                const cleaned = value.trim().replace(/,/g, '.');
+                                if (!isNaN(Number(cleaned)) && cleaned !== '') {
+                                    mapped[dbCol] = Number(cleaned);
+                                } else {
+                                    mapped[dbCol] = 0;
+                                }
                             }
                             else mapped[dbCol] = typeof value === 'number' ? value : 0;
                         }
@@ -483,6 +523,16 @@ export default function UploadPage() {
 
                 mapped["uploaded_by"] = user.id;
                 mapped["uploaded_at"] = new Date().toISOString();
+
+                // POST-PROCESSING EPPGBM (Prioritizing system-calculated usia in months over text parsing if dates exist)
+                if (selectedConfig.tableName === "data_eppgbm" && mapped["tgl_lahir"] && mapped["tgl_ukur"]) {
+                    const birth = new Date(mapped["tgl_lahir"] as string);
+                    const visit = new Date(mapped["tgl_ukur"] as string);
+                    if (!isNaN(birth.getTime()) && !isNaN(visit.getTime()) && visit >= birth) {
+                        const daysDiff = Math.floor((visit.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+                        mapped["usia_saatukur"] = Math.round(daysDiff / 30.4375);
+                    }
+                }
 
                 return mapped;
             });
@@ -857,6 +907,241 @@ export default function UploadPage() {
                     </div>
                 ))}
             </div>
+
+            {/* ─── Hapus Data Tahunan EPPGBM (Superadmin Only) ─────────────────── */}
+            {user?.role === "superadmin" && <HapusDataTahunanEPPGBM />}
+        </div>
+    );
+}
+
+// ─── Hapus Data Tahunan Component ─────────────────────────────────────────────
+function HapusDataTahunanEPPGBM() {
+    const [availableYears, setAvailableYears] = useState<string[]>([]);
+    const [selectedYear, setSelectedYear] = useState<string>("");
+    const [rowCount, setRowCount] = useState<number | null>(null);
+    const [loadingCount, setLoadingCount] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmText, setConfirmText] = useState("");
+    const [deleting, setDeleting] = useState(false);
+    const [deleteResult, setDeleteResult] = useState<{ success: boolean; message: string } | null>(null);
+
+    // Fetch available years from data_eppgbm
+    useEffect(() => {
+        async function fetchYears() {
+            const { data } = await supabase.rpc("get_distinct_periods");
+            if (data) {
+                // Extract unique years from periode values (e.g., 'februari_2025' → '2025')
+                const years = Array.from(
+                    new Set(
+                        data
+                            .map((p: any) => {
+                                const match = String(p.periode).match(/\d{4}/);
+                                return match ? match[0] : null;
+                            })
+                            .filter(Boolean)
+                    )
+                ).sort().reverse() as string[];
+                setAvailableYears(years);
+            }
+        }
+        fetchYears();
+    }, []);
+
+    // Fetch row count for selected year
+    useEffect(() => {
+        if (!selectedYear) { setRowCount(null); return; }
+        async function fetchCount() {
+            setLoadingCount(true);
+            const { count } = await supabase
+                .from("data_eppgbm")
+                .select("*", { count: "exact", head: true })
+                .like("periode", `%${selectedYear}%`);
+            setRowCount(count ?? 0);
+            setLoadingCount(false);
+        }
+        fetchCount();
+    }, [selectedYear]);
+
+    const handleDelete = async () => {
+        if (confirmText !== selectedYear) return;
+        setDeleting(true);
+        try {
+            const { error } = await supabase
+                .from("data_eppgbm")
+                .delete()
+                .like("periode", `%${selectedYear}%`);
+
+            if (error) {
+                setDeleteResult({ success: false, message: `Gagal: ${error.message}` });
+            } else {
+                setDeleteResult({ success: true, message: `Berhasil menghapus ${rowCount?.toLocaleString("id-ID")} baris data tahun ${selectedYear}.` });
+                setRowCount(0);
+                setShowConfirm(false);
+                setConfirmText("");
+                // Refresh years
+                const { data } = await supabase.rpc("get_distinct_periods");
+                if (data) {
+                    const years = Array.from(
+                        new Set(data.map((p: any) => { const m = String(p.periode).match(/\d{4}/); return m ? m[0] : null; }).filter(Boolean))
+                    ).sort().reverse() as string[];
+                    setAvailableYears(years);
+                    if (!years.includes(selectedYear)) setSelectedYear("");
+                }
+            }
+        } catch (err: any) {
+            setDeleteResult({ success: false, message: `Error: ${err.message}` });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="mt-8 bg-white rounded-3xl border-2 border-red-100 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center gap-4 px-6 py-4 bg-red-50 border-b border-red-100">
+                <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shrink-0">
+                    <span className="material-icons-round text-white text-xl">delete_forever</span>
+                </div>
+                <div>
+                    <h3 className="text-base font-extrabold text-red-800">Manajemen Data EPPGBM – Hapus Data Tahunan</h3>
+                    <p className="text-xs text-red-600 mt-0.5">
+                        Hapus seluruh data EPPGBM berdasarkan tahun. Gunakan fitur ini untuk mengosongkan data lama dan menjaga kapasitas storage Supabase.
+                    </p>
+                </div>
+                <span className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider shrink-0">
+                    Superadmin Only
+                </span>
+            </div>
+
+            <div className="p-6 space-y-6">
+                {/* Info box */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                    <span className="material-icons-round text-amber-500 mt-0.5 shrink-0">warning</span>
+                    <div className="text-xs text-amber-800 leading-relaxed">
+                        <strong>Perhatian:</strong> Tindakan ini akan <strong>menghapus permanen</strong> seluruh data EPPGBM untuk tahun yang dipilih.
+                        Data yang sudah dihapus <strong>tidak dapat dipulihkan</strong>.
+                        Direkomendasikan untuk menyimpan 2 tahun terakhir dan menghapus tahun yang lebih lama.
+                        Estimasi kapasitas storage: ~60-80 MB/tahun.
+                    </div>
+                </div>
+
+                {/* Year selector */}
+                <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex-1 min-w-[180px]">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Tahun yang Akan Dihapus</label>
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => { setSelectedYear(e.target.value); setDeleteResult(null); }}
+                            className="w-full bg-slate-50 border-2 border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all font-semibold"
+                        >
+                            <option value="">-- Pilih Tahun --</option>
+                            {availableYears.map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Row Count Badge */}
+                    {selectedYear && (
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                            {loadingCount ? (
+                                <span className="material-icons-round animate-spin text-slate-400">refresh</span>
+                            ) : (
+                                <>
+                                    <span className="material-icons-round text-red-500">info</span>
+                                    <div>
+                                        <p className="text-[10px] text-slate-500 font-medium uppercase">Data ditemukan</p>
+                                        <p className="text-lg font-extrabold text-red-600">
+                                            {(rowCount ?? 0).toLocaleString("id-ID")} baris
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {selectedYear && rowCount !== null && rowCount > 0 && (
+                        <button
+                            onClick={() => { setShowConfirm(true); setConfirmText(""); setDeleteResult(null); }}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-all flex items-center gap-2 shadow-md shadow-red-200"
+                        >
+                            <span className="material-icons-round text-lg">delete_forever</span>
+                            Hapus Data Tahun {selectedYear}
+                        </button>
+                    )}
+                </div>
+
+                {/* Result */}
+                {deleteResult && (
+                    <div className={`flex items-center gap-3 p-4 rounded-2xl ${deleteResult.success
+                        ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                        : "bg-red-50 border border-red-200 text-red-800"
+                        }`}>
+                        <span className="material-icons-round">
+                            {deleteResult.success ? "check_circle" : "error"}
+                        </span>
+                        <p className="text-sm font-semibold">{deleteResult.message}</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Confirmation Modal Overlay */}
+            {showConfirm && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center">
+                                <span className="material-icons-round text-red-600 text-2xl">warning</span>
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-extrabold text-slate-800">Konfirmasi Penghapusan</h4>
+                                <p className="text-xs text-slate-500">Tindakan ini tidak dapat dibatalkan</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+                            <p className="text-sm text-red-800 font-semibold">
+                                Anda akan menghapus <span className="text-red-600 font-extrabold">{(rowCount ?? 0).toLocaleString("id-ID")} baris</span> data EPPGBM tahun <span className="font-extrabold">{selectedYear}</span>
+                            </p>
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-xs font-bold text-slate-600 mb-2">
+                                Ketik <span className="text-red-600 font-extrabold">{selectedYear}</span> untuk konfirmasi:
+                            </label>
+                            <input
+                                type="text"
+                                value={confirmText}
+                                onChange={(e) => setConfirmText(e.target.value)}
+                                placeholder={`Ketik "${selectedYear}" untuk melanjutkan`}
+                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-mono font-bold outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setShowConfirm(false); setConfirmText(""); }}
+                                className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition-all"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={confirmText !== selectedYear || deleting}
+                                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                            >
+                                {deleting ? (
+                                    <span className="material-icons-round animate-spin text-lg">refresh</span>
+                                ) : (
+                                    <span className="material-icons-round text-lg">delete_forever</span>
+                                )}
+                                {deleting ? "Menghapus..." : "Ya, Hapus Permanen"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
