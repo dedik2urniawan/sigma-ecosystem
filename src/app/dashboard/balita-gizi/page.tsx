@@ -73,23 +73,25 @@ export default function BalitaGiziPage() {
                 </div>
 
                 {/* Main Tabs */}
-                <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto shadow-inner">
                     <button
                         onClick={() => setMainTab("kualitas")}
-                        className={`flex-1 md:flex-none px-5 py-2.5 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${mainTab === "kualitas"
-                            ? "bg-white text-teal-700 shadow-sm"
+                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${mainTab === "kualitas"
+                            ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
                             : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                             }`}
                     >
+                        <span className="material-icons-round text-[18px]">fact_check</span>
                         Kelengkapan Data Laporan
                     </button>
                     <button
                         onClick={() => setMainTab("indikator")}
-                        className={`flex-1 md:flex-none px-5 py-2.5 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${mainTab === "indikator"
-                            ? "bg-white text-teal-700 shadow-sm"
+                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${mainTab === "indikator"
+                            ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
                             : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                             }`}
                     >
+                        <span className="material-icons-round text-[18px]">analytics</span>
                         Analisis Indikator Balita Gizi
                     </button>
                 </div>
@@ -103,20 +105,21 @@ export default function BalitaGiziPage() {
                     {/* Sub Tabs for Indikator */}
                     <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
                         {[
-                            { id: "pemantauan", label: "Analisis Pertumbuhan" },
-                            { id: "masalah_gizi", label: "Masalah Gizi" },
-                            { id: "asi", label: "ASI Eksklusif dan MPASI" },
-                            { id: "suplemen", label: "Suplementasi Zat Gizi Mikro" },
-                            { id: "tatalaksana", label: "Tatalaksana Balita Bermasalah Gizi" }
+                            { id: "pemantauan", label: "Analisis Pertumbuhan", icon: "timeline" },
+                            { id: "masalah_gizi", label: "Masalah Gizi", icon: "health_and_safety" },
+                            { id: "asi", label: "ASI Eksklusif dan MPASI", icon: "child_friendly" },
+                            { id: "suplemen", label: "Suplementasi Zat Gizi Mikro", icon: "medication" },
+                            { id: "tatalaksana", label: "Tatalaksana Balita Bermasalah Gizi", icon: "medical_services" }
                         ].map((t) => (
                             <button
                                 key={t.id}
                                 onClick={() => setIndikatorSubTab(t.id as any)}
-                                className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-all border-b-2 ${indikatorSubTab === t.id
-                                    ? "text-teal-600 border-teal-600 bg-teal-50"
+                                className={`px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 ${indikatorSubTab === t.id
+                                    ? "text-teal-700 border-teal-600 bg-teal-50/50"
                                     : "text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-700"
                                     }`}
                             >
+                                <span className="material-icons-round text-[18px]">{t.icon}</span>
                                 {t.label}
                             </button>
                         ))}
