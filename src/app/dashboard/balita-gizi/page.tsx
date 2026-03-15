@@ -117,7 +117,7 @@ export default function BalitaGiziPage() {
                                 key={t.id}
                                 onClick={() => setIndikatorSubTab(t.id as any)}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${indikatorSubTab === t.id
-                                    ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
+                                    ? "bg-teal-600 text-white shadow-md shadow-teal-200"
                                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                     }`}
                             >
