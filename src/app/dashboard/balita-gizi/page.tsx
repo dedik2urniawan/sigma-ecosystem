@@ -71,27 +71,29 @@ export default function BalitaGiziPage() {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Main Tabs */}
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto shadow-inner">
+            {/* Main Tabs Selection */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-1">
                     <button
                         onClick={() => setMainTab("kualitas")}
-                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${mainTab === "kualitas"
-                            ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
-                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                        className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${mainTab === "kualitas"
+                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                             }`}
                     >
-                        <span className="material-icons-round text-[18px]">fact_check</span>
+                        <span className="material-icons-round text-lg">fact_check</span>
                         Kelengkapan Data Laporan
                     </button>
                     <button
                         onClick={() => setMainTab("indikator")}
-                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${mainTab === "indikator"
-                            ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
-                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                        className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${mainTab === "indikator"
+                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                             }`}
                     >
-                        <span className="material-icons-round text-[18px]">analytics</span>
+                        <span className="material-icons-round text-lg">analytics</span>
                         Analisis Indikator Balita Gizi
                     </button>
                 </div>
