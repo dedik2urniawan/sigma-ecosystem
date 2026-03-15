@@ -194,23 +194,25 @@ export default function DataQualityDashboard() {
             {/* Context Filters */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
-                    <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <div className="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner overflow-x-auto">
                         <button
                             onClick={() => setActiveTab("compliance")}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === "compliance"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-500 hover:text-slate-700"
+                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === "compliance"
+                                ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
+                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                 }`}
                         >
+                            <span className="material-icons-round text-[18px]">assignment_turned_in</span>
                             Tingkat Kepatuhan Lapor
                         </button>
                         <button
                             onClick={() => setActiveTab("completeness")}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === "completeness"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-500 hover:text-slate-700"
+                            className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === "completeness"
+                                ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
+                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                 }`}
                         >
+                            <span className="material-icons-round text-[18px]">library_add_check</span>
                             Tingkat Kelengkapan Data
                         </button>
                     </div>

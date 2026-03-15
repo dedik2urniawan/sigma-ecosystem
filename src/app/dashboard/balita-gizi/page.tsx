@@ -103,7 +103,7 @@ export default function BalitaGiziPage() {
             ) : (
                 <div className="space-y-6">
                     {/* Sub Tabs for Indikator */}
-                    <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+                    <div className="flex bg-slate-50 p-1.5 rounded-2xl flex-wrap gap-1 border border-slate-100">
                         {[
                             { id: "pemantauan", label: "Analisis Pertumbuhan", icon: "timeline" },
                             { id: "masalah_gizi", label: "Masalah Gizi", icon: "health_and_safety" },
@@ -114,9 +114,9 @@ export default function BalitaGiziPage() {
                             <button
                                 key={t.id}
                                 onClick={() => setIndikatorSubTab(t.id as any)}
-                                className={`px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 ${indikatorSubTab === t.id
-                                    ? "text-teal-700 border-teal-600 bg-teal-50/50"
-                                    : "text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-700"
+                                className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${indikatorSubTab === t.id
+                                    ? "bg-white text-teal-700 shadow-sm border border-slate-200/60"
+                                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                     }`}
                             >
                                 <span className="material-icons-round text-[18px]">{t.icon}</span>
