@@ -204,7 +204,7 @@ export default function AnalisisPertumbuhanPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+            <div className="flex bg-slate-50 p-1.5 rounded-2xl flex-wrap gap-1 border border-slate-100">
                 {[
                     { id: "informasi", label: "Informasi Data EPPGBM", icon: "dataset" },
                     { id: "distribusi", label: "Distribusi Data", icon: "bar_chart" },
@@ -215,9 +215,9 @@ export default function AnalisisPertumbuhanPage() {
                     <button
                         key={t.id}
                         onClick={() => setMainTab(t.id as any)}
-                        className={`px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 flex items-center gap-2 ${mainTab === t.id
-                            ? "text-cyan-700 border-cyan-600 bg-cyan-50/50"
-                            : "text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-700"
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl transition-all whitespace-nowrap ${mainTab === t.id
+                            ? "bg-teal-600 text-white shadow-md shadow-teal-200"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                             }`}
                     >
                         <span className="material-icons-round text-[18px]">{t.icon}</span>
