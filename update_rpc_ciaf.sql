@@ -18,6 +18,9 @@ DECLARE
 BEGIN
   v_level := CASE WHEN p_puskesmas = 'Semua' THEN 'puskesmas' ELSE 'kelurahan' END;
 
+  -- Create a temporary table to store the classified data for the duration of this function
+  DROP TABLE IF EXISTS tmp_ciaf_classified;
+  CREATE TEMP TABLE tmp_ciaf_classified AS
   WITH raw_data AS (
     SELECT 
       nik,
@@ -38,43 +41,42 @@ BEGIN
       AND (p_puskesmas = 'Semua' OR puskesmas = p_puskesmas)
       AND (p_kelurahan = 'Semua' OR kelurahan = p_kelurahan)
       AND zs_tbu IS NOT NULL AND zs_bbtb IS NOT NULL AND zs_bbu IS NOT NULL
-  ),
-  classified AS (
-    SELECT
-      *,
-      -- Age Group
-      CASE 
-        WHEN age_months >= 0 AND age_months <= 5 THEN '0-5 bulan'
-        WHEN age_months >= 6 AND age_months <= 11 THEN '6-11 bulan'
-        WHEN age_months >= 12 AND age_months <= 23 THEN '12-23 bulan'
-        WHEN age_months >= 24 AND age_months <= 35 THEN '24-35 bulan'
-        WHEN age_months >= 36 AND age_months <= 47 THEN '36-47 bulan'
-        WHEN age_months >= 48 AND age_months <= 59 THEN '48-59 bulan'
-        ELSE '>59 bulan'
-      END AS age_group,
-      -- CIAF Category
-      CASE
-        WHEN NOT is_wasted AND NOT is_underweight AND NOT is_stunted THEN 'A'
-        WHEN is_wasted AND NOT is_underweight AND NOT is_stunted THEN 'B'
-        WHEN is_wasted AND is_underweight AND NOT is_stunted THEN 'C'
-        WHEN is_wasted AND is_underweight AND is_stunted THEN 'D'
-        WHEN NOT is_wasted AND is_underweight AND is_stunted THEN 'E'
-        WHEN NOT is_wasted AND NOT is_underweight AND is_stunted THEN 'F'
-        WHEN NOT is_wasted AND is_underweight AND NOT is_stunted THEN 'Y'
-        ELSE 'A' -- Fallback (should not happen based on logic combinations, but safe)
-      END AS ciaf_cat,
-      CASE
-        WHEN is_wasted OR is_underweight OR is_stunted THEN true ELSE false
-      END AS is_ciaf_failure
-    FROM raw_data
   )
+  SELECT
+    *,
+    -- Age Group
+    CASE 
+      WHEN age_months >= 0 AND age_months <= 5 THEN '0-5 bulan'
+      WHEN age_months >= 6 AND age_months <= 11 THEN '6-11 bulan'
+      WHEN age_months >= 12 AND age_months <= 23 THEN '12-23 bulan'
+      WHEN age_months >= 24 AND age_months <= 35 THEN '24-35 bulan'
+      WHEN age_months >= 36 AND age_months <= 47 THEN '36-47 bulan'
+      WHEN age_months >= 48 AND age_months <= 59 THEN '48-59 bulan'
+      ELSE '>59 bulan'
+    END AS age_group,
+    -- CIAF Category
+    CASE
+      WHEN NOT is_wasted AND NOT is_underweight AND NOT is_stunted THEN 'A'
+      WHEN is_wasted AND NOT is_underweight AND NOT is_stunted THEN 'B'
+      WHEN is_wasted AND is_underweight AND NOT is_stunted THEN 'C'
+      WHEN is_wasted AND is_underweight AND is_stunted THEN 'D'
+      WHEN NOT is_wasted AND is_underweight AND is_stunted THEN 'E'
+      WHEN NOT is_wasted AND NOT is_underweight AND is_stunted THEN 'F'
+      WHEN NOT is_wasted AND is_underweight AND NOT is_stunted THEN 'Y'
+      ELSE 'A' -- Fallback 
+    END AS ciaf_cat,
+    CASE
+      WHEN is_wasted OR is_underweight OR is_stunted THEN true ELSE false
+    END AS is_ciaf_failure
+  FROM raw_data;
+
   SELECT 
     COUNT(*), 
     COUNT(CASE WHEN is_ciaf_failure THEN 1 END)
   INTO 
     v_total_pop, 
     v_ciaf_failures
-  FROM classified;
+  FROM tmp_ciaf_classified;
 
   -- Build JSON
   SELECT jsonb_build_object(
@@ -93,7 +95,7 @@ BEGIN
       )
       FROM (SELECT unnest(ARRAY['A', 'B', 'C', 'D', 'E', 'F', 'Y']) AS c) cat
       LEFT JOIN (
-        SELECT ciaf_cat, COUNT(*) as c_count FROM classified GROUP BY ciaf_cat
+        SELECT ciaf_cat, COUNT(*) as c_count FROM tmp_ciaf_classified GROUP BY ciaf_cat
       ) cat_counts ON cat.c = cat_counts.ciaf_cat
     ),
 
@@ -110,7 +112,7 @@ BEGIN
       FROM (SELECT unnest(ARRAY['0-5 bulan', '6-11 bulan', '12-23 bulan', '24-35 bulan', '36-47 bulan', '48-59 bulan']) AS grp) a
       LEFT JOIN (
         SELECT age_group, COUNT(*) as tot, COUNT(CASE WHEN is_ciaf_failure THEN 1 END) as fail 
-        FROM classified GROUP BY age_group
+        FROM tmp_ciaf_classified GROUP BY age_group
       ) age_stats ON a.grp = age_stats.age_group
     ),
 
@@ -127,7 +129,7 @@ BEGIN
       FROM (SELECT unnest(ARRAY['L', 'P']) AS jk) g
       LEFT JOIN (
         SELECT jk, COUNT(*) as tot, COUNT(CASE WHEN is_ciaf_failure THEN 1 END) as fail 
-        FROM classified GROUP BY jk
+        FROM tmp_ciaf_classified GROUP BY jk
       ) g_stats ON g.jk = g_stats.jk
     ),
 
@@ -151,11 +153,14 @@ BEGIN
           COUNT(CASE WHEN is_stunted THEN 1 END) as stunt_fail,
           COUNT(CASE WHEN is_wasted THEN 1 END) as waste_fail,
           COUNT(CASE WHEN is_underweight THEN 1 END) as under_fail
-        FROM classified
+        FROM tmp_ciaf_classified
         GROUP BY area
       ) area_stats
     )
   ) INTO result;
+
+  -- Clean up
+  DROP TABLE IF EXISTS tmp_ciaf_classified;
 
   RETURN result;
 END;
