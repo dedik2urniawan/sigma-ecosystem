@@ -29,7 +29,8 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
         }
     });
 
-    const [previewData, setPreviewData] = useState<any[]>([]);
+    const [mismatchData, setMismatchData] = useState<any[]>([]);
+    const [orData, setOrData] = useState<any[]>([]);
 
     useEffect(() => {
         async function fetchStats() {
@@ -52,7 +53,8 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                     totalRes, lRes, pRes,
                     mismatchUnderRes, mismatchOverRes,
                     age0_5, age6_11, age12_23, age24_35, age36_47, age48_59, ageOver59,
-                    previewRes
+                    mismatchRes,
+                    orRes
                 ] = await Promise.all([
                     buildQuery(),
                     buildQuery().ilike("jk", "L%"),
@@ -66,11 +68,16 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                     buildQuery().gte("usia_saatukur", 36).lte("usia_saatukur", 47),
                     buildQuery().gte("usia_saatukur", 48).lte("usia_saatukur", 59),
                     buildQuery().gt("usia_saatukur", 59),
-                    (() => {
-                        let q = supabase.from("data_eppgbm").select('*').limit(15);
-                        if (filters.periode && filters.periode !== "Semua") q = q.eq("periode", filters.periode);
-                        return q;
-                    })()
+                    supabase.rpc("get_eppgbm_mismatch_posisi", { 
+                        p_periode: filters.periode !== "Semua" ? filters.periode : null,
+                        p_puskesmas: filters.puskesmas !== "Semua" ? filters.puskesmas : null,
+                        p_kelurahan: filters.kelurahan && filters.kelurahan !== "Semua" ? filters.kelurahan : null
+                    }),
+                    supabase.rpc("get_eppgbm_odds_ratio_stunting", {
+                        p_periode: filters.periode !== "Semua" ? filters.periode : null,
+                        p_puskesmas: filters.puskesmas !== "Semua" ? filters.puskesmas : null,
+                        p_kelurahan: filters.kelurahan && filters.kelurahan !== "Semua" ? filters.kelurahan : null
+                    })
                 ]);
 
                 setStats({
@@ -90,7 +97,8 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                     }
                 });
 
-                if (previewRes.data) setPreviewData(previewRes.data);
+                if (mismatchRes.data) setMismatchData(mismatchRes.data);
+                if (orRes.data) setOrData(orRes.data);
 
             } catch (error) {
                 console.error("Error fetching stats:", error);
@@ -262,65 +270,120 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                 </div>
             </div>
 
-            {/* Preview Table */}
+            {/* Mismatch Posisi Ukur */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800">Preview Dataset (Top 15 rows)</h3>
-                        <p className="text-xs text-slate-500 mt-1">Data mentah acak sebagai sampel validasi</p>
-                    </div>
-                    <div className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider">
-                        {previewData.length} sampel
+                        <h3 className="text-lg font-bold text-slate-800">📋 Tabel Proporsi Mismatches Posisi Pengukuran</h3>
+                        <p className="text-xs text-slate-500 mt-1">Konsistensi posisi ukur (Berdiri/Terlentang) berdasarkan kelompok usia</p>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto -mx-6 px-6">
-                    <table className="w-full text-xs text-left">
+                <div className="overflow-x-auto -mx-6 px-6 mb-8">
+                    <table className="w-full text-sm text-left">
                         <thead>
                             <tr className="border-b-2 border-slate-100">
-                                <th className="py-3 pr-4 font-bold text-slate-500 uppercase whitespace-nowrap">NIK</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">Nama Balita</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">JK</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">Usia (Bln)</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">BB (Kg)</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">TB (Cm)</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">ZS BB/U</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase whitespace-nowrap">ZS TB/U</th>
-                                <th className="py-3 pl-4 font-bold text-slate-500 uppercase whitespace-nowrap">ZS BB/TB</th>
+                                <th className="py-3 px-4 font-bold text-slate-500 uppercase">Age Group</th>
+                                <th className="py-3 px-4 font-bold text-slate-500 uppercase text-center">Expected Position</th>
+                                <th className="py-3 px-4 font-bold text-slate-500 uppercase text-right">Total</th>
+                                <th className="py-3 px-4 font-bold text-rose-500 uppercase text-right">Observed Mismatch</th>
+                                <th className="py-3 px-4 font-bold text-rose-500 uppercase text-right">% Mismatch</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {previewData.map((row, idx) => (
+                            {mismatchData.map((row, idx) => (
                                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                    <td className="py-3 pr-4 text-slate-600 font-mono">{String(row.nik).substring(0, 6)}...</td>
-                                    <td className="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">{row.nama_balita}</td>
-                                    <td className="py-3 px-4 text-slate-600 font-bold">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${row.jk === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
-                                            {row.jk}
+                                    <td className="py-3 px-4 font-semibold text-slate-800">{row.age_group}</td>
+                                    <td className="py-3 px-4 text-slate-600 text-center">
+                                        <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium">
+                                            {row.expected_position}
                                         </span>
                                     </td>
-                                    <td className="py-3 px-4 text-slate-700 font-medium">{row.usia_saatukur}</td>
-                                    <td className="py-3 px-4 text-slate-700">{row.bb}</td>
-                                    <td className="py-3 px-4 text-slate-700">{row.tinggi}</td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-1 rounded-md font-bold ${row.zs_bbu < -2 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'}`}>
-                                            {row.zs_bbu}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-1 rounded-md font-bold ${row.zs_tbu < -2 ? 'bg-red-100 text-red-700' : 'bg-emerald-50 text-emerald-600'}`}>
-                                            {row.zs_tbu}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 pl-4">
-                                        <span className={`px-2 py-1 rounded-md font-bold ${row.zs_bbtb < -2 ? 'bg-red-100 text-red-700' : row.zs_bbtb > 2 ? 'bg-purple-100 text-purple-700' : 'bg-emerald-50 text-emerald-600'}`}>
-                                            {row.zs_bbtb}
-                                        </span>
-                                    </td>
+                                    <td className="py-3 px-4 text-slate-700 font-medium text-right">{row.total.toLocaleString("id-ID")}</td>
+                                    <td className="py-3 px-4 text-rose-600 font-bold text-right">{row.mismatch.toLocaleString("id-ID")}</td>
+                                    <td className="py-3 px-4 text-rose-600 font-bold text-right">{row.percentage}%</td>
                                 </tr>
                             ))}
+                            {mismatchData.length > 0 && (
+                                <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                                    <td className="py-4 px-4 text-slate-800">Total</td>
+                                    <td className="py-4 px-4"></td>
+                                    <td className="py-4 px-4 text-slate-800 text-right">
+                                        {mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0).toLocaleString("id-ID")}
+                                    </td>
+                                    <td className="py-4 px-4 text-rose-600 text-right">
+                                        {mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0).toLocaleString("id-ID")}
+                                    </td>
+                                    <td className="py-4 px-4 text-rose-600 text-right">
+                                        {(() => {
+                                            const tot = mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0);
+                                            const mism = mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0);
+                                            return tot > 0 ? ((mism / tot) * 100).toFixed(2) + "%" : "0%";
+                                        })()}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 mb-8">
+                    <strong>Catatan:</strong> Mismatch berarti anak di bawah 24 bulan diukur dalam posisi berdiri (tinggi) atau anak 24 bulan atau lebih diukur dalam posisi terlentang (panjang recumbent), yang berlawanan dengan rekomendasi. Meskipun ada <em>Correction factor</em>, tabel ini melihat seberapa konsisten tenaga lapangan/kader dalam menjalankan instruksi pengukuran dengan benar.
+                </div>
+
+                {/* Bar chart over Mismatch Data */}
+                <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={mismatchData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="age_group" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                            <RechartsTooltip 
+                                formatter={(value: any) => [`${value}%`, '% Mismatch']}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Bar dataKey="percentage" name="% Mismatch" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={40} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Odds Ratio Analysis */}
+            <div className="bg-[#F0F9E8] border border-[#D4EDDA] rounded-3xl p-6 shadow-sm overflow-hidden mb-6">
+                <h4 className="text-[#2CA02C] text-xl font-bold mb-4 flex items-center gap-2">
+                    <span className="material-icons-round">trending_down</span>
+                    Analisis Odds Ratio (OR) untuk Risiko Stunting
+                </h4>
+                <div className="space-y-4">
+                    {orData.map((item, idx) => {
+                        let title = "";
+                        let condition = "";
+                        if (item.exposure === "BBLR") {
+                            title = "BBLR (BB_Lahir < 2.5 kg)";
+                            condition = "BBLR";
+                        } else if (item.exposure === "PBLR") {
+                            title = "PBLR (TB_Lahir < 48 cm)";
+                            condition = "PBLR";
+                        } else {
+                            title = "BBLR + PBLR";
+                            condition = "BBLR dan PBLR";
+                        }
+                        
+                        return (
+                            <div key={idx} className="bg-white/60 rounded-xl border border-[#D4EDDA]/50 p-4">
+                                <p className="text-[#2CA02C] text-base mb-2">
+                                    📌 <strong>{title}:</strong> Balita dengan {condition} memiliki risiko stunting <strong>{item.odds_ratio === null ? '∞ (Infinity)' : item.odds_ratio}</strong> kali lebih tinggi dibandingkan yang tidak {condition}.
+                                </p>
+                                <p className="text-emerald-700/70 text-xs italic">
+                                    Tabel Kontingensi: 
+                                    Stunting+ {item.exposure}+ = {item.a}, 
+                                    Stunting- {item.exposure}+ = {item.b}, 
+                                    Stunting+ {item.exposure}- = {item.c}, 
+                                    Stunting- {item.exposure}- = {item.d}
+                                </p>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
