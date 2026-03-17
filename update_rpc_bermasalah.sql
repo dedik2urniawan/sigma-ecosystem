@@ -49,18 +49,18 @@ BEGIN
       d.zs_bbtb,
       d.bbtb,
       -- TBU (Stunting)
-      CASE WHEN CAST(NULLIF(d.zs_tbu, '') AS numeric) < -2 THEN true ELSE false END AS is_stunted,
+      CASE WHEN d.zs_tbu < -2 THEN true ELSE false END AS is_stunted,
       -- BBTB (Wasting)
-      CASE WHEN CAST(NULLIF(d.zs_bbtb, '') AS numeric) < -2 THEN true ELSE false END AS is_wasted,
+      CASE WHEN d.zs_bbtb < -2 THEN true ELSE false END AS is_wasted,
       -- BBU (Underweight)
-      CASE WHEN CAST(NULLIF(d.zs_bbu, '') AS numeric) < -2 THEN true ELSE false END AS is_underweight
+      CASE WHEN d.zs_bbu < -2 THEN true ELSE false END AS is_underweight
     FROM data_eppgbm d
     WHERE d.periode = p_periode
       AND (p_puskesmas = 'Semua' OR d.puskesmas = p_puskesmas)
       AND (p_kelurahan = 'Semua' OR d.kelurahan = p_kelurahan)
-      AND NULLIF(d.zs_tbu, '') IS NOT NULL 
-      AND NULLIF(d.zs_bbtb, '') IS NOT NULL 
-      AND NULLIF(d.zs_bbu, '') IS NOT NULL
+      AND d.zs_tbu IS NOT NULL 
+      AND d.zs_bbtb IS NOT NULL 
+      AND d.zs_bbu IS NOT NULL
   ),
   classified AS (
     SELECT
