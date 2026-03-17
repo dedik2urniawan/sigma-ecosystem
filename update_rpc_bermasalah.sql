@@ -79,22 +79,22 @@ BEGIN
     FROM raw_data
   )
   SELECT 
-    c.nik,
-    c.nama_balita,
-    c.jk,
+    c.nik::text,
+    c.nama_balita::text,
+    c.jk::text,
     c.tgl_lahir::text,
-    c.nama_ortu,
-    c.puskesmas,
-    c.alamat,
+    c.nama_ortu::text,
+    c.puskesmas::text,
+    c.alamat::text,
     c.tgl_ukur::text,
-    c.bb,
-    c.tinggi,
-    c.zs_bbu,
-    c.bbu,
-    c.zs_tbu,
-    c.tbu,
-    c.zs_bbtb,
-    c.bbtb
+    c.bb::text,
+    c.tinggi::text,
+    c.zs_bbu::text,
+    c.bbu::text,
+    c.zs_tbu::text,
+    c.tbu::text,
+    c.zs_bbtb::text,
+    c.bbtb::text
   FROM classified c
   WHERE c.ciaf_cat = p_category;
 END;
