@@ -6,12 +6,13 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function fetchSQL() {
-  const { data, error } = await supabase.rpc('get_eppgbm_ciaf_summary', {
+  const { data, error } = await supabase.rpc('get_eppgbm_ciaf_comprehensive', {
     p_periode: 'maret_2025',
     p_puskesmas: 'Semua',
-    p_kecamatan: 'Semua'
+    p_kelurahan: 'Semua'
   });
-  console.log('Result:', data);
+  console.log('Error:', error);
+  console.log('Result:', JSON.stringify(data, null, 2));
 }
 
 fetchSQL();

@@ -248,6 +248,7 @@ function PrevalensiStatusGizi({ filters }: { filters: Filters }) {
                 p_kelurahan: filters.kelurahan,
                 p_level: level,
             });
+            console.log("Raw statusgizi RPC data:", data); // Debugging info
             if (data) setRawData(data);
             setLoading(false);
         }
@@ -267,12 +268,30 @@ function PrevalensiStatusGizi({ filters }: { filters: Filters }) {
             statuses.add(sg);
         });
 
-        return {
-            chartData: Object.entries(grouped).map(([wilayah, vals]) => ({
+        const chartDataArray = Object.entries(grouped).map(([wilayah, vals]) => {
+            let totalIssues = 0;
+            if (activeIndicator === "BBU") {
+                totalIssues = (vals["GIZI BURUK"] || 0) + (vals["GIZI KURANG"] || 0);
+            } else if (activeIndicator === "TBU") {
+                totalIssues = (vals["SANGAT PENDEK"] || 0) + (vals["PENDEK"] || 0);
+            } else if (activeIndicator === "BBTB") {
+                totalIssues = (vals["GIZI BURUK"] || 0) + (vals["GIZI KURANG"] || 0);
+            }
+
+            return {
                 wilayah: wilayah.length > 18 ? wilayah.substring(0, 16) + "…" : wilayah,
                 wilayahFull: wilayah,
+                _totalIssues: totalIssues,
                 ...vals,
-            })),
+            };
+        });
+
+        // For horizontal Recharts BarChart, the first item in the array is drawn at the BOTTOM.
+        // So to show the highest value at the TOP, we need to sort ascending (lowest to highest).
+        chartDataArray.sort((a, b) => a._totalIssues - b._totalIssues);
+
+        return {
+            chartData: chartDataArray,
             statuses: Array.from(statuses).sort(),
         };
     }, [rawData, activeIndicator]);
@@ -342,8 +361,8 @@ function PrevalensiStatusGizi({ filters }: { filters: Filters }) {
                             key={ind}
                             onClick={() => setActiveIndicator(ind)}
                             className={`px-4 py-2 text-xs font-bold transition-all ${activeIndicator === ind
-                                    ? "bg-cyan-600 text-white"
-                                    : "bg-white text-slate-500 hover:bg-slate-50"
+                                ? "bg-cyan-600 text-white"
+                                : "bg-white text-slate-500 hover:bg-slate-50"
                                 }`}
                         >
                             {ind}
@@ -429,20 +448,20 @@ function PrevalensiStatusGizi({ filters }: { filters: Filters }) {
                                             </td>
                                             <td className="py-2.5 px-3 text-right font-mono">
                                                 <span className={`font-bold ${row.priority >= 30
-                                                        ? "text-red-600"
-                                                        : row.priority >= 20
-                                                            ? "text-orange-600"
-                                                            : "text-amber-600"
+                                                    ? "text-red-600"
+                                                    : row.priority >= 20
+                                                        ? "text-orange-600"
+                                                        : "text-amber-600"
                                                     }`}>
                                                     {Number(row.priority).toFixed(1)}%
                                                 </span>
                                             </td>
                                             <td className="py-2.5 px-3">
                                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${row.priority >= 30
-                                                        ? "bg-red-100 text-red-700"
-                                                        : row.priority >= 20
-                                                            ? "bg-orange-100 text-orange-700"
-                                                            : "bg-amber-50 text-amber-700"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : row.priority >= 20
+                                                        ? "bg-orange-100 text-orange-700"
+                                                        : "bg-amber-50 text-amber-700"
                                                     }`}>
                                                     {row.priority >= 30 ? "Kritis" : row.priority >= 20 ? "Tinggi" : "Sedang"}
                                                 </span>
@@ -580,6 +599,113 @@ function DigitPreference({ filters }: { filters: Filters }) {
     );
 }
 
+// ── Distribusi Metrik BB & TB ───────────────────────────────────────────────
+
+function DistribusiMetrik({ filters }: { filters: Filters }) {
+    const [loading, setLoading] = useState(true);
+    const [dataBB, setDataBB] = useState<any[]>([]);
+    const [dataTB, setDataTB] = useState<any[]>([]);
+
+    useEffect(() => {
+        async function fetch() {
+            setLoading(true);
+            const { data, error } = await supabase.rpc("get_eppgbm_distribusi_metrik", {
+                p_periode: filters.periode,
+                p_puskesmas: filters.puskesmas,
+                p_kelurahan: filters.kelurahan,
+            });
+            if (error) {
+                console.error("Error fetching distribusi metrik:", error);
+            }
+            if (data) {
+                setDataBB(data.filter((d: any) => d.tipe === "BB").sort((a: any, b: any) => Number(a.nilai_integer) - Number(b.nilai_integer)));
+                setDataTB(data.filter((d: any) => d.tipe === "TB").sort((a: any, b: any) => Number(a.nilai_integer) - Number(b.nilai_integer)));
+            }
+            setLoading(false);
+        }
+        fetch();
+    }, [filters]);
+
+    return (
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <SectionHeader
+                icon="bar_chart"
+                title="Distribusi Metrik Berat Badan dan Tinggi Badan"
+                subtitle="Distribusi frekuensi integer dari berat badan (BB) dan tinggi badan (TB) berdasarkan jumlah balita unik"
+            />
+            {loading ? (
+                <LoadingBox height="250px" />
+            ) : dataBB.length === 0 && dataTB.length === 0 ? (
+                <EmptyBox height="250px" />
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                                Distribusi Berat Badan (BB)
+                            </p>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={dataBB} margin={{ top: 20, right: 10, left: 0, bottom: 25 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                    <XAxis
+                                        dataKey="nilai_integer"
+                                        tick={{ fill: "#64748b", fontSize: 11 }}
+                                        label={{ value: "Berat Badan (kg) - Digit (integer)", position: "insideBottom", offset: -10, fontSize: 11, fill: "#64748b" }}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: "#64748b", fontSize: 11 }}
+                                        label={{ value: "Frekuensi", angle: -90, position: "insideLeft", fontSize: 11, fill: "#64748b" }}
+                                    />
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                                        formatter={(v: any) => [v, "Frekuensi"]}
+                                        labelFormatter={(l: any) => `Berat: ${l} kg`}
+                                    />
+                                    <Bar dataKey="frekuensi" fill="#0ea5e9" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="frekuensi" position="top" style={{ fontSize: "10px", fill: "#64748b" }} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                                Distribusi Tinggi Badan (TB)
+                            </p>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={dataTB} margin={{ top: 20, right: 10, left: 0, bottom: 25 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                    <XAxis
+                                        dataKey="nilai_integer"
+                                        tick={{ fill: "#64748b", fontSize: 11 }}
+                                        label={{ value: "Tinggi Badan (cm) - Digit (integer)", position: "insideBottom", offset: -10, fontSize: 11, fill: "#64748b" }}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: "#64748b", fontSize: 11 }}
+                                        label={{ value: "Frekuensi", angle: -90, position: "insideLeft", fontSize: 11, fill: "#64748b" }}
+                                    />
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                                        formatter={(v: any) => [v, "Frekuensi"]}
+                                        labelFormatter={(l: any) => `Tinggi: ${l} cm`}
+                                    />
+                                    <Bar dataKey="frekuensi" fill="#8b5cf6" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="frekuensi" position="top" style={{ fontSize: "10px", fill: "#64748b" }} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                    <div className="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                            <strong>Catatan:</strong> Grafik ini menunjukkan distribusi frekuensi integer dari berat badan (BB) dan tinggi badan (TB) berdasarkan jumlah individu unik (NIK). Puncak frekuensi menunjukkan digit yang paling sering diukur, yang dapat mengindikasikan preferensi pengukuran.
+                        </p>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
 // ── Main Tab ─────────────────────────────────────────────────────────────────
 
 export default function DistribusiDataTab({ filters }: { filters: Filters }) {
@@ -600,8 +726,8 @@ export default function DistribusiDataTab({ filters }: { filters: Filters }) {
                         key={t.id}
                         onClick={() => setSubTab(t.id as any)}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${subTab === t.id
-                                ? "bg-white text-cyan-700 shadow-sm border border-slate-200"
-                                : "text-slate-500 hover:text-slate-700"
+                                ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                                : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
                             }`}
                     >
                         <span className="material-icons-round text-[15px]">{t.icon}</span>
@@ -613,7 +739,12 @@ export default function DistribusiDataTab({ filters }: { filters: Filters }) {
             {/* Content */}
             {subTab === "demografi" && <DistribusiDemografi filters={filters} />}
             {subTab === "prevalensi" && <PrevalensiStatusGizi filters={filters} />}
-            {subTab === "digit" && <DigitPreference filters={filters} />}
+            {subTab === "digit" && (
+                <div className="space-y-6">
+                    <DigitPreference filters={filters} />
+                    <DistribusiMetrik filters={filters} />
+                </div>
+            )}
         </div>
     );
 }
