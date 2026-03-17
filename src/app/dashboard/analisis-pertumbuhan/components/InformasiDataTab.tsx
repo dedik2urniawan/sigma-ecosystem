@@ -271,116 +271,181 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
             </div>
 
             {/* Mismatch Posisi Ukur */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between mb-6">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 shadow-sm overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800">📋 Tabel Proporsi Mismatches Posisi Pengukuran</h3>
-                        <p className="text-xs text-slate-500 mt-1">Konsistensi posisi ukur (Berdiri/Terlentang) berdasarkan kelompok usia</p>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                                <span className="material-icons-round text-rose-500">rule</span>
+                            </div>
+                            <h3 className="text-xl font-extrabold text-slate-800">Analisis Mismatch Posisi Ukur</h3>
+                        </div>
+                        <p className="text-sm text-slate-500">Evaluasi konsistensi posisi ukur (Berdiri/Terlentang) berdasarkan standar usia WHO Anthro</p>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto -mx-6 px-6 mb-8">
-                    <table className="w-full text-sm text-left">
-                        <thead>
-                            <tr className="border-b-2 border-slate-100">
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase">Age Group</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase text-center">Expected Position</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 uppercase text-right">Total</th>
-                                <th className="py-3 px-4 font-bold text-rose-500 uppercase text-right">Observed Mismatch</th>
-                                <th className="py-3 px-4 font-bold text-rose-500 uppercase text-right">% Mismatch</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {mismatchData.map((row, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                    <td className="py-3 px-4 font-semibold text-slate-800">{row.age_group}</td>
-                                    <td className="py-3 px-4 text-slate-600 text-center">
-                                        <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium">
-                                            {row.expected_position}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-slate-700 font-medium text-right">{row.total.toLocaleString("id-ID")}</td>
-                                    <td className="py-3 px-4 text-rose-600 font-bold text-right">{row.mismatch.toLocaleString("id-ID")}</td>
-                                    <td className="py-3 px-4 text-rose-600 font-bold text-right">{row.percentage}%</td>
-                                </tr>
-                            ))}
-                            {mismatchData.length > 0 && (
-                                <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                                    <td className="py-4 px-4 text-slate-800">Total</td>
-                                    <td className="py-4 px-4"></td>
-                                    <td className="py-4 px-4 text-slate-800 text-right">
-                                        {mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0).toLocaleString("id-ID")}
-                                    </td>
-                                    <td className="py-4 px-4 text-rose-600 text-right">
-                                        {mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0).toLocaleString("id-ID")}
-                                    </td>
-                                    <td className="py-4 px-4 text-rose-600 text-right">
-                                        {(() => {
-                                            const tot = mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0);
-                                            const mism = mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0);
-                                            return tot > 0 ? ((mism / tot) * 100).toFixed(2) + "%" : "0%";
-                                        })()}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-12">
+                    {/* Left Col: Table */}
+                    <div className="xl:col-span-7 flex flex-col">
+                        <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white">
+                            <table className="w-full text-sm text-left">
+                                <thead>
+                                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                                        <th className="py-4 px-5 font-bold text-slate-500 uppercase tracking-wider text-xs">Kelompok Usia</th>
+                                        <th className="py-4 px-5 font-bold text-slate-500 uppercase tracking-wider text-xs text-center">Posisi Standar</th>
+                                        <th className="py-4 px-5 font-bold text-slate-500 uppercase tracking-wider text-xs text-right">Total Balita</th>
+                                        <th className="py-4 px-5 font-bold text-rose-500 uppercase tracking-wider text-xs text-right">Mismatches</th>
+                                        <th className="py-4 px-5 font-bold text-rose-500 uppercase tracking-wider text-xs text-right">% Kasus</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {mismatchData.map((row, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-3.5 px-5 font-bold text-slate-700 whitespace-nowrap">{row.age_group}</td>
+                                            <td className="py-3.5 px-5 text-center whitespace-nowrap">
+                                                <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold uppercase tracking-wider">
+                                                    {row.expected_position}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 text-slate-600 font-medium text-right">{row.total.toLocaleString("id-ID")}</td>
+                                            <td className="py-3.5 px-5 text-rose-600 font-bold text-right">{row.mismatch.toLocaleString("id-ID")}</td>
+                                            <td className="py-3.5 px-5 text-rose-600 font-extrabold text-right">{row.percentage}%</td>
+                                        </tr>
+                                    ))}
+                                    {mismatchData.length > 0 && (
+                                        <tr className="bg-slate-50/80 border-t-2 border-slate-100">
+                                            <td className="py-4 px-5 font-black text-slate-800">TOTAL KESELURUHAN</td>
+                                            <td className="py-4 px-5"></td>
+                                            <td className="py-4 px-5 font-bold text-slate-800 text-right">
+                                                {mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0).toLocaleString("id-ID")}
+                                            </td>
+                                            <td className="py-4 px-5 font-black text-rose-600 text-right">
+                                                {mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0).toLocaleString("id-ID")}
+                                            </td>
+                                            <td className="py-4 px-5 font-black text-rose-600 text-right">
+                                                {(() => {
+                                                    const tot = mismatchData.reduce((acc, curr) => acc + Number(curr.total), 0);
+                                                    const mism = mismatchData.reduce((acc, curr) => acc + Number(curr.mismatch), 0);
+                                                    return tot > 0 ? ((mism / tot) * 100).toFixed(2) + "%" : "0%";
+                                                })()}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 mb-8">
-                    <strong>Catatan:</strong> Mismatch berarti anak di bawah 24 bulan diukur dalam posisi berdiri (tinggi) atau anak 24 bulan atau lebih diukur dalam posisi terlentang (panjang recumbent), yang berlawanan dengan rekomendasi. Meskipun ada <em>Correction factor</em>, tabel ini melihat seberapa konsisten tenaga lapangan/kader dalam menjalankan instruksi pengukuran dengan benar.
-                </div>
+                    {/* Right Col: Chart & Notes */}
+                    <div className="xl:col-span-5 flex flex-col justify-between">
+                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-6 flex-1 flex flex-col">
+                            <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                Grafik Persentase Mismatch
+                            </h4>
+                            <div className="h-[200px] w-full flex-1">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={mismatchData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="age_group" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `${val}%`} />
+                                        <RechartsTooltip 
+                                            formatter={(value: any) => [`${value}%`, 'Mismatch']}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
+                                            cursor={{ fill: '#f1f5f9' }}
+                                        />
+                                        <Bar dataKey="percentage" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={32} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
 
-                {/* Bar chart over Mismatch Data */}
-                <div className="h-[250px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={mismatchData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="age_group" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                            <RechartsTooltip 
-                                formatter={(value: any) => [`${value}%`, '% Mismatch']}
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Bar dataKey="percentage" name="% Mismatch" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={40} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-5">
+                            <div className="flex items-start gap-3">
+                                <span className="material-icons-round text-amber-500 text-xl shrink-0">lightbulb</span>
+                                <div className="text-xs text-amber-800/80 leading-relaxed font-medium">
+                                    <strong className="text-amber-900 block mb-1">Pedoman Pengukuran:</strong>
+                                    Anak dibawah usia 24 bulan wajib diukur panjang badannya secara terlentang (recumbent length). Sebaliknya, anak usia 24 bulan ke atas diukur tinggi badannya secara berdiri (standing height). Adanya correction factor otomatis tidak menggugurkan pentingnya kedisiplinan kader dalam mengambil posisi ukur awal.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Odds Ratio Analysis */}
-            <div className="bg-[#F0F9E8] border border-[#D4EDDA] rounded-3xl p-6 shadow-sm overflow-hidden mb-6">
-                <h4 className="text-[#2CA02C] text-xl font-bold mb-4 flex items-center gap-2">
-                    <span className="material-icons-round">trending_down</span>
-                    Analisis Odds Ratio (OR) untuk Risiko Stunting
-                </h4>
-                <div className="space-y-4">
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/60 rounded-3xl p-6 lg:p-8 shadow-sm mb-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                        <span className="material-icons-round text-white">analytics</span>
+                    </div>
+                    <div>
+                        <h4 className="text-xl font-extrabold text-emerald-900 tracking-tight">Analisis Odds Ratio (OR) Risiko Stunting</h4>
+                        <p className="text-sm text-emerald-700/80">Perbandingan tingkat risiko balita mengalami stunting berdasarkan riwayat lahir</p>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {orData.map((item, idx) => {
                         let title = "";
                         let condition = "";
-                        if (item.exposure === "BBLR") {
-                            title = "BBLR (BB_Lahir < 2.5 kg)";
-                            condition = "BBLR";
-                        } else if (item.exposure === "PBLR") {
-                            title = "PBLR (TB_Lahir < 48 cm)";
+                        let icon = "scale";
+                        let colorClass = "text-emerald-600";
+                        let bgClass = "bg-emerald-50";
+
+                        if (item.exposure === "PBLR") {
+                            title = "PBLR (TB Lahir < 48 cm)";
                             condition = "PBLR";
+                            icon = "height";
+                        } else if (item.exposure === "BBLR") {
+                            title = "BBLR (BB Lahir < 2.5 kg)";
+                            condition = "BBLR";
+                            icon = "monitor_weight";
                         } else {
                             title = "BBLR + PBLR";
-                            condition = "BBLR dan PBLR";
+                            condition = "BBLR & PBLR";
+                            icon = "warning";
+                            colorClass = "text-rose-600";
+                            bgClass = "bg-rose-50";
                         }
                         
                         return (
-                            <div key={idx} className="bg-white/60 rounded-xl border border-[#D4EDDA]/50 p-4">
-                                <p className="text-[#2CA02C] text-base mb-2">
-                                    📌 <strong>{title}:</strong> Balita dengan {condition} memiliki risiko stunting <strong>{item.odds_ratio === null ? '∞ (Infinity)' : item.odds_ratio}</strong> kali lebih tinggi dibandingkan yang tidak {condition}.
-                                </p>
-                                <p className="text-emerald-700/70 text-xs italic">
-                                    Tabel Kontingensi: 
-                                    Stunting+ {item.exposure}+ = {item.a}, 
-                                    Stunting- {item.exposure}+ = {item.b}, 
-                                    Stunting+ {item.exposure}- = {item.c}, 
-                                    Stunting- {item.exposure}- = {item.d}
-                                </p>
+                            <div key={idx} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                {/* Decorative Icon Background */}
+                                <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+                                    <span className="material-icons-round text-8xl">{icon}</span>
+                                </div>
+                                
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-8 h-8 rounded-lg ${bgClass} flex items-center justify-center`}>
+                                            <span className={`material-icons-round text-[18px] ${colorClass}`}>{icon}</span>
+                                        </div>
+                                        <h5 className="font-bold text-slate-700 text-sm tracking-wide">{title}</h5>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <div className="flex items-baseline gap-2 mb-1">
+                                        <span className={`text-4xl font-black tracking-tighter ${colorClass}`}>
+                                            {item.odds_ratio === null ? '∞' : item.odds_ratio}x
+                                        </span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Lipat</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        Balita dengan <strong>{condition}</strong> memiliki risiko stunting <strong>{item.odds_ratio} kali lebih tinggi</strong> dibandingkan yang normal.
+                                    </p>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100/80">
+                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Tabel Kontingensi (Jumlah Kasus)</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 bg-slate-50/50 rounded-lg p-2 border border-slate-100">
+                                        <div className="flex justify-between"><span className="text-slate-400">Stunting + {item.exposure} +</span> <span className="font-bold text-slate-700">{item.a}</span></div>
+                                        <div className="flex justify-between"><span className="text-slate-400">Stunting - {item.exposure} +</span> <span className="font-bold text-slate-700">{item.b}</span></div>
+                                        <div className="flex justify-between"><span className="text-slate-400">Stunting + {item.exposure} -</span> <span className="font-bold text-slate-700">{item.c}</span></div>
+                                        <div className="flex justify-between"><span className="text-slate-400">Stunting - {item.exposure} -</span> <span className="font-bold text-slate-700">{item.d}</span></div>
+                                    </div>
+                                </div>
                             </div>
                         );
                     })}
