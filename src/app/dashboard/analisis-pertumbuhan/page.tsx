@@ -8,13 +8,14 @@ import DistribusiDataTab from "./components/DistribusiDataTab";
 import DistribusiZScoreTab from "./components/DistribusiZScoreTab";
 import TrendPertumbuhanTab from "./components/TrendPertumbuhanTab";
 import DifferensiasiPrevalensiTab from "./components/DifferensiasiPrevalensiTab";
+import DaftarBalitaBermasalahTab from "./components/DaftarBalitaBermasalahTab";
 
 export default function AnalisisPertumbuhanPage() {
     const { user } = useAuth();
     const isSuperadmin = user?.role === "superadmin";
 
     const [mainTab, setMainTab] = useState<
-        "informasi" | "distribusi" | "zscore" | "trend" | "differensiasi"
+        "informasi" | "distribusi" | "zscore" | "trend" | "differensiasi" | "bermasalah"
     >("informasi");
 
     // Global Filters
@@ -211,6 +212,7 @@ export default function AnalisisPertumbuhanPage() {
                     { id: "zscore", label: "Distribusi Z-Score", icon: "area_chart" },
                     { id: "trend", label: "Trend Pertumbuhan", icon: "timeline" },
                     { id: "differensiasi", label: "Differensiasi Prevalensi", icon: "scatter_plot" },
+                    { id: "bermasalah", label: "Daftar Balita Bermasalah", icon: "list_alt" },
                 ].map((t) => (
                     <button
                         key={t.id}
@@ -233,6 +235,7 @@ export default function AnalisisPertumbuhanPage() {
                 {mainTab === "zscore" && <DistribusiZScoreTab filters={filterProps} />}
                 {mainTab === "trend" && <TrendPertumbuhanTab filters={filterProps} />}
                 {mainTab === "differensiasi" && <DifferensiasiPrevalensiTab filters={filterProps} />}
+                {mainTab === "bermasalah" && <DaftarBalitaBermasalahTab filters={filterProps} />}
             </div>
         </div>
     );
