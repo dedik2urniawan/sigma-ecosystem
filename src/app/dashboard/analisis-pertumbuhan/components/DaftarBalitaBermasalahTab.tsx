@@ -101,58 +101,77 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-                
-                <div className="mb-6">
-                    <h3 className="text-xl font-extrabold text-slate-800">
-                        Unduh Daftar Balita Bermasalah Gizi
-                    </h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Berdasarkan kategori Composite Index of Anthropometric Failure (CIAF). 
-                        Data ini bersifat rahasia dan dikhususkan untuk keperluan intervensi gizi.
-                    </p>
+                <div className="mb-8 p-6 lg:p-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    {/* Decorative Background */}
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/5 blur-3xl mix-blend-overlay"></div>
+                    <div className="absolute bottom-0 left-10 -mb-20 w-48 h-48 rounded-full bg-teal-500/10 blur-2xl mix-blend-overlay"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/10">
+                                <span className="material-icons-round text-teal-400">group_off</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-white tracking-tight">
+                                Daftar Balita Bermasalah Gizi
+                            </h3>
+                        </div>
+                        <p className="text-slate-300 text-sm max-w-2xl leading-relaxed font-medium">
+                            Rekapitulasi data spesifik balita berdasarkan klasifikasi <span className="font-bold text-teal-300">Composite Index of Anthropometric Failure (CIAF)</span>. 
+                            Diperuntukkan sebagai instrumen dasar dalam merumuskan tata laksana dan intervensi gizi terpadu.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Accordion Privasi & Keamanan Data */}
-                <details className="group bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden mb-6">
-                    <summary className="flex items-center justify-between p-4 cursor-pointer font-bold text-slate-700 hover:bg-slate-100 transition-colors list-none">
+                <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6 shadow-sm hover:shadow-md transition-shadow">
+                    <summary className="flex items-center justify-between p-5 cursor-pointer font-bold text-slate-800 hover:bg-slate-50 transition-colors list-none">
                         <div className="flex items-center gap-3">
-                            <span className="material-icons-round text-amber-500">lock</span>
-                            <span>Informasi Keamanan dan Privasi Data</span>
+                            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                                <span className="material-icons-round text-amber-500 text-[18px]">gpp_bad</span>
+                            </div>
+                            <span className="tracking-wide">Informasi Keamanan dan Privasi Data Khusus</span>
                         </div>
-                        <span className="material-icons-round text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
+                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                            <span className="material-icons-round text-slate-500 group-open:rotate-180 transition-transform">expand_more</span>
+                        </div>
                     </summary>
-                    <div className="p-4 border-t border-slate-200 text-sm text-slate-600 leading-relaxed space-y-4">
-                        <p>
-                            Rekapitulasi data balita bermasalah gizi ini disusun <strong>khusus untuk kepentingan intervensi gizi</strong> dalam rangka meningkatkan status gizi anak balita. Data ini bersifat rahasia dan hanya boleh digunakan oleh pihak yang berwenang, seperti Dinas Kesehatan, Puskesmas, atau petugas gizi yang memiliki izin resmi.
+                    <div className="p-5 md:p-6 border-t border-slate-100 bg-slate-50/50 text-sm text-slate-600 leading-relaxed space-y-4">
+                        <p className="text-justify">
+                            Rekapitulasi data balita bermasalah gizi ini disusun <strong>khusus untuk kepentingan intervensi gizi</strong> dalam rangka meningkatkan status gizi anak balita. Data ini bersifat konfidensial dan hanya boleh digunakan oleh otoritas yang berwenang, meliputi Dinas Kesehatan tingkat Kabupaten/Kota, Fasilitas Kesehatan Primer (Puskesmas), atau Tim Percepatan Penurunan Stunting (TPPS) yang memiliki mandat dan izin resmi.
                         </p>
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm my-4">
+                            <strong className="flex items-center gap-2 text-slate-800 mb-2">
+                                <span className="material-icons-round text-rose-500 text-[18px]">policy</span>
+                                Aspek Keamanan dan Privasi Data
+                            </strong>
+                            <p className="text-justify text-slate-600">
+                                Penggunaan data ini diatur secara ketat berdasarkan <strong>Undang-Undang Privasi Kesehatan</strong> yang berlaku di Indonesia, termasuk didalamnya Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP). <strong>Dilarang keras menyebarluaskan, mempublikasikan, memperjualbelikan, atau menggunakan data individual balita tanpa sepengetahuan dan rekomendasi tertulis dari Dinas Kesehatan atau perizinan resmi dari Kepala Puskesmas setempat</strong>. Segala bentuk pelanggaran terhadap ketentuan integritas data ini dapat diproses untuk dikenakan sanksi administratif, gugatan perdata, maupun tuntutan pidana sesuai dengan koridor hukum yang berlaku.
+                            </p>
+                        </div>
                         <p>
-                            <strong>Aspek Keamanan dan Privasi Data:</strong><br/>
-                            Penggunaan data ini harus sesuai dengan ketentuan <strong>Undang-Undang Privasi Kesehatan</strong> yang berlaku di Indonesia, termasuk Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP). <strong>Dilarang menyebarluaskan, mempublikasikan, atau menggunakan data tanpa sepengetahuan dan rekomendasi Dinas Kesehatan atau perizinan resmi dari Puskesmas</strong>. Pelanggaran terhadap ketentuan ini dapat dikenakan sanksi administratif, gugatan perdata, atau pidana sesuai hukum yang berlaku.
+                            <strong>Tujuan Sah Penggunaan Data:</strong>
                         </p>
-                        <p>
-                            <strong>Tujuan Penggunaan:</strong>
-                        </p>
-                        <ul className="list-disc pl-5 space-y-1">
-                            <li>Mengidentifikasi balita yang memerlukan intervensi gizi segera.</li>
-                            <li>Merancang program intervensi yang tepat sasaran, seperti pemberian makanan tambahan, edukasi gizi untuk orang tua, atau perbaikan sanitasi.</li>
-                            <li>Memantau perkembangan status gizi balita dari waktu ke waktu.</li>
+                        <ul className="list-none space-y-2">
+                            <li className="flex gap-2 items-start"><span className="material-icons-round text-teal-500 text-[16px] mt-0.5">check_circle</span> <span>Mengidentifikasi target sasaran balita yang memerlukan pemantauan dan intervensi gizi segera (spesifik maupun sensitif).</span></li>
+                            <li className="flex gap-2 items-start"><span className="material-icons-round text-teal-500 text-[16px] mt-0.5">check_circle</span> <span>Merancang dan mengeksekusi program intervensi yang presisi, seperti penyaluran Pemberian Makanan Tambahan (PMT), rujukan faskes, edukasi gizi pola asuh untuk orang tua, atau perbaikan sanitasi.</span></li>
+                            <li className="flex gap-2 items-start"><span className="material-icons-round text-teal-500 text-[16px] mt-0.5">check_circle</span> <span>Melakukan monitoring dan evaluasi terhadap tren perbaikan status gizi balita pada lokus stunting tertentu dari waktu ke waktu.</span></li>
                         </ul>
                     </div>
                 </details>
 
                 {/* Warning Card & Checkbox */}
-                <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 mb-8">
-                    <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                            <span className="material-icons-round text-amber-600">warning</span>
+                <div className="bg-amber-50 border border-amber-200/60 rounded-2xl p-5 md:p-6 mb-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-5 items-start">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+                            <span className="material-icons-round text-white font-bold">priority_high</span>
                         </div>
-                        <div>
-                            <h4 className="font-bold text-amber-900 mb-1">Peringatan Privasi Data</h4>
-                            <p className="text-sm text-amber-800 leading-relaxed mb-4">
-                                Mengunduh data dan informasi individu bertaraf penggunaan, penyebaran, dan pengubahan data pribadi yang tidak sah dan tidak bertanggungjawab. Setiap orang yang menyalahgunakan data pribadi orang lain berpotensi bertanggung jawab secara hukum. Saya memahami risiko pengunduhan data, dan bertanggung jawab untuk menjaga dari akses, penyebaran, dan penggunaan data yang tidak sah terhadap data yang saya unduh.
+                        <div className="flex-1">
+                            <h4 className="font-extrabold text-amber-900 mb-2 truncate text-lg">Pakta Integritas Pengunduhan Data</h4>
+                            <p className="text-sm text-amber-800 leading-relaxed mb-5 font-medium">
+                                Tindakan mengunduh data dan informasi individu (<em>by name by address</em>) rentan terhadap penyalahgunaan, penyebaran, dan pengubahan data pribadi yang tidak sah. Setiap entitas yang menyalahgunakan data pribadi orang lain berpotensi memikul tanggung jawab secara penuh di mata hukum. Saya memahami risiko pengunduhan data ini, dan berjanji untuk menjaga data dari akses, penyebaran, serta pemanfaatan yang menyimpang dari mandat yang diberikan.
                             </p>
                             
-                            <label className="flex items-start gap-3 cursor-pointer group">
+                            <label className="flex items-start gap-4 cursor-pointer group p-3 bg-white/60 hover:bg-white rounded-xl border border-amber-200/40 transition-colors">
                                 <div className="relative flex items-center justify-center mt-0.5">
                                     <input 
                                         type="checkbox" 
@@ -160,11 +179,14 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
                                         checked={agreed}
                                         onChange={(e) => setAgreed(e.target.checked)}
                                     />
-                                    <div className={`w-5 h-5 rounded border-2 transition-all ${agreed ? 'bg-amber-500 border-amber-500' : 'bg-white border-amber-300 group-hover:border-amber-400'}`}></div>
-                                    <span className={`material-icons-round text-[16px] text-white absolute pointer-events-none transition-transform scale-0 peer-checked:scale-100`}>check</span>
+                                    <div className={`w-6 h-6 rounded-md border-2 transition-all duration-300 shadow-sm flex items-center justify-center 
+                                        ${agreed ? 'bg-amber-500 border-amber-500' : 'bg-white border-amber-300 group-hover:border-amber-400 group-hover:shadow'}`}>
+                                        <span className={`material-icons-round text-[16px] text-white font-bold transition-transform duration-300 ${agreed ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`}>check</span>
+                                    </div>
                                 </div>
-                                <span className={`text-sm font-bold select-none ${agreed ? 'text-amber-900' : 'text-amber-700'}`}>
-                                    Saya setuju dengan kebijakan privasi dan bertanggung jawab penuh atas penggunaan data yang saya unduh.
+                                <span className={`text-sm md:text-base font-bold select-none leading-snug transition-colors duration-300
+                                    ${agreed ? 'text-amber-900' : 'text-amber-700/80 group-hover:text-amber-800'}`}>
+                                    Demi Tuhan dan negara, saya setuju dengan pakta integritas privasi di atas dan mengambil tanggung jawab penuh atas kerahasiaan data yang saya unduh.
                                 </span>
                             </label>
                         </div>
@@ -172,45 +194,59 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
                 </div>
 
                 {/* Download Grid */}
-                <div>
-                    <h4 className="font-bold text-slate-800 mb-4">Kategori CIAF (Kegagalan Antropometri)</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {categories.map((cat) => (
-                            <div key={cat.id} className={`${cat.color} border ${cat.borderColor} rounded-2xl p-5 flex flex-col justify-between h-full transition-all hover:shadow-md`}>
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className={`text-sm font-black ${cat.textColor}`}>KATEGORI {cat.id}</span>
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${cat.borderColor} border border-dashed`}>
-                                            <span className={`material-icons-round text-[18px] ${cat.textColor}`}>download</span>
+                <div className="pt-2">
+                    <h4 className="font-extrabold text-slate-800 mb-6 text-lg flex items-center gap-2">
+                        <span className="w-1.5 h-6 rounded-full bg-teal-500"></span>
+                        Kategori CIAF (Kegagalan Antropometri)
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+                        {categories.map((cat) => {
+                            // Extract base color name (e.g., "amber" from "bg-amber-50")
+                            const baseColorMatch = cat.color.match(/bg-([a-z]+)-/);
+                            const baseColor = baseColorMatch ? baseColorMatch[1] : "slate";
+                            
+                            return (
+                            <div key={cat.id} className="relative bg-white rounded-2xl border border-slate-200/60 p-5 md:p-6 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden">
+                                {/* Danger Level Accent Line */}
+                                <div className={`absolute top-0 left-0 w-full h-1 bg-${baseColor}-400 opacity-80`}></div>
+                                
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className={`px-3 py-1.5 rounded-lg bg-slate-100 flex items-center gap-1.5 border border-slate-200/50`}>
+                                            <span className={`w-2 h-2 rounded-full bg-${baseColor}-500 shadow-sm shadow-${baseColor}-300`}></span>
+                                            <span className={`text-[11px] font-black text-slate-600 tracking-wider`}>KATEGORI {cat.id}</span>
+                                        </div>
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-${baseColor}-50 text-${baseColor}-600 group-hover:scale-110 group-hover:bg-${baseColor}-100 transition-all duration-300`}>
+                                            <span className="material-icons-round text-[20px]">analytics</span>
                                         </div>
                                     </div>
-                                    <h5 className="font-bold text-slate-800 mb-1 leading-tight">{cat.title}</h5>
-                                    <p className="text-xs text-slate-600 mb-4">{cat.desc}</p>
+                                    <h5 className="font-extrabold text-slate-800 text-lg mb-2 leading-tight group-hover:text-slate-900 transition-colors">{cat.title}</h5>
+                                    <p className="text-sm font-medium text-slate-500 leading-relaxed mb-6">{cat.desc}</p>
                                 </div>
                                 
                                 <button
                                     onClick={() => handleDownload(cat.id, cat.title)}
                                     disabled={!agreed || downloadingCat === cat.id}
-                                    className={`w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all
-                                        ${!agreed ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 
-                                          downloadingCat === cat.id ? 'bg-cyan-100 text-cyan-600 cursor-wait' : 
-                                          'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm'
+                                    className={`relative z-10 w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 overflow-hidden
+                                        ${!agreed ? 'bg-slate-100/80 text-slate-400 cursor-not-allowed border border-slate-200/50' : 
+                                          downloadingCat === cat.id ? `bg-${baseColor}-100 text-${baseColor}-700 cursor-wait border border-${baseColor}-200` : 
+                                          `bg-white text-slate-700 hover:text-${baseColor}-700 border border-slate-200 shadow-sm hover:border-${baseColor}-300 hover:shadow-${baseColor}-100 hover:bg-${baseColor}-50/30`
                                         }`}
                                 >
                                     {downloadingCat === cat.id ? (
                                         <>
-                                            <span className="material-icons-round text-[16px] animate-spin">refresh</span>
-                                            Memproses...
+                                            <span className="material-icons-round text-[18px] animate-spin">autorenew</span>
+                                            Memproses Data...
                                         </>
                                     ) : (
                                         <>
-                                            <span className="material-icons-round text-[18px]">file_download</span>
+                                            <span className={`material-icons-round text-[18px] ${!agreed ? 'text-slate-400' : `text-${baseColor}-500 group-hover:-translate-y-0.5 transition-transform`}`}>download</span>
                                             Unduh Excel
                                         </>
                                     )}
                                 </button>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
 
