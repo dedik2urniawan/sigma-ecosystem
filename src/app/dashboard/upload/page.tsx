@@ -167,7 +167,10 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
             "Jumlah_kasus_gizi_buruk_Balita_6-23_Bulan_mendapat_perawatan",
             "Jumlah_kasus_gizi_buruk_Balita_24-59_Bulan",
             "Jumlah_kasus_gizi_buruk_Balita_24-59_Bulan_mendapat_perawatan",
-            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
+            // Kumulatif 6-59 (2025 & 2026 — wajib untuk analisis tatalaksana)
+            "Jumlah_kasus_gizi_buruk_Balita_6-59_Bulan_sampai_bulan_ini",
+            "Jumlah_Kasus_Gizi_Buruk_Balita_6-59_Bulan_mendapat_perawatan_sampai_bulan_ini",
+            // ── Blok 13: Stunting Kumulatif ─────────────────────────────────────
             "Jumlah_balita_stunting_sampai_bulan_ini",
             "Jumlah_balita_stunting_dirujuk_Puskesmas_ke_RS_sampai_bulan_ini"
         ],

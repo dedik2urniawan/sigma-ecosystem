@@ -2,12 +2,12 @@
 // Handles 6 metrics with different TW aggregation rules
 
 export const TATALAKSANA_COLUMNS = [
-    // Metric 1: Gizi kurang PMT (cumulative)
-    "jumlah_seluruh_balita_usia_6_59_bulan_gizi_kurang_dengan_atau_t",
-    "jumlah_balita_gizi_kurang_usia_6_59_bulan_yang_mendapatkan_maka",
-    // Metric 2: BGM PMT (average)
-    "jumlah_seluruh_balita_usia_6_59_bulan_bb_kurang_yang_tidak_wast",
-    "jumlah_balita_bb_kurang_usia_6_59_bulan_yang_mendapatkan_makana",
+    // Metric 1: Gizi kurang PMT (cumulative) — nama pendek setelah rename 2026
+    "jumlah_gikur_sampai_bulan_ini",
+    "jumlah_gikur_mendapatkan_pmtlokal",
+    // Metric 2: BGM PMT (average) — nama pendek setelah rename 2026
+    "jumlah_bbkurang_sampai_bulan_ini",
+    "jumlah_bbkurang_mendapatkan_pmtlokal",
     // Metric 3: BB tidak naik T PMT (average)
     "jumlah_sasaran_balita_t",
     "jumlah_balita_t659_mendapatkan_pmt",
@@ -22,12 +22,12 @@ export const TATALAKSANA_COLUMNS = [
     "jumlah_balita_stunting_dirujuk_puskesmas_ke_rs_sampai_bulan_ini",
 ];
 
-// Short keys for readability
+// Short keys for readability — updated to match renamed DB columns
 const COL = {
-    gk_den: "jumlah_seluruh_balita_usia_6_59_bulan_gizi_kurang_dengan_atau_t",
-    gk_num: "jumlah_balita_gizi_kurang_usia_6_59_bulan_yang_mendapatkan_maka",
-    bgm_den: "jumlah_seluruh_balita_usia_6_59_bulan_bb_kurang_yang_tidak_wast",
-    bgm_num: "jumlah_balita_bb_kurang_usia_6_59_bulan_yang_mendapatkan_makana",
+    gk_den: "jumlah_gikur_sampai_bulan_ini",
+    gk_num: "jumlah_gikur_mendapatkan_pmtlokal",
+    bgm_den: "jumlah_bbkurang_sampai_bulan_ini",
+    bgm_num: "jumlah_bbkurang_mendapatkan_pmtlokal",
     t_den: "jumlah_sasaran_balita_t",
     t_num: "jumlah_balita_t659_mendapatkan_pmt",
     gb05_den: "jumlah_kasus_gizi_buruk_bayi_0_5_bulan_sampai_bulan_ini",
