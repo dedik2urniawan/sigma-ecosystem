@@ -151,9 +151,9 @@ export default function DataQualityDashboard() {
 
             const effectiveRole = (isSuperadmin && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
 
-            // Apply calculations
+            // Apply calculations (pass tahun for dual-year column detection)
             const compliance = calculateCompliance(mappedRefDesa, transData || [], monthsCount, effectiveRole);
-            const completeness = calculateCompleteness(mappedRefDesa, transData || [], monthsCount, effectiveRole);
+            const completeness = calculateCompleteness(mappedRefDesa, transData || [], monthsCount, effectiveRole, selectedTahun);
 
             setComplianceResult(compliance);
             setCompletenessResult(completeness);

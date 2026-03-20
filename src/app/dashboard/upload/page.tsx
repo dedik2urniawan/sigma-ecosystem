@@ -82,14 +82,30 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
         gradient: "from-teal-500 to-teal-700",
         tableName: "data_balita_gizi",
         fileName: "data_balita_gizi",
-        description: "Data indikator gizi balita",
+        description: "Data indikator gizi balita (format 2025 & 2026 SIGIZI KESGA)",
         columns: [
             "Tahun", "Puskesmas", "Kelurahan", "Bulan",
+            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
             "Jumlah_sasaran_balita",
+            // ── KOLOM FORMAT LAMA 2025 (dipertahankan untuk backward compat) ──
             "Jumlah_balita_bulan_ini",
             "Jumlah_balita_ditimbang",
             "Jumlah_balita_ditimbang_dan_diukur",
             "Jumlah_balita_diukur_PBTB",
+            // ── KOLOM BARU 2026: Balita per Kelompok Usia ─────────────────────
+            "Jumlah_balita_usia_0-23_bulan_ini",
+            "Jumlah_balita_usia_24-59_bulan_ini",
+            "Jumlah_balita_usia_0-59_bulan_ini",
+            "Jumlah_balita_usia_0-23_bulan_ditimbang",
+            "Jumlah_balita_usia_24-59_bulan_ditimbang",
+            "Jumlah_balita_usia_0-59_bulan_ditimbang",
+            "Jumlah_balita_usia_0-23_bulan_diukur_PBTB",
+            "Jumlah_balita_usia_24-59_bulan_diukur_PBTB",
+            "Jumlah_balita_usia_0-59_bulan_diukur_PBTB",
+            "Jumlah_balita_usia_0-23_bulan_ditimbang_dan_diukur",
+            "Jumlah_balita_usia_24-59_bulan_ditimbang_dan_diukur",
+            "Jumlah_balita_usia_0-59_bulan_ditimbang_dan_diukur",
+            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
             "Jumlah_balita_punya_KIA",
             "Jumlah_balita_naik_berat_badannya_N",
             "Jumlah_balita_tidak_naik_berat_badannya_T",
@@ -116,6 +132,14 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
             "Jumlah_anak_12-59_bulan",
             "Jumlah_anak_12-59_bulan_mendapat_Vitamin_A",
             "Jumlah_anak_12-59_bulan_mendapat_Vitamin_A_2_kali_dalam_setahun",
+            // ── KOLOM BARU 2026: Vitamin A Kelompok Baru ──────────────────────
+            "Jumlah_anak_usia_54-59_bulan",
+            "Jumlah_anak_usia_54-59_bulan_mendapat_Vitamin_A",
+            "Jumlah_anak_6-59_bulan",
+            "Jumlah_anak_6-59_bulan_mendapat_Vitamin_A",
+            // ── KOLOM BARU 2026: MPASI ────────────────────────────────────────
+            "Kab_praktik_MPASI_pada_80pct_anak_usia_6-23_bulan",
+            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
             "Jumlah_balita_Underweight_suplemen",
             "Jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
             "Jumlah_seluruh_balita_(usia_6-59_bulan)_gizi_kurang_dengan_atau_tanpa_stunting_sampai_bulan_ini",
@@ -124,10 +148,22 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
             "Jumlah_balita_BB_kurang_usia_6-59_bulan_yang_mendapatkan_makanan_tambahan_berbahan_pangan_lokal",
             "Jumlah_sasaran_balita_T",
             "Jumlah_Balita_T659_mendapatkan_PMT",
+            // ── KOLOM BARU 2026: PMT Alokasi ──────────────────────────────────
+            "Jumlah_balita_6-59_bulan_gizi_kurang_dialokasikan_PMT",
+            "Jumlah_balita_gizi_kurang_6-59_bulan_mendapat_PMT_lokal",
+            "Jumlah_balita_6-59_bulan_BB_kurang_dialokasikan_PMT_BOK",
+            "Jumlah_balita_6-59_bulan_T_dialokasikan_PMT_BOK",
+            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
             "Jumlah_kasus_gizi_buruk_bayi_0-5_Bulan_sampai_bulan_ini",
             "Jumlah_Kasus_Gizi_Buruk_bayi_0-5_Bulan_mendapat_perawatan_sampai_bulan_ini",
             "Jumlah_kasus_gizi_buruk_Balita_6-59_Bulan_sampai_bulan_ini",
             "Jumlah_Kasus_Gizi_Buruk_Balita_6-59_Bulan_mendapat_perawatan_sampai_bulan_ini",
+            // ── KOLOM BARU 2026: Gizi Buruk Breakdown ─────────────────────────
+            "Jumlah_kasus_gizi_buruk_Balita_6-23_Bulan",
+            "Jumlah_kasus_gizi_buruk_Balita_6-23_Bulan_mendapat_perawatan",
+            "Jumlah_kasus_gizi_buruk_Balita_24-59_Bulan",
+            "Jumlah_kasus_gizi_buruk_Balita_24-59_Bulan_mendapat_perawatan",
+            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
             "Jumlah_balita_stunting_sampai_bulan_ini",
             "Jumlah_balita_stunting_dirujuk_Puskesmas_ke_RS_sampai_bulan_ini"
         ],

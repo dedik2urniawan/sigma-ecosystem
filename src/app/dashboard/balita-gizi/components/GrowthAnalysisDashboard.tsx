@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
-import { TransactionData, calculateGrowthMetrics, calculateTrendMetrics, GrowthMetricsResult, TrendDataPoint } from "@/lib/balitaGiziHelper";
+import { TransactionData, calculateGrowthMetrics, calculateTrendMetrics, GrowthMetricsResult, TrendDataPoint, calculateAgeGroupBreakdown, AgeGroupBreakdown } from "@/lib/balitaGiziHelper";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LineChart, Line, Legend, LabelList } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
 import {
@@ -60,6 +60,9 @@ export default function GrowthAnalysisDashboard() {
     // Data State
     const [metricsResult, setMetricsResult] = useState<GrowthMetricsResult | null>(null);
     const [trendResult, setTrendResult] = useState<TrendDataPoint[]>([]);
+
+    // Age breakdown state (2026+)
+    const [ageBreakdown, setAgeBreakdown] = useState<AgeGroupBreakdown | null>(null);
 
     // Expandable definitions
     const [showDefinitions, setShowDefinitions] = useState(false);
@@ -196,9 +199,12 @@ export default function GrowthAnalysisDashboard() {
                 const groupingRole = (effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
                 const metrics = calculateGrowthMetrics(filteredCurrentData, filteredPrevData, groupingRole, currentMonthsCount, previousMonthsCount);
                 const trends = calculateTrendMetrics(filteredYearData);
+                // Age breakdown — only meaningful for 2026+ data
+                const breakdown = calculateAgeGroupBreakdown(filteredCurrentData, currentMonthsCount);
 
                 setMetricsResult(metrics);
                 setTrendResult(trends);
+                setAgeBreakdown(breakdown);
 
             } catch (error) {
                 console.error("Failed to fetch growth data", error);
@@ -335,6 +341,7 @@ export default function GrowthAnalysisDashboard() {
                     >
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
 
@@ -415,6 +422,84 @@ export default function GrowthAnalysisDashboard() {
                             <MetricCard key={key} title={key} data={data} />
                         ))}
                     </div>
+
+                    {/* Age Breakdown Panel — tampil untuk data 2026+ */}
+                    {ageBreakdown && (
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-slate-100 flex items-center gap-3">
+                                <div className="p-2.5 bg-teal-50 rounded-xl">
+                                    <span className="material-icons text-teal-600 text-xl">group</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-800">Breakdown Pemantauan per Kelompok Usia</h3>
+                                    {ageBreakdown.isAvailable ? (
+                                        <p className="text-sm text-teal-600 font-medium">Data 2026 — variabel per kelompok usia tersedia</p>
+                                    ) : (
+                                        <p className="text-sm text-amber-500 font-medium">Data tahun ini masih menggunakan format 2025 (breakdown usia tidak tersedia)</p>
+                                    )}
+                                </div>
+                            </div>
+                            {ageBreakdown.isAvailable ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left min-w-[700px]">
+                                        <thead className="text-xs text-slate-600 font-bold uppercase bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th className="px-5 py-3">Metrik</th>
+                                                <th className="px-5 py-3 text-center">0–23 Bulan</th>
+                                                <th className="px-5 py-3 text-center">24–59 Bulan</th>
+                                                <th className="px-5 py-3 text-center">0–59 Bulan (Total)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {[
+                                                { label: 'Sasaran Balita', k023: ageBreakdown.usia_0_23.sasaran.toLocaleString(), k2459: ageBreakdown.usia_24_59.sasaran.toLocaleString(), k059: ageBreakdown.usia_0_59.sasaran.toLocaleString(), isCount: true },
+                                                { label: '% Balita Ditimbang', k023: `${ageBreakdown.usia_0_23.pct_ditimbang}%`, k2459: `${ageBreakdown.usia_24_59.pct_ditimbang}%`, k059: `${ageBreakdown.usia_0_59.pct_ditimbang}%`, isCount: false, v023: ageBreakdown.usia_0_23.pct_ditimbang, v2459: ageBreakdown.usia_24_59.pct_ditimbang, v059: ageBreakdown.usia_0_59.pct_ditimbang },
+                                                { label: '% Balita Diukur PB/TB', k023: `${ageBreakdown.usia_0_23.pct_diukur_pbtb}%`, k2459: `${ageBreakdown.usia_24_59.pct_diukur_pbtb}%`, k059: `${ageBreakdown.usia_0_59.pct_diukur_pbtb}%`, isCount: false, v023: ageBreakdown.usia_0_23.pct_diukur_pbtb, v2459: ageBreakdown.usia_24_59.pct_diukur_pbtb, v059: ageBreakdown.usia_0_59.pct_diukur_pbtb },
+                                                { label: '% Ditimbang & Diukur', k023: `${ageBreakdown.usia_0_23.pct_ditimbang_dan_diukur}%`, k2459: `${ageBreakdown.usia_24_59.pct_ditimbang_dan_diukur}%`, k059: `${ageBreakdown.usia_0_59.pct_ditimbang_dan_diukur}%`, isCount: false, v023: ageBreakdown.usia_0_23.pct_ditimbang_dan_diukur, v2459: ageBreakdown.usia_24_59.pct_ditimbang_dan_diukur, v059: ageBreakdown.usia_0_59.pct_ditimbang_dan_diukur },
+                                            ].map((row, i) => (
+                                                <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-5 py-3.5 font-semibold text-slate-700">{row.label}</td>
+                                                    {[{ val: row.k023, pct: row.v023 }, { val: row.k2459, pct: row.v2459 }, { val: row.k059, pct: row.v059 }].map((cell, j) => (
+                                                        <td key={j} className="px-5 py-3.5 text-center">
+                                                            {row.isCount ? (
+                                                                <span className="font-semibold text-slate-700">{cell.val}</span>
+                                                            ) : (
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <span className={`font-bold text-sm ${
+                                                                        (cell.pct ?? 0) >= 80 ? 'text-emerald-600' :
+                                                                        (cell.pct ?? 0) >= 60 ? 'text-amber-500' : 'text-rose-500'
+                                                                    }`}>{cell.val}</span>
+                                                                    <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className={`h-full rounded-full transition-all ${
+                                                                                (cell.pct ?? 0) >= 80 ? 'bg-emerald-500' :
+                                                                                (cell.pct ?? 0) >= 60 ? 'bg-amber-400' : 'bg-rose-400'
+                                                                            }`}
+                                                                            style={{ width: `${Math.min(cell.pct ?? 0, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="p-8 flex flex-col items-center gap-3 text-center">
+                                    <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center">
+                                        <span className="material-icons text-amber-400 text-2xl">info</span>
+                                    </div>
+                                    <p className="text-slate-500 text-sm max-w-md">
+                                        Breakdown per kelompok usia (0–23 bln, 24–59 bln) tersedia mulai data pelaporan <strong>2026</strong>.
+                                        Silakan pilih Tahun 2026 atau upload data dengan format baru SIGIZI KESGA.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Bar Chart overall metrics */}
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[500px]">
