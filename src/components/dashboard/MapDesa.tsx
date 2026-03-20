@@ -100,6 +100,7 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
     const [geojsonData, setGeojsonData] = useState<any>(null);
     const mapRef = useRef<L.Map | null>(null);
     const geoJsonRef = useRef<L.GeoJSON | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         fetch("/desa_fix.geojson")
@@ -107,13 +108,17 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
             .then((d) => setGeojsonData(d))
             .catch((err) => console.error("Failed to load GeoJSON:", err));
 
-        // Cleanup map on unmount to prevent "Map container is being reused" error
-        // React-Leaflet handles this automatically. Manual removal causes conflicts.
         return () => {
-            // if (mapRef.current) {
-            //     mapRef.current.remove();
-            //     mapRef.current = null;
-            // }
+            // Clear _leaflet_id so React re-mount in Strict Mode doesn't throw
+            // "Map container is being reused by another instance"
+            if (containerRef.current) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (containerRef.current as any)._leaflet_id = null;
+            }
+            if (mapRef.current) {
+                try { mapRef.current.remove(); } catch { /* already removed */ }
+                mapRef.current = null;
+            }
         };
     }, []);
 
@@ -217,7 +222,11 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
 
     return (
         <div className="relative">
-            <div className="rounded-2xl overflow-hidden border border-slate-200" style={{ height: "500px" }}>
+            <div
+                ref={containerRef}
+                className="rounded-2xl overflow-hidden border border-slate-200"
+                style={{ height: "500px" }}
+            >
                 <MapContainer
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
