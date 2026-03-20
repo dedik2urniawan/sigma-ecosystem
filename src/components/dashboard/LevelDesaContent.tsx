@@ -635,7 +635,7 @@ export default function LevelDesaContent() {
 
                     {/* ─── Interactive Map ─── */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
                                     <span className="material-icons-round text-lg text-emerald-500">map</span>
@@ -646,7 +646,7 @@ export default function LevelDesaContent() {
                                 </div>
                             </div>
                             <select value={mapMetric} onChange={(e) => setMapMetric(e.target.value)}
-                                className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 no-print">
+                                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 no-print">
                                 <option value="stunting">Prevalensi Stunting</option>
                                 <option value="wasting">Prevalensi Wasting</option>
                                 <option value="underweight">Prevalensi Underweight</option>
@@ -663,7 +663,7 @@ export default function LevelDesaContent() {
 
                     {/* ─── Bar Chart (collapsible) ─── */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
                                     <span className="material-icons-round text-lg text-violet-500">bar_chart</span>
@@ -676,7 +676,7 @@ export default function LevelDesaContent() {
                             <select
                                 value={chartMetric}
                                 onChange={(e) => setChartMetric(e.target.value)}
-                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all no-print"
+                                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all no-print"
                             >
                                 {METRIC_OPTIONS.map((m) => (
                                     <option key={m.key} value={m.key}>
