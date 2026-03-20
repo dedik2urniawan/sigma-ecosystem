@@ -84,39 +84,47 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
         fileName: "data_balita_gizi",
         description: "Data indikator gizi balita (format 2025 & 2026 SIGIZI KESGA)",
         columns: [
+            // ── Header wajib ─────────────────────────────────────────────────────
             "Tahun", "Puskesmas", "Kelurahan", "Bulan",
-            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
+            // ── Blok 1: Sasaran & Timbang Lama (2025, backward compat) ──────────
             "Jumlah_sasaran_balita",
-            // ── KOLOM FORMAT LAMA 2025 (dipertahankan untuk backward compat) ──
             "Jumlah_balita_bulan_ini",
             "Jumlah_balita_ditimbang",
             "Jumlah_balita_ditimbang_dan_diukur",
             "Jumlah_balita_diukur_PBTB",
-            // ── KOLOM BARU 2026: Balita per Kelompok Usia ─────────────────────
+            // ── Blok 2: 2025-only (removed in 2026, kept for data 2025) ─────────
+            "Jumlah_Bayi_Mendapat_IMD",
+            "Jumlah_balita_Underweight_suplemen",
+            "Jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
+            // ── Blok 3: Sasaran per kelompok usia (2026+) ───────────────────────
             "Jumlah_balita_usia_0-23_bulan_ini",
             "Jumlah_balita_usia_24-59_bulan_ini",
             "Jumlah_balita_usia_0-59_bulan_ini",
+            // ── Blok 4: Ditimbang per kelompok usia (2026+) ─────────────────────
             "Jumlah_balita_usia_0-23_bulan_ditimbang",
             "Jumlah_balita_usia_24-59_bulan_ditimbang",
             "Jumlah_balita_usia_0-59_bulan_ditimbang",
+            // ── Blok 5: Diukur PB/TB per kelompok usia (2026+) ─────────────────
             "Jumlah_balita_usia_0-23_bulan_diukur_PBTB",
             "Jumlah_balita_usia_24-59_bulan_diukur_PBTB",
             "Jumlah_balita_usia_0-59_bulan_diukur_PBTB",
+            // ── Blok 6: Ditimbang & Diukur per kelompok usia (2026+) ────────────
             "Jumlah_balita_usia_0-23_bulan_ditimbang_dan_diukur",
             "Jumlah_balita_usia_24-59_bulan_ditimbang_dan_diukur",
             "Jumlah_balita_usia_0-59_bulan_ditimbang_dan_diukur",
-            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
+            // ── Blok 7: KIA, Naik/Tidak Naik BB, Koreksi Daksen ────────────────
             "Jumlah_balita_punya_KIA",
             "Jumlah_balita_naik_berat_badannya_N",
             "Jumlah_balita_tidak_naik_berat_badannya_T",
             "Jumlah_balita_tidak_ditimbang_bulan_lalu_O",
             "Jumlah_bayi_baru_lahir_bulan_ini_B",
             "Jumlah_balita_ditimbang_terkoreksi_Daksen",
+            // ── Blok 8: Masalah Gizi ────────────────────────────────────────────
             "Jumlah_balita_stunting",
             "Jumlah_balita_wasting",
             "Jumlah_balita_overweight",
             "Jumlah_balita_underweight",
-            "Jumlah_Bayi_Mendapat_IMD",
+            // ── Blok 9: ASI & MPASI ─────────────────────────────────────────────
             "Jumlah_Bayi_usia_0-5_bulan",
             "Jumlah_Bayi_usia_0-5_bulan_yang_direcall",
             "Jumlah_Bayi_usia_0-5_bulan_yang_mendapat_ASI_Eksklusif_berdasarkan_recall_24_jam",
@@ -124,41 +132,37 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
             "Jumlah_Bayi_Asi_Eksklusif_sampai_6_bulan",
             "Jumlah_anak_usia_6-23_bulan",
             "Jumlah_anak_usia_6-23_bulan_yang_diwawancarai",
+            "Kab_praktik_MPASI_pada_80pct_anak_usia_6-23_bulan",
+            // old header (2025) / new short header 2026 — both map to same DB col
             "Jumlah_anak_usia_6-23_bulan_yang_mengkonsumsi_makanan_dan_minuman_setidaknya_5_dari_8_jenis_kelompok_makanan_pada_hari_kemarin_sebelum_wawancara",
             "Jumlah_anak_usia_6-23_bulan_yang_mengkonsumsi_telur_ikan_dan_atau_daging_pada_hari_kemarin_sebelum_wawancara",
             "Jumlah_anak_usia_6-23_bulan_yang_mendapat_MPASI_baik",
+            // ── Blok 10: Vitamin A ──────────────────────────────────────────────
             "Jumlah_bayi_6-11_bulan",
             "Jumlah_bayi_6-11_bulan_mendapat_Vitamin_A",
             "Jumlah_anak_12-59_bulan",
             "Jumlah_anak_12-59_bulan_mendapat_Vitamin_A",
-            "Jumlah_anak_12-59_bulan_mendapat_Vitamin_A_2_kali_dalam_setahun",
-            // ── KOLOM BARU 2026: Vitamin A Kelompok Baru ──────────────────────
             "Jumlah_anak_usia_54-59_bulan",
             "Jumlah_anak_usia_54-59_bulan_mendapat_Vitamin_A",
-            "Jumlah_anak_6-59_bulan",
-            "Jumlah_anak_6-59_bulan_mendapat_Vitamin_A",
-            // ── KOLOM BARU 2026: MPASI ────────────────────────────────────────
-            "Kab_praktik_MPASI_pada_80pct_anak_usia_6-23_bulan",
-            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
-            "Jumlah_balita_Underweight_suplemen",
-            "Jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
-            "Jumlah_seluruh_balita_(usia_6-59_bulan)_gizi_kurang_dengan_atau_tanpa_stunting_sampai_bulan_ini",
-            "Jumlah_balita_gizi_kurang_usia_6-59_bulan_yang_mendapatkan_makanan_tambahan_berbahan_pangan_lokal_sampai_bulan_ini",
-            "Jumlah_seluruh_balita_(usia_6-59_bulan)_BB_kurang_yang_tidak_wasting_dengan_atau_tanpa_stunting_dan_tanpa_wasting",
-            "Jumlah_balita_BB_kurang_usia_6-59_bulan_yang_mendapatkan_makanan_tambahan_berbahan_pangan_lokal",
+            "Jumlah_anak_12-59_bulan_mendapat_Vitamin_A_2_kali_dalam_setahun",
+            // Vit A 6-59 bulan split Februari & Agustus (2026+)
+            "Jumlah_anak_6-59_bulan_februari",
+            "Jumlah_anak_6-59_bulan_mendapat_Vitamin_A_februari",
+            "Jumlah_anak_6-59_bulan_Agustus",
+            "Jumlah_anak_6-59_bulan_mendapat_Vitamin_A_Agustus",
+            // ── Blok 11: PMT & Alokasi BOK (nama pendek 2026) ───────────────────
+            "Jumlah_Gikur_alokasiBOK",
+            "Jumlah_Gikur_sampai_bulan_ini",
+            "Jumlah_Gikur_mendapatkan_PMTlokal",
+            "Jumlah_BBkurang_alokasiBOK",
+            "Jumlah_Bbkurang_sampai_bulan_ini",
+            "Jumlah_BBkurang_mendapatkan_PMTlokal",
+            "Jumlah_T_alokasiBOK",
             "Jumlah_sasaran_balita_T",
             "Jumlah_Balita_T659_mendapatkan_PMT",
-            // ── KOLOM BARU 2026: PMT Alokasi ──────────────────────────────────
-            "Jumlah_balita_6-59_bulan_gizi_kurang_dialokasikan_PMT",
-            "Jumlah_balita_gizi_kurang_6-59_bulan_mendapat_PMT_lokal",
-            "Jumlah_balita_6-59_bulan_BB_kurang_dialokasikan_PMT_BOK",
-            "Jumlah_balita_6-59_bulan_T_dialokasikan_PMT_BOK",
-            // ── KOLOM UMUM (2025 & 2026) ──────────────────────────────────────
+            // ── Blok 12: Gizi Buruk ─────────────────────────────────────────────
             "Jumlah_kasus_gizi_buruk_bayi_0-5_Bulan_sampai_bulan_ini",
             "Jumlah_Kasus_Gizi_Buruk_bayi_0-5_Bulan_mendapat_perawatan_sampai_bulan_ini",
-            "Jumlah_kasus_gizi_buruk_Balita_6-59_Bulan_sampai_bulan_ini",
-            "Jumlah_Kasus_Gizi_Buruk_Balita_6-59_Bulan_mendapat_perawatan_sampai_bulan_ini",
-            // ── KOLOM BARU 2026: Gizi Buruk Breakdown ─────────────────────────
             "Jumlah_kasus_gizi_buruk_Balita_6-23_Bulan",
             "Jumlah_kasus_gizi_buruk_Balita_6-23_Bulan_mendapat_perawatan",
             "Jumlah_kasus_gizi_buruk_Balita_24-59_Bulan",
@@ -259,12 +263,29 @@ const COLUMN_MAP: Record<string, string> = {
     insiden_stunting_p: "insiden_p",
     insiden_stunting_l_baduta: "insiden_l_baduta",
     insiden_stunting_p_baduta: "insiden_p_baduta",
-    // Data Balita Gizi
+    // Data Balita Gizi — updated 2026 SIGIZI sync
     jumlah_sasaran_balita: "jumlah_sasaran_balita",
     jumlah_balita_bulan_ini: "jumlah_balita_bulan_ini",
     jumlah_balita_ditimbang: "jumlah_balita_ditimbang",
     jumlah_balita_ditimbang_dan_diukur: "jumlah_balita_ditimbang_dan_diukur",
     jumlah_balita_diukur_pbtb: "jumlah_balita_diukur_pbtb",
+    jumlah_bayi_mendapat_imd: "jumlah_bayi_mendapat_imd",
+    jumlah_balita_underweight_suplemen: "jumlah_balita_underweight_suplemen",
+    jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro: "jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
+    // New 2026: Usia kelompok
+    "jumlah_balita_usia_0-23_bulan_ini": "jumlah_balita_usia_0_23_bulan_ini",
+    "jumlah_balita_usia_24-59_bulan_ini": "jumlah_balita_usia_24_59_bulan_ini",
+    "jumlah_balita_usia_0-59_bulan_ini": "jumlah_balita_usia_0_59_bulan_ini",
+    "jumlah_balita_usia_0-23_bulan_ditimbang": "jumlah_balita_usia_0_23_bulan_ditimbang",
+    "jumlah_balita_usia_24-59_bulan_ditimbang": "jumlah_balita_usia_24_59_bulan_ditimbang",
+    "jumlah_balita_usia_0-59_bulan_ditimbang": "jumlah_balita_usia_0_59_bulan_ditimbang",
+    "jumlah_balita_usia_0-23_bulan_diukur_pbtb": "jumlah_balita_usia_0_23_bulan_diukur_pbtb",
+    "jumlah_balita_usia_24-59_bulan_diukur_pbtb": "jumlah_balita_usia_24_59_bulan_diukur_pbtb",
+    "jumlah_balita_usia_0-59_bulan_diukur_pbtb": "jumlah_balita_usia_0_59_bulan_diukur_pbtb",
+    "jumlah_balita_usia_0-23_bulan_ditimbang_dan_diukur": "jumlah_balita_usia_0_23_bulan_ditimbang_dan_diukur",
+    "jumlah_balita_usia_24-59_bulan_ditimbang_dan_diukur": "jumlah_balita_usia_24_59_bulan_ditimbang_dan_diukur",
+    "jumlah_balita_usia_0-59_bulan_ditimbang_dan_diukur": "jumlah_balita_usia_0_59_bulan_ditimbang_dan_diukur",
+    // Pertumbuhan lainnya
     jumlah_balita_punya_kia: "jumlah_balita_punya_kia",
     jumlah_balita_naik_berat_badannya_n: "jumlah_balita_naik_berat_badannya_n",
     jumlah_balita_tidak_naik_berat_badannya_t: "jumlah_balita_tidak_naik_berat_badannya_t",
@@ -275,7 +296,7 @@ const COLUMN_MAP: Record<string, string> = {
     jumlah_balita_wasting: "jumlah_balita_wasting",
     jumlah_balita_overweight: "jumlah_balita_overweight",
     jumlah_balita_underweight: "jumlah_balita_underweight",
-    jumlah_bayi_mendapat_imd: "jumlah_bayi_mendapat_imd",
+    // ASI, MPASI
     "jumlah_bayi_usia_0-5_bulan": "jumlah_bayi_usia_0_5_bulan",
     "jumlah_bayi_usia_0-5_bulan_yang_direcall": "jumlah_bayi_usia_0_5_bulan_yang_direcall",
     "jumlah_bayi_usia_0-5_bulan_yang_mendapat_asi_eksklusif_berdasarkan_recall_24_jam": "jumlah_bayi_usia_0_5_bulan_yang_mendapat_asi_eksklusif_berdasar",
@@ -283,28 +304,49 @@ const COLUMN_MAP: Record<string, string> = {
     "jumlah_bayi_asi_eksklusif_sampai_6_bulan": "jumlah_bayi_asi_eksklusif_sampai_6_bulan",
     "jumlah_anak_usia_6-23_bulan": "jumlah_anak_usia_6_23_bulan",
     "jumlah_anak_usia_6-23_bulan_yang_diwawancarai": "jumlah_anak_usia_6_23_bulan_yang_diwawancarai",
+    // MPASI - New 2026
+    "kab_praktik_mpasi_pada_80pct_anak_usia_6-23_bulan": "kab_praktik_mpasi_pada_80pct_anak_6_23_bulan",
+    // old long column (renamed in SIGIZI 2026 = "Jumlah anak 6-23 bln mendapat MPASI")
     "jumlah_anak_usia_6-23_bulan_yang_mengkonsumsi_makanan_dan_minuman_setidaknya_5_dari_8_jenis_kelompok_makanan_pada_hari_kemarin_sebelum_wawancara": "jumlah_anak_usia_6_23_bulan_yang_mengkonsumsi_makanan_dan_minum",
+    "jumlah_anak_usia_6-23_bulan_mendapat_mpasi": "jumlah_anak_usia_6_23_bulan_yang_mengkonsumsi_makanan_dan_minum",
     "jumlah_anak_usia_6-23_bulan_yang_mengkonsumsi_telur_ikan_dan_atau_daging_pada_hari_kemarin_sebelum_wawancara": "jumlah_anak_usia_6_23_bulan_yang_mengkonsumsi_telur_ikan_dan_at",
     "jumlah_anak_usia_6-23_bulan_yang_mendapat_mpasi_baik": "jumlah_anak_usia_6_23_bulan_yang_mendapat_mpasi_baik",
+    // Vitamin A
     "jumlah_bayi_6-11_bulan": "jumlah_bayi_6_11_bulan",
     "jumlah_bayi_6-11_bulan_mendapat_vitamin_a": "jumlah_bayi_6_11_bulan_mendapat_vitamin_a",
     "jumlah_anak_12-59_bulan": "jumlah_anak_12_59_bulan",
     "jumlah_anak_12-59_bulan_mendapat_vitamin_a": "jumlah_anak_12_59_bulan_mendapat_vitamin_a",
+    "jumlah_anak_usia_54-59_bulan": "jumlah_anak_usia_54_59_bulan",
+    "jumlah_anak_usia_54-59_bulan_mendapat_vitamin_a": "jumlah_anak_usia_54_59_bulan_mendapat_vitamin_a",
     "jumlah_anak_12-59_bulan_mendapat_vitamin_a_2_kali_dalam_setahun": "jumlah_anak_12_59_bulan_mendapat_vitamin_a_2_kali_dalam_setahun",
-    "jumlah_balita_underweight_suplemen": "jumlah_balita_underweight_suplemen",
-    "jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro": "jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
-    "jumlah_seluruh_balita_(usia_6-59_bulan)_gizi_kurang_dengan_atau_tanpa_stunting_sampai_bulan_ini": "jumlah_seluruh_balita_usia_6_59_bulan_gizi_kurang_dengan_atau_t",
-    "jumlah_balita_gizi_kurang_usia_6-59_bulan_yang_mendapatkan_makanan_tambahan_berbahan_pangan_lokal_sampai_bulan_ini": "jumlah_balita_gizi_kurang_usia_6_59_bulan_yang_mendapatkan_maka",
-    "jumlah_seluruh_balita_(usia_6-59_bulan)_bb_kurang_yang_tidak_wasting_dengan_atau_tanpa_stunting_dan_tanpa_wasting": "jumlah_seluruh_balita_usia_6_59_bulan_bb_kurang_yang_tidak_wast",
-    "jumlah_balita_bb_kurang_usia_6-59_bulan_yang_mendapatkan_makanan_tambahan_berbahan_pangan_lokal": "jumlah_balita_bb_kurang_usia_6_59_bulan_yang_mendapatkan_makana",
-    "jumlah_sasaran_balita_t": "jumlah_sasaran_balita_t",
-    "jumlah_balita_t659_mendapatkan_pmt": "jumlah_balita_t659_mendapatkan_pmt",
+    // Vit A 6-59 split Februari & Agustus (NEW 2026)
+    "jumlah_anak_6-59_bulan_februari": "jumlah_anak_6_59_bulan_februari",
+    "jumlah_anak_6-59_bulan_mendapat_vitamin_a_februari": "jumlah_anak_6_59_bulan_mendapat_vitamin_a_februari",
+    "jumlah_anak_6-59_bulan_agustus": "jumlah_anak_6_59_bulan_agustus",
+    "jumlah_anak_6-59_bulan_mendapat_vitamin_a_agustus": "jumlah_anak_6_59_bulan_mendapat_vitamin_a_agustus",
+    // PMT & Gikur — renamed short (NEW 2026)
+    jumlah_gikur_alokasbok: "jumlah_gikur_alokasbok",
+    jumlah_gikur_sampai_bulan_ini: "jumlah_gikur_sampai_bulan_ini",
+    jumlah_gikur_mendapatkan_pmtlokal: "jumlah_gikur_mendapatkan_pmtlokal",
+    jumlah_bbkurang_alokasbok: "jumlah_bbkurang_alokasbok",
+    jumlah_bbkurang_sampai_bulan_ini: "jumlah_bbkurang_sampai_bulan_ini",
+    jumlah_bbkurang_mendapatkan_pmtlokal: "jumlah_bbkurang_mendapatkan_pmtlokal",
+    jumlah_t_alokasbok: "jumlah_t_alokasbok",
+    jumlah_sasaran_balita_t: "jumlah_sasaran_balita_t",
+    jumlah_balita_t659_mendapatkan_pmt: "jumlah_balita_t659_mendapatkan_pmt",
+    // Gizi Buruk
     "jumlah_kasus_gizi_buruk_bayi_0-5_bulan_sampai_bulan_ini": "jumlah_kasus_gizi_buruk_bayi_0_5_bulan_sampai_bulan_ini",
     "jumlah_kasus_gizi_buruk_bayi_0-5_bulan_mendapat_perawatan_sampai_bulan_ini": "jumlah_kasus_gizi_buruk_bayi_0_5_bulan_mendapat_perawatan_sampa",
+    // NEW 2026: Gizi Buruk breakdown 6-23 & 24-59
+    "jumlah_kasus_gizi_buruk_balita_6-23_bulan": "jumlah_kasus_gizi_buruk_balita_6_23_bulan",
+    "jumlah_kasus_gizi_buruk_balita_6-23_bulan_mendapat_perawatan": "jumlah_kasus_gizi_buruk_balita_6_23_bulan_perawatan",
+    "jumlah_kasus_gizi_buruk_balita_24-59_bulan": "jumlah_kasus_gizi_buruk_balita_24_59_bulan",
+    "jumlah_kasus_gizi_buruk_balita_24-59_bulan_mendapat_perawatan": "jumlah_kasus_gizi_buruk_balita_24_59_bulan_perawatan",
     "jumlah_kasus_gizi_buruk_balita_6-59_bulan_sampai_bulan_ini": "jumlah_kasus_gizi_buruk_balita_6_59_bulan_sampai_bulan_ini",
     "jumlah_kasus_gizi_buruk_balita_6-59_bulan_mendapat_perawatan_sampai_bulan_ini": "jumlah_kasus_gizi_buruk_balita_6_59_bulan_mendapat_perawatan_sa",
-    "jumlah_balita_stunting_sampai_bulan_ini": "jumlah_balita_stunting_sampai_bulan_ini",
+    jumlah_balita_stunting_sampai_bulan_ini: "jumlah_balita_stunting_sampai_bulan_ini",
     "jumlah_balita_stunting_dirujuk_puskesmas_ke_rs_sampai_bulan_ini": "jumlah_balita_stunting_dirujuk_puskesmas_ke_rs_sampai_bulan_ini",
+
 
     // EPPGBM Data Mapping
     "periode": "periode",

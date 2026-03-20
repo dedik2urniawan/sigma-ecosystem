@@ -59,13 +59,14 @@ export const MANDATORY_COLUMNS_2026 = [
     "jumlah_bayi_usia_6_bulan",
     "jumlah_bayi_asi_eksklusif_sampai_6_bulan",
     "jumlah_anak_usia_6_23_bulan",
-    // Vitamin A (new: 54-59 bln, 6-59 bln)
+    // Vitamin A (new 2026: 54-59 bln, 6-59 bln split Feb & Ags)
     "jumlah_anak_usia_54_59_bulan",
     "jumlah_anak_usia_54_59_bulan_mendapat_vitamin_a",
-    "jumlah_anak_6_59_bulan",
-    "jumlah_anak_6_59_bulan_mendapat_vitamin_a",
-    // Suplemen & Gizi Buruk
-    "jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro",
+    "jumlah_anak_6_59_bulan_februari",
+    "jumlah_anak_6_59_bulan_mendapat_vitamin_a_februari",
+    "jumlah_anak_6_59_bulan_agustus",
+    "jumlah_anak_6_59_bulan_mendapat_vitamin_a_agustus",
+    // Gizi Buruk breakdown (nama kolom DB setelah rename 2026)
     "jumlah_kasus_gizi_buruk_balita_6_23_bulan",
     "jumlah_kasus_gizi_buruk_balita_24_59_bulan",
 ];
