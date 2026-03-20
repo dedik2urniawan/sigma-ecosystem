@@ -50,6 +50,7 @@ function getBarColor(value: number, metric: string): string {
     if (metric === "wasting") return value >= 10 ? "#ef4444" : value >= 5 ? "#f59e0b" : "#10b981";
     if (metric === "underweight") return value >= 20 ? "#ef4444" : value >= 10 ? "#f59e0b" : "#10b981";
     if (metric === "obesitas") return value >= 5 ? "#ef4444" : value >= 3 ? "#f59e0b" : "#10b981";
+    if (metric === "bb_outlier" || metric === "tb_outlier") return value >= 5 ? "#ef4444" : value >= 2 ? "#f59e0b" : "#10b981";
     return "#10b981";
 }
 
@@ -271,12 +272,13 @@ export default function LevelDesaContent() {
 
     // Aggregated totals
     const totals = useMemo(() => {
-        const t = { sasaran_l: 0, sasaran_p: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0 };
+        const t = { sasaran_l: 0, sasaran_p: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0 };
         filteredData.forEach((r) => {
             t.sasaran_l += r.data_sasaran_l; t.sasaran_p += r.data_sasaran_p;
-            t.jumlah_timbang += r.jumlah_timbang; t.jumlah_ukur += r.jumlah_ukur;
+            t.jumlah_timbang += r.jumlah_timbang || 0; t.jumlah_ukur += r.jumlah_ukur || 0;
             t.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
             t.stunting += r.stunting; t.wasting += r.wasting; t.underweight += r.underweight; t.obesitas += r.obesitas;
+            t.bb_outlier += r.bb_outlier || 0; t.tb_outlier += r.tb_outlier || 0;
         });
         const totalSasaran = t.sasaran_l + t.sasaran_p;
         return {
@@ -286,6 +288,8 @@ export default function LevelDesaContent() {
             pctWasting: t.jumlah_timbang_ukur > 0 ? (t.wasting / t.jumlah_timbang_ukur) * 100 : 0,
             pctUnderweight: t.jumlah_timbang_ukur > 0 ? (t.underweight / t.jumlah_timbang_ukur) * 100 : 0,
             pctObesitas: t.jumlah_timbang_ukur > 0 ? (t.obesitas / t.jumlah_timbang_ukur) * 100 : 0,
+            pctBbOutlier: t.jumlah_timbang > 0 ? (t.bb_outlier / t.jumlah_timbang) * 100 : 0,
+            pctTbOutlier: t.jumlah_ukur > 0 ? (t.tb_outlier / t.jumlah_ukur) * 100 : 0,
         };
     }, [filteredData]);
 
@@ -302,6 +306,8 @@ export default function LevelDesaContent() {
             return filteredData.map((r) => {
                 const totalSasaran = r.data_sasaran_l + r.data_sasaran_p;
                 const metricVal = chartMetric === "dataEntry" ? (totalSasaran > 0 ? (r.jumlah_timbang_ukur / totalSasaran) * 100 : 0)
+                    : chartMetric === "bb_outlier" ? (r.jumlah_timbang > 0 ? ((r.bb_outlier || 0) / r.jumlah_timbang) * 100 : 0)
+                    : chartMetric === "tb_outlier" ? (r.jumlah_ukur > 0 ? ((r.tb_outlier || 0) / r.jumlah_ukur) * 100 : 0)
                     : chartMetric === "stunting" ? (r.jumlah_timbang_ukur > 0 ? (r.stunting / r.jumlah_timbang_ukur) * 100 : 0)
                         : chartMetric === "wasting" ? (r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0)
                             : chartMetric === "underweight" ? (r.jumlah_timbang_ukur > 0 ? (r.underweight / r.jumlah_timbang_ukur) * 100 : 0)
@@ -322,7 +328,11 @@ export default function LevelDesaContent() {
             const agg = (rows: DesaRow[]) => {
                 const ts = rows.reduce((s, r) => s + r.data_sasaran_l + r.data_sasaran_p, 0);
                 const ttu = rows.reduce((s, r) => s + r.jumlah_timbang_ukur, 0);
+                const tt = rows.reduce((s, r) => s + (r.jumlah_timbang || 0), 0);
+                const tu = rows.reduce((s, r) => s + (r.jumlah_ukur || 0), 0);
                 if (chartMetric === "dataEntry") return ts > 0 ? (ttu / ts) * 100 : 0;
+                if (chartMetric === "bb_outlier") return tt > 0 ? (rows.reduce((s, r) => s + (r.bb_outlier || 0), 0) / tt) * 100 : 0;
+                if (chartMetric === "tb_outlier") return tu > 0 ? (rows.reduce((s, r) => s + (r.tb_outlier || 0), 0) / tu) * 100 : 0;
                 const val = rows.reduce((s, r) => s + (r[chartMetric as keyof DesaRow] as number), 0);
                 return ttu > 0 ? ((val as number) / ttu) * 100 : 0;
             };
@@ -332,7 +342,11 @@ export default function LevelDesaContent() {
         for (const [pusk, rows] of sortedPusk) {
             const ts = rows.reduce((s, r) => s + r.data_sasaran_l + r.data_sasaran_p, 0);
             const ttu = rows.reduce((s, r) => s + r.jumlah_timbang_ukur, 0);
+            const tt = rows.reduce((s, r) => s + (r.jumlah_timbang || 0), 0);
+            const tu = rows.reduce((s, r) => s + (r.jumlah_ukur || 0), 0);
             const metricVal = chartMetric === "dataEntry" ? (ts > 0 ? (ttu / ts) * 100 : 0)
+                : chartMetric === "bb_outlier" ? (tt > 0 ? (rows.reduce((s, r) => s + (r.bb_outlier || 0), 0) / tt) * 100 : 0)
+                : chartMetric === "tb_outlier" ? (tu > 0 ? (rows.reduce((s, r) => s + (r.tb_outlier || 0), 0) / tu) * 100 : 0)
                 : (ttu > 0 ? (rows.reduce((s, r) => s + (r[chartMetric as keyof DesaRow] as number), 0) / ttu) * 100 : 0);
             items.push({ name: pusk, value: parseFloat(metricVal.toFixed(2)), type: "puskesmas" });
 
@@ -341,6 +355,8 @@ export default function LevelDesaContent() {
                 const desaItems = rows.map((r) => {
                     const rts = r.data_sasaran_l + r.data_sasaran_p;
                     const rv = chartMetric === "dataEntry" ? (rts > 0 ? (r.jumlah_timbang_ukur / rts) * 100 : 0)
+                        : chartMetric === "bb_outlier" ? (r.jumlah_timbang > 0 ? ((r.bb_outlier || 0) / r.jumlah_timbang) * 100 : 0)
+                        : chartMetric === "tb_outlier" ? (r.jumlah_ukur > 0 ? ((r.tb_outlier || 0) / r.jumlah_ukur) * 100 : 0)
                         : (r.jumlah_timbang_ukur > 0 ? ((r[chartMetric as keyof DesaRow] as number) / r.jumlah_timbang_ukur) * 100 : 0);
                     return { name: `  └ ${r.kelurahan}`, value: parseFloat(rv.toFixed(2)), type: "desa" as const, parent: pusk };
                 });
@@ -384,6 +400,8 @@ export default function LevelDesaContent() {
                 pctWasting: r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0,
                 pctUnderweight: r.jumlah_timbang_ukur > 0 ? (r.underweight / r.jumlah_timbang_ukur) * 100 : 0,
                 pctObesitas: r.jumlah_timbang_ukur > 0 ? (r.obesitas / r.jumlah_timbang_ukur) * 100 : 0,
+                pctBbOutlier: r.jumlah_timbang > 0 ? ((r.bb_outlier || 0) / r.jumlah_timbang) * 100 : 0,
+                pctTbOutlier: r.jumlah_ukur > 0 ? ((r.tb_outlier || 0) / r.jumlah_ukur) * 100 : 0,
             };
         });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -401,6 +419,8 @@ export default function LevelDesaContent() {
             "Wasting": r.wasting, "% Wasting": parseFloat(r.pctWasting.toFixed(2)),
             "Underweight": r.underweight, "% Underweight": parseFloat(r.pctUnderweight.toFixed(2)),
             "Obesitas": r.obesitas, "% Obesitas": parseFloat(r.pctObesitas.toFixed(2)),
+            "Outlier BBU": r.bb_outlier || 0, "% Outlier BBU": parseFloat(r.pctBbOutlier.toFixed(2)),
+            "Outlier TBU": r.tb_outlier || 0, "% Outlier TBU": parseFloat(r.pctTbOutlier.toFixed(2)),
         }));
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -431,6 +451,7 @@ export default function LevelDesaContent() {
     const METRIC_OPTIONS = [
         { key: "dataEntry", label: "% Data Entry" }, { key: "stunting", label: "Stunting" },
         { key: "wasting", label: "Wasting" }, { key: "underweight", label: "Underweight" }, { key: "obesitas", label: "Obesitas" },
+        { key: "bb_outlier", label: "% Outlier BBU" }, { key: "tb_outlier", label: "% Outlier TBU" },
     ];
 
     const TABLE_COLS = [
@@ -441,7 +462,9 @@ export default function LevelDesaContent() {
         { key: "pctStunting", label: "% Stunting" }, { key: "wasting", label: "Wasting" },
         { key: "pctWasting", label: "% Wasting" }, { key: "underweight", label: "UW" },
         { key: "pctUnderweight", label: "% UW" }, { key: "obesitas", label: "Obes" },
-        { key: "pctObesitas", label: "% Obes" },
+        { key: "pctObesitas", label: "% Obes" }, { key: "bb_outlier", label: "Outlier BBU" },
+        { key: "pctBbOutlier", label: "% Out BBU" }, { key: "tb_outlier", label: "Outlier TBU" },
+        { key: "pctTbOutlier", label: "% Out TBU" },
     ];
 
     // Pagination
@@ -525,6 +548,22 @@ export default function LevelDesaContent() {
                         <ScoreCard label="Obesitas" value={formatNum(totals.obesitas)} suffix={formatPct(totals.pctObesitas)} icon="trending_up" color="red" />
                     </div>
 
+                    {/* ─── Analisis Anomali & Outlier Data ─── */}
+                    <div className="bg-red-50/30 border border-red-100 rounded-2xl p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                                <span className="material-icons-round text-lg text-red-600">warning</span>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900">Analisis Anomali & Outlier Data</h3>
+                                <p className="text-xs text-slate-400">Persentase data outlier yang memerlukan verifikasi ulang</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <ScoreCard label="% Outlier BBU" value={formatPct(totals.pctBbOutlier)} icon="warning_amber" color="red" highlight />
+                            <ScoreCard label="% Outlier TBU" value={formatPct(totals.pctTbOutlier)} icon="warning_amber" color="red" highlight />
+                        </div>
+                    </div>
                     {/* ─── Gender Analysis ─── */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-6">
                         <div className="flex items-center gap-3 mb-6">

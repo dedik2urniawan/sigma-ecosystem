@@ -142,6 +142,11 @@ function getBarColor(value: number, metric: string): string {
         if (value >= 3) return "#f59e0b";
         return "#10b981";
     }
+    if (metric === "bb_outlier" || metric === "tb_outlier" || metric === "outlier") {
+        if (value >= 5) return "#ef4444"; // Urgent
+        if (value >= 2) return "#f59e0b"; // Warning
+        return "#10b981"; // Normal
+    }
     return "#10b981";
 }
 
@@ -414,6 +419,9 @@ export default function PelayananKesehatanPage() {
             wasting: 0,
             underweight: 0,
             obesitas: 0,
+            bb_outlier: 0,
+            tb_outlier: 0,
+            outlier: 0,
         };
 
         filteredData.forEach((r) => {
@@ -425,6 +433,9 @@ export default function PelayananKesehatanPage() {
             t.wasting += r.wasting;
             t.underweight += r.underweight;
             t.obesitas += r.obesitas;
+            t.bb_outlier += r.bb_outlier || 0;
+            t.tb_outlier += r.tb_outlier || 0;
+            t.outlier += r.outlier || 0;
         });
 
         return {
@@ -434,25 +445,41 @@ export default function PelayananKesehatanPage() {
             pctWasting: t.jumlah_timbang_ukur > 0 ? (t.wasting / t.jumlah_timbang_ukur) * 100 : 0,
             pctUnderweight: t.jumlah_timbang_ukur > 0 ? (t.underweight / t.jumlah_timbang_ukur) * 100 : 0,
             pctObesitas: t.jumlah_timbang_ukur > 0 ? (t.obesitas / t.jumlah_timbang_ukur) * 100 : 0,
+            pctBbOutlier: t.jumlah_timbang > 0 ? (t.bb_outlier / t.jumlah_timbang) * 100 : 0,
+            pctTbOutlier: t.jumlah_ukur > 0 ? (t.tb_outlier / t.jumlah_ukur) * 100 : 0,
+            pctOutlier: t.jumlah_timbang_ukur > 0 ? (t.outlier / t.jumlah_timbang_ukur) * 100 : 0,
         };
     }, [filteredData]);
 
     // Chart data: per puskesmas
     const chartData = useMemo(() => {
-        const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number }>();
+        const pkmMap = new Map<string, {
+            data_sasaran: number; jumlah_timbang_ukur: number; jumlah_timbang: number; jumlah_ukur: number;
+            stunting: number; wasting: number; underweight: number; obesitas: number;
+            bb_outlier: number; tb_outlier: number; outlier: number;
+        }>();
 
         // If a single puskesmas is selected, still show it (or its villages if we wanted, but logic here assumes Puskesmas bars)
         // With village data, we MUST aggregate by Puskesmas to avoid duplicate bars
         const chartFiltered = filterPuskesmas === "all" ? filteredData : filteredData;
 
         chartFiltered.forEach((r) => {
-            const existing = pkmMap.get(r.puskesmas) || { data_sasaran: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0 };
+            const existing = pkmMap.get(r.puskesmas) || {
+                data_sasaran: 0, jumlah_timbang_ukur: 0, jumlah_timbang: 0, jumlah_ukur: 0,
+                stunting: 0, wasting: 0, underweight: 0, obesitas: 0,
+                bb_outlier: 0, tb_outlier: 0, outlier: 0
+            };
             existing.data_sasaran += r.data_sasaran;
             existing.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
+            existing.jumlah_timbang += r.jumlah_timbang || 0;
+            existing.jumlah_ukur += r.jumlah_ukur || 0;
             existing.stunting += r.stunting;
             existing.wasting += r.wasting;
             existing.underweight += r.underweight;
             existing.obesitas += r.obesitas;
+            existing.bb_outlier += r.bb_outlier || 0;
+            existing.tb_outlier += r.tb_outlier || 0;
+            existing.outlier += r.outlier || 0;
             pkmMap.set(r.puskesmas, existing);
         });
 
@@ -462,8 +489,11 @@ export default function PelayananKesehatanPage() {
             const wasting = v.jumlah_timbang_ukur > 0 ? (v.wasting / v.jumlah_timbang_ukur) * 100 : 0;
             const underweight = v.jumlah_timbang_ukur > 0 ? (v.underweight / v.jumlah_timbang_ukur) * 100 : 0;
             const obesitas = v.jumlah_timbang_ukur > 0 ? (v.obesitas / v.jumlah_timbang_ukur) * 100 : 0;
+            const bb_outlier = v.jumlah_timbang > 0 ? (v.bb_outlier / v.jumlah_timbang) * 100 : 0;
+            const tb_outlier = v.jumlah_ukur > 0 ? (v.tb_outlier / v.jumlah_ukur) * 100 : 0;
+            const outlier = v.jumlah_timbang_ukur > 0 ? (v.outlier / v.jumlah_timbang_ukur) * 100 : 0;
 
-            return { name, dataEntry, stunting, wasting, underweight, obesitas };
+            return { name, dataEntry, stunting, wasting, underweight, obesitas, bb_outlier, tb_outlier, outlier };
         });
 
         // Sort descending by chosen metric
@@ -512,10 +542,10 @@ export default function PelayananKesehatanPage() {
 
     // Table data with sorting
     const tableData = useMemo(() => {
-        const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang: number; jumlah_ukur: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number }>();
+        const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang: number; jumlah_ukur: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number; bb_outlier: number; tb_outlier: number; outlier: number; }>();
 
         filteredData.forEach((r) => {
-            const existing = pkmMap.get(r.puskesmas) || { data_sasaran: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0 };
+            const existing = pkmMap.get(r.puskesmas) || { data_sasaran: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0, outlier: 0 };
             existing.data_sasaran += r.data_sasaran;
             existing.jumlah_timbang += r.jumlah_timbang;
             existing.jumlah_ukur += r.jumlah_ukur;
@@ -524,6 +554,9 @@ export default function PelayananKesehatanPage() {
             existing.wasting += r.wasting;
             existing.underweight += r.underweight;
             existing.obesitas += r.obesitas;
+            existing.bb_outlier += r.bb_outlier || 0;
+            existing.tb_outlier += r.tb_outlier || 0;
+            existing.outlier += r.outlier || 0;
             pkmMap.set(r.puskesmas, existing);
         });
 
@@ -542,6 +575,12 @@ export default function PelayananKesehatanPage() {
             pctUnderweight: v.jumlah_timbang_ukur > 0 ? (v.underweight / v.jumlah_timbang_ukur) * 100 : 0,
             obesitas: v.obesitas,
             pctObesitas: v.jumlah_timbang_ukur > 0 ? (v.obesitas / v.jumlah_timbang_ukur) * 100 : 0,
+            bb_outlier: v.bb_outlier,
+            pctBbOutlier: v.jumlah_timbang > 0 ? (v.bb_outlier / v.jumlah_timbang) * 100 : 0,
+            tb_outlier: v.tb_outlier,
+            pctTbOutlier: v.jumlah_ukur > 0 ? (v.tb_outlier / v.jumlah_ukur) * 100 : 0,
+            outlier: v.outlier,
+            pctOutlier: v.jumlah_timbang_ukur > 0 ? (v.outlier / v.jumlah_timbang_ukur) * 100 : 0,
         }));
 
         // Sort
@@ -572,6 +611,9 @@ export default function PelayananKesehatanPage() {
         wasting: "Prevalensi Wasting",
         underweight: "Prevalensi Underweight",
         obesitas: "Prevalensi Obesitas",
+        bb_outlier: "% Outlier Berat Badan (BBU)",
+        tb_outlier: "% Outlier Tinggi Badan (TBU)",
+        outlier: "% Outlier BB/TB",
     };
 
     // ─── Export: Excel (table data only) ──────────────────────────────────
@@ -595,6 +637,12 @@ export default function PelayananKesehatanPage() {
             "% Underweight": Number(r.pctUnderweight.toFixed(2)),
             Obesitas: r.obesitas,
             "% Obesitas": Number(r.pctObesitas.toFixed(2)),
+            "Outlier BBU": r.bb_outlier,
+            "% Outlier BBU": Number(r.pctBbOutlier.toFixed(2)),
+            "Outlier TBU": r.tb_outlier,
+            "% Outlier TBU": Number(r.pctTbOutlier.toFixed(2)),
+            "Outlier BBTB": r.outlier,
+            "% Outlier BBTB": Number(r.pctOutlier.toFixed(2)),
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportRows);
@@ -896,7 +944,21 @@ export default function PelayananKesehatanPage() {
                                         <ScoreCard label="Prevalensi Obesitas" value={formatPct(totals.pctObesitas)} icon="trending_up" color={totals.pctObesitas >= 5 ? "red" : totals.pctObesitas >= 3 ? "amber" : "emerald"} highlight />
                                     </div>
 
-
+                                    {/* ─── Analisis Anomali & Outlier Data ─────────────────────────────────────── */}
+                                    <div className="mt-8 mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="material-icons-round text-red-600 text-xl">warning</span>
+                                            <div>
+                                                <h2 className="text-base font-bold text-slate-900">Analisis Anomali & Outlier Data</h2>
+                                                <p className="text-xs text-slate-400">Persentase data outlier yang memerlukan verifikasi ulang</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 border border-red-100 bg-red-50/30 p-4 rounded-2xl">
+                                        <ScoreCard label="% Outlier BBU" value={formatPct(totals.pctBbOutlier)} icon="warning_amber" color="red" highlight />
+                                        <ScoreCard label="% Outlier TBU" value={formatPct(totals.pctTbOutlier)} icon="warning_amber" color="red" highlight />
+                                        <ScoreCard label="% Outlier BB/TB" value={formatPct(totals.pctOutlier)} icon="warning_amber" color="red" highlight />
+                                    </div>
 
                                     {/* ─── Trend Analysis ───────────────────────────────── */}
                                     <TrendAnalysisChart data={trendData} year={filterTahun} />
