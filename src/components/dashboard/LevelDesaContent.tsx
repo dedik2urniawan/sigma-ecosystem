@@ -673,14 +673,17 @@ export default function LevelDesaContent() {
                                     <p className="text-xs text-slate-400">{filterDesa !== "all" ? "Level Desa" : "Klik bar puskesmas untuk expand ke desa"}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-1 flex-wrap no-print">
+                            <select
+                                value={chartMetric}
+                                onChange={(e) => setChartMetric(e.target.value)}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all no-print"
+                            >
                                 {METRIC_OPTIONS.map((m) => (
-                                    <button key={m.key} onClick={() => setChartMetric(m.key)}
-                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wider transition-all ${chartMetric === m.key ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
+                                    <option key={m.key} value={m.key}>
                                         {m.label}
-                                    </button>
+                                    </option>
                                 ))}
-                            </div>
+                            </select>
                         </div>
                         <ResponsiveContainer width="100%" height={Math.max(400, chartData.length * 32)}>
                             <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
@@ -697,7 +700,7 @@ export default function LevelDesaContent() {
                                     contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
                                 />
 
-                                <Bar dataKey="value" radius={[0, 6, 6, 0]} onClick={(entry) => {
+                                <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={32} onClick={(entry) => {
                                     if (entry.type === "puskesmas") {
                                         setExpandedPuskesmas((prev) => {
                                             const next = new Set(prev);
