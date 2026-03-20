@@ -124,19 +124,6 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
             .then((res) => res.json())
             .then((d) => setGeojsonData(d))
             .catch((err) => console.error("Failed to load GeoJSON:", err));
-
-        return () => {
-            // Clear _leaflet_id so React re-mount in Strict Mode doesn't throw
-            // "Map container is being reused by another instance"
-            if (containerRef.current) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (containerRef.current as any)._leaflet_id = null;
-            }
-            if (mapRef.current) {
-                try { mapRef.current.remove(); } catch { /* already removed */ }
-                mapRef.current = null;
-            }
-        };
     }, []);
 
     const normalizeString = useCallback((s: string) => s?.toUpperCase().trim().replace(/\s+/g, " "), []);
