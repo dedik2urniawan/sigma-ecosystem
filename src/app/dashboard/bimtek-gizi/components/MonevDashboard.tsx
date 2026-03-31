@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/dashboard/layout";
 import { SUPERVISI_SECTIONS, TOTAL_ITEMS } from "@/lib/supervisiConfig";
+import jsPDF from "jspdf";
+import { toPng } from "html-to-image";
+import * as xlsx from "xlsx";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Session {
@@ -80,6 +83,107 @@ export default function MonevDashboard() {
     const [aggregatedSessionIds, setAggregatedSessionIds] = useState<string[]>([]);  // which sessions are shown
     const [loading, setLoading] = useState(true);
     const [loadingSessions, setLoadingSessions] = useState(true);
+    
+    // Export states
+    const dashboardRef = useRef<HTMLDivElement>(null);
+    const [exportingPDF, setExportingPDF] = useState(false);
+    const [exportingExcel, setExportingExcel] = useState(false);
+
+    const handleExportPDF = async () => {
+        if (!dashboardRef.current) return;
+        try {
+            setExportingPDF(true);
+            
+            // Menggunakan html-to-image menggantikan html2canvas untuk menghindari error color function 'lab' dll.
+            const dataUrl = await toPng(dashboardRef.current, { 
+                backgroundColor: '#ffffff',
+                cacheBust: true,
+                pixelRatio: 2
+            });
+            
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            
+            // To figure out height we can use the element's actual pixel dimensions
+            const elWidth = dashboardRef.current.offsetWidth;
+            const elHeight = dashboardRef.current.offsetHeight;
+            const pdfHeight = (elHeight * pdfWidth) / elWidth;
+            
+            let position = 0;
+            let heightLeft = pdfHeight;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            pdf.addImage(dataUrl, "PNG", 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pageHeight;
+            
+            while (heightLeft > 0) {
+              position = heightLeft - pdfHeight;
+              pdf.addPage();
+              pdf.addImage(dataUrl, "PNG", 0, position, pdfWidth, pdfHeight);
+              heightLeft -= pageHeight;
+            }
+            
+            const fileName = `Dashboard_Monev_${selectedPKM === "all" ? "Semua_PKM" : selectedPKM}_${new Date().toLocaleDateString('id-ID')}.pdf`;
+            pdf.save(fileName.replace(/\//g, "-"));
+        } catch (error) {
+            console.error("PDF generation failed", error);
+            alert("Terjadi kesalahan saat mengekspor ke PDF.");
+        } finally {
+            setExportingPDF(false);
+        }
+    };
+
+    const handleExportExcel = async () => {
+        if (aggregatedSessionIds.length === 0) return;
+        try {
+            setExportingExcel(true);
+            
+            const { data } = await supabase
+                .from("supervisi_items")
+                .select("session_id, section, item_label, value, catatan_integer")
+                .in("session_id", aggregatedSessionIds);
+                
+            if (!data) throw new Error("No data found");
+            
+            const numericSections = SUPERVISI_SECTIONS.filter(s => s.inputType === 'integer');
+            const numericSectionIds = numericSections.map(s => s.id);
+            const numericItems = data.filter(i => numericSectionIds.includes(i.section));
+            
+            const sessionMap: Record<string, string> = {};
+            allSessions.forEach(s => { sessionMap[s.id] = s.puskesmas_name; });
+            
+            const rowsArray: any[] = [];
+            
+            aggregatedSessionIds.forEach(sessionId => {
+                const pkmName = sessionMap[sessionId] || "Unknown PKM";
+                const rowObj: any = { "Puskesmas": pkmName };
+                
+                let sessionItems = numericItems.filter(i => i.session_id === sessionId);
+                
+                numericSections.forEach(section => {
+                    section.items.forEach(itemConfig => {
+                        const dbItem = sessionItems.find(i => i.section === section.id && i.item_label === itemConfig.label);
+                        const value = dbItem?.catatan_integer !== null && dbItem?.catatan_integer !== undefined ? dbItem.catatan_integer : 0;
+                        rowObj[`${section.title} - ${itemConfig.label}`] = value;
+                    });
+                });
+                rowsArray.push(rowObj);
+            });
+            
+            const worksheet = xlsx.utils.json_to_sheet(rowsArray);
+            const workbook = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(workbook, worksheet, "Data Kesiapan (Numerik)");
+            
+            const fileName = `Rekap_Kesiapan_Numerik_${selectedPKM === "all" ? "Semua_PKM" : selectedPKM}_${new Date().toLocaleDateString('id-ID')}.xlsx`;
+            xlsx.writeFile(workbook, fileName.replace(/\//g, "-"));
+            
+        } catch (error) {
+            console.error("Excel generation failed", error);
+            alert("Gagal mengunduh data numerik ke Excel.");
+        } finally {
+            setExportingExcel(false);
+        }
+    };
 
     const sectionColors = [
         { bar: 'bg-gradient-to-r from-orange-400 to-amber-500' },
@@ -313,7 +417,7 @@ export default function MonevDashboard() {
                             ))}
                         </select>
                     </div>
-                    {/* Active mode badge */}
+                    {/* Active mode badge & Exports */}
                     <div className="ml-auto flex items-center gap-2 flex-wrap">
                         {isAggregateMode ? (
                             <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">
@@ -325,6 +429,24 @@ export default function MonevDashboard() {
                                 {selectedPKMLabel}
                             </span>
                         )}
+                        <div className="flex items-center gap-2 border-l border-slate-200 pl-4 ml-2">
+                            <button 
+                                onClick={handleExportExcel}
+                                disabled={exportingExcel || aggregatedSessionIds.length === 0}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            >
+                                <span className="material-icons-round text-[16px]">{exportingExcel ? 'hourglass_empty' : 'table_view'}</span>
+                                {exportingExcel ? 'Exporting...' : 'Excel (Numerik)'}
+                            </button>
+                            <button 
+                                onClick={handleExportPDF}
+                                disabled={exportingPDF || aggregatedSessionIds.length === 0}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            >
+                                <span className="material-icons-round text-[16px]">{exportingPDF ? 'hourglass_empty' : 'picture_as_pdf'}</span>
+                                {exportingPDF ? 'Exporting...' : 'PDF (Analisis)'}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {/* Aggregate mode info banner */}
@@ -354,7 +476,7 @@ export default function MonevDashboard() {
                     <p className="text-slate-400 text-sm animate-pulse">Menghitung agregasi...</p>
                 </div>
             ) : (
-                <>
+                <div ref={dashboardRef} className="space-y-6 pt-2 bg-slate-50 border-t-transparent">
                     {/* ── 4 Scorecards ── */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
@@ -587,7 +709,7 @@ export default function MonevDashboard() {
                             </div>
                         </div>
                     )}
-                </>
+                </div>
             )}
         </div>
     );
