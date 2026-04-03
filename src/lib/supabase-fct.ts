@@ -64,10 +64,26 @@ export interface AkgReference {
 
 // Data fetching helper
 export async function fetchFctReferenceData() {
+    const fetchAllTkpi = async () => {
+        const all = [];
+        let from = 0;
+        const step = 1000;
+        while (true) {
+            const { data, error } = await supabaseFct.from('fct_tkpi').select('*').order('nama_bahan_mentah').range(from, from + step - 1);
+            if (error) { console.error("Error tkpi:", error); break; }
+            if (data && data.length > 0) {
+                all.push(...data);
+                if (data.length < step) break;
+                from += step;
+            } else break;
+        }
+        return { data: all, error: null };
+    };
+
     const [tkpiRes, yieldRes, retRes, akgRes] = await Promise.all([
-        supabaseFct.from('fct_tkpi').select('*').order('nama_bahan_mentah'),
-        supabaseFct.from('fct_yield').select('*'),
-        supabaseFct.from('fct_retention').select('*'),
+        fetchAllTkpi(),
+        supabaseFct.from('fct_yield').select('*').limit(3000),
+        supabaseFct.from('fct_retention').select('*').limit(3000),
         supabaseFct.from('fct_akg_ref').select('*').order('id')
     ]);
 
