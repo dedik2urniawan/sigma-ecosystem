@@ -101,7 +101,8 @@ export async function generateHealthAnalysis(context: AnalysisContext) {
       Output in Bahasa Indonesia.
     `;
 
-        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/gemini-2.0-flash:generateContent`;
+        const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash-001';
+        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${aiModel}:generateContent`;
 
         const response = await fetch(vertexEndpoint, {
             method: 'POST',

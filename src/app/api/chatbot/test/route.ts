@@ -11,7 +11,8 @@ export async function GET() {
         console.log("API Key loaded:", apiKey.substring(0, 5) + "...");
 
         // Let's do a direct fetch to Gemini API to bypass SDK parsing
-        const fetchResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${apiKey}`, {
+        const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash-001';
+        const fetchResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=\${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
