@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as XLSX from "xlsx";
+import PkmkEngine from "./PkmkEngine";
 
 interface Filters {
     periode: string;
@@ -18,6 +19,7 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
     const [downloadingCat, setDownloadingCat] = useState<string | null>(null);
 
     const categories = [
+        { id: "A", title: "Risiko Faltering (AI Predicted)", desc: "Status saat ini Normal, namun Z-Score berada di ambang krisis (-1.5 s/d -1.99).", color: "bg-teal-50", borderColor: "border-teal-200", textColor: "text-teal-700" },
         { id: "B", title: "Hanya Wasting", desc: "Z-Score BB/TB < -2", color: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700" },
         { id: "C", title: "Wasting & Underweight", desc: "Z-Score BB/TB < -2 dan BB/U < -2", color: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700" },
         { id: "D", title: "Wasting, Underweight, Stunting", desc: "Ketiga indikator < -2 (Risiko Tertinggi)", color: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700" },
@@ -31,28 +33,62 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
         setDownloadingCat(categoryId);
 
         try {
-            const { data, error } = await supabase.rpc('get_eppgbm_balita_bermasalah', {
-                p_periode: filters.periode,
-                p_puskesmas: filters.puskesmas,
-                p_kelurahan: filters.kelurahan || "Semua",
-                p_category: categoryId
-            });
+            let fetchedData = null;
 
-            if (error) {
-                console.error("Error fetching data for download:", error);
-                alert("Gagal mengunduh data dari server.");
+            if (categoryId === "A") {
+                // Predictive AI Logic (Fetch Normal children who are At-Risk)
+                let query = supabase.from("data_eppgbm").select("*")
+                    .gt("zs_tbu", -2.0).gt("zs_bbu", -2.0).gt("zs_bbtb", -2.0) // All must be > -2.0 (Normal)
+                    .or("zs_tbu.lte.-1.5,zs_bbu.lte.-1.5,zs_bbtb.lte.-1.5");   // At least one is <= -1.5
+                
+                if (filters.periode && filters.periode !== "Semua") query = query.eq("periode", filters.periode);
+                if (filters.puskesmas && filters.puskesmas !== "Semua") query = query.eq("puskesmas", filters.puskesmas);
+                if (filters.kelurahan && filters.kelurahan !== "Semua") query = query.eq("kelurahan", filters.kelurahan);
+
+                const { data, error } = await query;
+                if (error) throw error;
+                fetchedData = data;
+            } else {
+                // Standard RPC for existing problem categories
+                const { data, error } = await supabase.rpc('get_eppgbm_balita_bermasalah', {
+                    p_periode: filters.periode,
+                    p_puskesmas: filters.puskesmas,
+                    p_kelurahan: filters.kelurahan || "Semua",
+                    p_category: categoryId
+                });
+                if (error) throw error;
+                fetchedData = data;
+            }
+
+            if (!fetchedData || fetchedData.length === 0) {
+                alert(`Tidak ada data balita untuk Kategori ${categoryId} pada filter ini.`);
                 setDownloadingCat(null);
                 return;
             }
 
-            if (!data || data.length === 0) {
-                alert(`Tidak ada data balita bermasalah untuk Kategori ${categoryId} pada filter ini.`);
-                setDownloadingCat(null);
-                return;
-            }
+            // AI Expert System Logic (Rule-Based Heuristic)
+            const getAiInsight = (item: any) => {
+                const bbu = Number(item.zs_bbu || 0);
+                const tbu = Number(item.zs_tbu || 0);
+                const bbtb = Number(item.zs_bbtb || 0);
+
+                if (tbu <= -2.0 && bbtb <= -2.0) {
+                    return "Kondisi Kronis & Akut: Anak mengalami Stunting dan Wasting sekaligus. Rekomendasi: Rujuk segera ke RSUD/Sp.A untuk tata laksana gizi buruk terpadu, lacak potensi penyakit penyerta (TBC/Infeksi).";
+                } else if (tbu <= -2.0) {
+                    return `Stunting (Z-Score TB/U ${tbu}): Anak sudah mengalami perawakan pendek. Rekomendasi: Evaluasi pola asuh, sanitasi lingkungan, dan berikan edukasi tinggi protein hewani jangka panjang.`;
+                } else if (bbtb <= -2.0) {
+                    return `Wasting (Z-Score BB/TB ${bbtb}): Defisit gizi akut terdeteksi. Rekomendasi: Intervensi PMT Pemulihan (F-100/F-75 atau PKMK) selama 14-30 hari ke depan wajib dipantau ketat.`;
+                } else if (tbu <= -1.5 || bbu <= -1.5 || bbtb <= -1.5) {
+                    const metrik = tbu <= -1.5 ? "TB/U" : bbtb <= -1.5 ? "BB/TB" : "BB/U";
+                    const val = tbu <= -1.5 ? tbu : bbtb <= -1.5 ? bbtb : bbu;
+                    return `⚠️ PREDIKSI FALTERING: Status saat ini Normal, namun Z-Score ${metrik} (${val}) sangat dekat dengan jurang defisit gizi (-2.0). Rekomendasi: Berikan konseling pencegahan dan pantau ketat tren BB bulan depan.`;
+                } else {
+                    return "Pertumbuhan dalam ambang batas toleransi.";
+                }
+            };
 
             // Format data for Excel
-            const exportData = data.map((item: any, index: number) => ({
+            const exportData = fetchedData.map((item: any, index: number) => ({
                 "No": index + 1,
                 "NIK": item.nik || "-",
                 "Nama Balita": item.nama_balita || "-",
@@ -69,7 +105,8 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
                 "ZScore TBU": item.zs_tbu || "-",
                 "Klasifikasi TBU": item.tbu || "-",
                 "ZScore BBTB": item.zs_bbtb || "-",
-                "Klasifikasi BBTB": item.bbtb || "-"
+                "Klasifikasi BBTB": item.bbtb || "-",
+                "✨ AI Risk Insight & Rekomendasi": getAiInsight(item)
             }));
 
             // Create Excel file
@@ -100,6 +137,33 @@ export default function DaftarBalitaBermasalahTab({ filters }: { filters: Filter
 
     return (
         <div className="space-y-6">
+            {/* NEW AI FEATURE HIGHLIGHT BANNER */}
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                {/* Abstract background shapes */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                <div className="absolute -bottom-10 right-20 w-32 h-32 bg-teal-400/20 rounded-full blur-xl"></div>
+                
+                <div className="relative z-10 flex items-start gap-4">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0 border border-white/30">
+                        <span className="material-icons-round text-white text-2xl animate-pulse">auto_awesome</span>
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-gradient-to-r from-teal-400 to-emerald-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
+                                UPDATE v2.0
+                            </span>
+                            <h3 className="font-bold text-lg text-white">Sistem Pakar AI & Prediktif Faltering Aktif!</h3>
+                        </div>
+                        <p className="text-indigo-100 text-sm max-w-3xl leading-relaxed">
+                            Kini setiap file Excel yang diunduh otomatis disisipkan nasehat gizi spesifik per balita (Kolom AI Risk Insight). Anda juga dapat menggunakan <strong>Personalized PKMK Engine</strong> di bawah ini untuk mencari pasien spesifik dan meracik preskripsi medis secara instan!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* PKMK Intervention Engine Component */}
+            <PkmkEngine filters={filters} />
+
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
                 <div className="mb-8 p-6 lg:p-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl md:rounded-3xl shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     {/* Decorative Background */}

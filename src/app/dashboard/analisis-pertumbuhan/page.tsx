@@ -9,6 +9,7 @@ import DistribusiZScoreTab from "./components/DistribusiZScoreTab";
 import TrendPertumbuhanTab from "./components/TrendPertumbuhanTab";
 import DifferensiasiPrevalensiTab from "./components/DifferensiasiPrevalensiTab";
 import DaftarBalitaBermasalahTab from "./components/DaftarBalitaBermasalahTab";
+import AiExecutiveSummary from "./components/AiExecutiveSummary";
 
 export default function AnalisisPertumbuhanPage() {
     const { user } = useAuth();
@@ -203,6 +204,9 @@ export default function AnalisisPertumbuhanPage() {
                     </div>
                 </div>
             </div>
+
+            {/* AI Executive Summary Component */}
+            <AiExecutiveSummary filters={filterProps} />
 
             {/* Navigation Tabs */}
             <div className="flex bg-slate-50 p-1.5 rounded-2xl flex-wrap gap-1 border border-slate-100">
