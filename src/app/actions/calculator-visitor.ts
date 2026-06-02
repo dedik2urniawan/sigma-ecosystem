@@ -6,7 +6,7 @@ import crypto from "crypto";
 
 export async function trackVisitor() {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         
         // Extract IP
         const forwardedFor = headersList.get("x-forwarded-for");
