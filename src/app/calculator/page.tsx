@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import VisitorTracker from "./components/VisitorTracker";
 
 // ============================================================
 // Feature Cards Data
@@ -289,6 +290,9 @@ export default function CalculatorPage() {
                     </div>
                 </div>
             </section>
+
+            {/* ---- VISITOR TRACKER ---- */}
+            <VisitorTracker />
 
             <footer className="py-8 bg-slate-900">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
