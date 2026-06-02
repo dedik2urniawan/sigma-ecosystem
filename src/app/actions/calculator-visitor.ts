@@ -62,10 +62,13 @@ export async function getVisitorStats() {
         const regionsSet = new Set<string>();
         if (recentVisitors) {
             recentVisitors.forEach((v) => {
-                if (v.region && v.region !== "Unknown Region" && v.region !== "dev1") {
-                    regionsSet.add(v.region);
-                } else if (v.city && v.city !== "Unknown City") {
-                    regionsSet.add(v.city);
+                const region = v.region?.trim();
+                const city = v.city?.trim();
+                
+                if (region && region.length > 3 && region !== "Unknown Region" && region !== "dev1") {
+                    regionsSet.add(region);
+                } else if (city && city.length > 3 && city !== "Unknown City") {
+                    regionsSet.add(city);
                 }
             });
         }
@@ -77,6 +80,7 @@ export async function getVisitorStats() {
         const realCount = count || 0;
         const displayCount = realCount + BASE_VISITOR_COUNT;
         
+        // If we don't have enough valid regions, provide a solid default fallback
         if (topRegions.length === 0) {
             topRegions = ["Jawa Timur", "DKI Jakarta"];
         }
