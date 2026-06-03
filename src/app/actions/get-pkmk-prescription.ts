@@ -19,7 +19,7 @@ export async function getPkmkPrescription(balita: PkmkBalitaContext) {
 
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
     const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-    const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash-001';
+    const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-3.1-flash-lite';
 
     if (!projectId) {
         return { success: false, error: "Konfigurasi Project ID belum diatur." };
