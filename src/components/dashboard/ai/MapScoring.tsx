@@ -4,10 +4,15 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { AIAnalyticsData } from "@/app/actions/get-advanced-analytics";
+export interface RegionScore {
+    puskesmas: string;
+    riskScore: number;
+    reason: string;
+    status: "Red Zone" | "Yellow Zone" | "Green Zone" | string;
+}
 
 interface MapScoringProps {
-    scores: AIAnalyticsData["regionScoring"];
+    scores: RegionScore[];
 }
 
 const DEFAULT_CENTER: [number, number] = [-8.1, 112.6];
@@ -33,7 +38,10 @@ export default function MapScoring({ scores }: MapScoringProps) {
             .catch((err) => console.error("Failed to load map:", err));
     }, []);
 
-    const normalizeString = useCallback((s: string) => s?.toUpperCase().trim().replace(/\s+/g, " "), []);
+    const normalizeString = useCallback((s: string) => {
+        if (!s) return "";
+        return s.toUpperCase().replace(/PUSKESMAS/g, "").trim().replace(/\s+/g, " ");
+    }, []);
 
     const style = useCallback((feature: any) => {
         const name = feature?.properties?.nama_puskesmas;

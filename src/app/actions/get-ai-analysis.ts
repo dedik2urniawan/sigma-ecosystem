@@ -1,6 +1,5 @@
 "use server";
 
-import { GoogleAuth } from "google-auth-library";
 
 export interface AnalysisContext {
     filterTahun: number | null;
@@ -33,45 +32,12 @@ export async function generateHealthAnalysis(context: AnalysisContext) {
         puskesmas: context.filterPuskesmas
     });
 
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-
-    if (!projectId) {
-        console.error("Missing Vertex AI Credentials (GOOGLE_CLOUD_PROJECT)");
-        return {
-            success: false,
-            error: "Konfigurasi server (GCP Project ID) tidak lengkap.",
-        };
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+        return { success: false, error: "Konfigurasi API Key tidak lengkap." };
     }
 
     try {
-        let auth;
-        // Check if we have Base64 credentials for Vercel deployment
-        if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-            try {
-                const credsStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-                const credentials = JSON.parse(credsStr);
-                auth = new GoogleAuth({
-                    credentials,
-                    scopes: 'https://www.googleapis.com/auth/cloud-platform'
-                });
-            } catch (err) {
-                console.error("Failed to parse GOOGLE_CREDENTIALS_BASE64", err);
-                return { success: false, error: "Konfigurasi Base64 Kredensial tidak valid." };
-            }
-        }
-        // Fallback to local file path mapping if no Base64
-        else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            auth = new GoogleAuth({
-                scopes: 'https://www.googleapis.com/auth/cloud-platform'
-            });
-        }
-        else {
-            console.error("Missing Vertex AI Credentials");
-            return { success: false, error: "Konfigurasi Kredensial GCP tidak ditemukan." };
-        }
-
-        const accessToken = await auth.getAccessToken();
 
         const fullSystemPrompt = `
       You are SIGMA Advisor, an expert Health Policy Analyst for Kabupaten Malang.
@@ -101,14 +67,13 @@ export async function generateHealthAnalysis(context: AnalysisContext) {
       Output in Bahasa Indonesia.
     `;
 
-        const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-3.1-flash-lite';
-        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${aiModel}:generateContent`;
+        const aiModel = 'gemini-3.1-flash-lite';
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
-        const response = await fetch(vertexEndpoint, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Asisten Analis Kebijakan Kesehatan." }] },

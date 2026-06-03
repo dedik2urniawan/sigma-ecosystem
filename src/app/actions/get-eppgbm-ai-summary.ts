@@ -1,7 +1,6 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { GoogleAuth } from "google-auth-library";
 
 interface Filters {
     periode: string;
@@ -123,43 +122,23 @@ Aturan Formatting:
 Gunakan bahasa Indonesia yang profesional. Gunakan formatting Markdown (bold untuk penekanan metrik penting). Jangan gunakan heading (seperti ### atau **Ringkasan:**). Langsung berikan 3 paragraf yang mengalir elegan.
         `;
 
-        // Call Vertex AI using the environment variable approach
-        const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-        const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1'; 
-        const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-3.1-flash-lite';
+        // Call Gemini API using the API Key
+        const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+        const aiModel = 'gemini-3.1-flash-lite';
         
-        if (!projectId) {
-            console.error("Missing Vertex AI Credentials (GOOGLE_CLOUD_PROJECT)");
+        if (!apiKey) {
             return {
-                summary: "Gagal menghubungkan AI: Konfigurasi Project ID belum diatur.",
+                summary: "Gagal menghubungkan AI: Konfigurasi API Key belum diatur.",
                 stats: { total, stunting, wasting, underweight }
             };
         }
 
-        let auth;
-        if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-            const credsStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-            const credentials = JSON.parse(credsStr);
-            auth = new GoogleAuth({
-                credentials,
-                scopes: 'https://www.googleapis.com/auth/cloud-platform'
-            });
-        } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            auth = new GoogleAuth({
-                scopes: 'https://www.googleapis.com/auth/cloud-platform'
-            });
-        } else {
-            return { summary: "Gagal menghubungkan AI: Konfigurasi Kredensial GCP tidak ditemukan.", stats: { total, stunting, wasting, underweight } };
-        }
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
-        const accessToken = await auth.getAccessToken();
-        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${aiModel}:generateContent`;
-
-        const response = await fetch(vertexEndpoint, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Ahli Gizi dan Epidemiolog." }] },

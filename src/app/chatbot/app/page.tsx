@@ -46,14 +46,15 @@ export default function ChatbotAppPage() {
 
     const fetchMessages = async (tId: string) => {
         setIsLoading(true);
-        const { data, error } = await supabase
-            .from("chatbot_messages")
-            .select("*")
-            .eq("thread_id", tId)
-            .order("created_at", { ascending: true });
-
-        if (!error && data) {
-            setMessages(data);
+        try {
+            const stored = localStorage.getItem(`sigma_chat_messages_${tId}`);
+            if (stored) {
+                setMessages(JSON.parse(stored));
+            } else {
+                setMessages([]);
+            }
+        } catch (e) {
+            console.error("Failed to load messages", e);
         }
         setIsLoading(false);
     };
@@ -72,32 +73,36 @@ export default function ChatbotAppPage() {
             const { data: userData } = await supabase.auth.getUser();
             if (!userData.user) return;
 
-            const { data: newThread, error: threadError } = await supabase
-                .from("chatbot_threads")
-                .insert([{ user_id: userData.user.id, title: userText.slice(0, 40) + "..." }])
-                .select()
-                .single();
+            const newThread = {
+                id: crypto.randomUUID(),
+                user_id: userData.user.id,
+                title: userText.slice(0, 40) + "...",
+                created_at: Date.now()
+            };
 
-            if (threadError) {
-                console.error("Error creating thread:", threadError);
-                return;
+            try {
+                const stored = localStorage.getItem(`sigma_chat_threads_${userData.user.id}`);
+                const threads = stored ? JSON.parse(stored) : [];
+                threads.push(newThread);
+                localStorage.setItem(`sigma_chat_threads_${userData.user.id}`, JSON.stringify(threads));
+            } catch (e) {
+                console.error("Failed to save thread", e);
             }
 
             currentThreadId = newThread.id;
             setThreadId(currentThreadId);
 
-            // Just push to router to update URL, no need to refetch immediately because we are appending locally
-            router.replace(`/chatbot/app?thread_id=\${currentThreadId}`);
+            window.history.replaceState(null, '', `/chatbot/app?thread_id=${currentThreadId}`);
+            window.dispatchEvent(new Event('storage')); // to notify layout if it listens (optional)
         }
 
         // 2. Append User Message
         const tempUserMsg: Message = { id: crypto.randomUUID(), role: "user", content: userText };
-        setMessages((prev) => [...prev, tempUserMsg]);
+        const updatedMsgs = [...messages, tempUserMsg];
+        setMessages(updatedMsgs);
 
         // Save User Message to DB
-        await supabase.from("chatbot_messages").insert([
-            { thread_id: currentThreadId, role: "user", content: userText }
-        ]);
+        localStorage.setItem(`sigma_chat_messages_${currentThreadId}`, JSON.stringify(updatedMsgs));
 
         setIsLoading(true);
 
@@ -130,12 +135,11 @@ export default function ChatbotAppPage() {
 
             // 4. Append AI Message
             const tempAiMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: aiText };
-            setMessages((prev) => [...prev, tempAiMsg]);
+            const finalMsgs = [...updatedMsgs, tempAiMsg];
+            setMessages(finalMsgs);
 
             // Save AI Message to DB
-            await supabase.from("chatbot_messages").insert([
-                { thread_id: currentThreadId, role: "assistant", content: aiText }
-            ]);
+            localStorage.setItem(`sigma_chat_messages_${currentThreadId}`, JSON.stringify(finalMsgs));
 
         } catch (error) {
             console.error(error);
@@ -218,8 +222,8 @@ export default function ChatbotAppPage() {
                             <div
                                 className={
                                     msg.role === 'user'
-                                        ? 'px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap bg-[#1e293b] text-[#ffffff] rounded-tr-sm shadow-md'
-                                        : 'px-6 py-4 rounded-2xl text-sm leading-relaxed bg-white border border-[#cbd5e1] text-[#000000] rounded-tl-sm shadow-sm prose prose-sm prose-slate max-w-full prose-headings:font-bold prose-headings:text-slate-800 prose-a:text-purple-600 prose-strong:text-slate-900 prose-ul:pl-4 prose-li:my-0.5'
+                                        ? 'px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-slate-800 to-slate-900 text-[#ffffff] rounded-tr-sm shadow-lg shadow-slate-200/50'
+                                        : 'px-6 py-4 rounded-2xl text-sm leading-relaxed bg-white/95 backdrop-blur-sm border border-purple-100/50 text-[#000000] rounded-tl-sm shadow-xl shadow-purple-900/5 prose prose-sm prose-slate max-w-full prose-headings:font-bold prose-headings:text-slate-800 prose-a:text-purple-600 prose-strong:text-slate-900 prose-ul:pl-4 prose-li:my-0.5 prose-table:border-collapse prose-th:bg-purple-50 prose-th:p-2 prose-th:border prose-th:border-purple-100 prose-td:p-2 prose-td:border prose-td:border-purple-50 prose-td:align-middle prose-tr:hover:bg-slate-50 transition-all'
                                 }
                             >
                                 {msg.role === 'user' ? (

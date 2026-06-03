@@ -1,6 +1,5 @@
 "use server";
 
-import { GoogleAuth } from "google-auth-library";
 
 export interface PkmkBalitaContext {
     nama: string;
@@ -17,28 +16,12 @@ export interface PkmkBalitaContext {
 export async function getPkmkPrescription(balita: PkmkBalitaContext) {
     console.log("Generating PKMK Prescription for:", balita.nama);
 
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-    const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-3.1-flash-lite';
-
-    if (!projectId) {
-        return { success: false, error: "Konfigurasi Project ID belum diatur." };
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+        return { success: false, error: "Konfigurasi API Key tidak lengkap." };
     }
 
     try {
-        let auth;
-        if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-            const credsStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-            const credentials = JSON.parse(credsStr);
-            auth = new GoogleAuth({ credentials, scopes: 'https://www.googleapis.com/auth/cloud-platform' });
-        } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            auth = new GoogleAuth({ scopes: 'https://www.googleapis.com/auth/cloud-platform' });
-        } else {
-            return { success: false, error: "Konfigurasi Kredensial GCP tidak ditemukan." };
-        }
-
-        const accessToken = await auth.getAccessToken();
-        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${aiModel}:generateContent`;
 
         const promptText = `
 Anda adalah seorang Dokter Spesialis Anak & Clinical Pediatric Dietitian (Sistem Pakar).
@@ -71,11 +54,13 @@ Di bagian paling bawah, tambahkan *disclaimer* berikut persis seperti ini:
 *"⚠️ **Disclaimer Medis:** Kalkulasi ini dihasilkan oleh AI berdasarkan pedoman standar. Keputusan medis, dosis final, dan tata laksana klinis **wajib** dikonsultasikan dengan Dokter Spesialis Anak atau Ahli Gizi Terdaftar yang memeriksa kondisi klinis pasien secara langsung."*
         `;
 
-        const response = await fetch(vertexEndpoint, {
+        const aiModel = 'gemini-3.1-flash-lite';
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Clinical Pediatric Dietitian System." }] },

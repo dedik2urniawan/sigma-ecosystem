@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { GoogleAuth } from 'google-auth-library';
 
 export const maxDuration = 60;
 
@@ -8,21 +7,23 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const SYSTEM_PROMPT = `Anda adalah "SIGMA Advisor", asisten AI resmi dari Dinas Kesehatan Kabupaten Malang untuk ekosistem SIGMA (Sistem Informasi Gizi Integrasi AI).
+const SYSTEM_PROMPT = `Anda adalah "SIGMA Advisor", Epidemiolog Senior dan Asisten AI resmi dari Dinas Kesehatan Kabupaten Malang untuk ekosistem SIGMA (Sistem Informasi Gizi Integrasi AI).
 
 Tugas utama Anda:
-- Menjawab pertanyaan seputar data stunting, gizi balita, kesehatan ibu-anak (KIA), dan intervensi PKMK di Kabupaten Malang.
-- Melakukan analisis berdasarkan DATA AKTUAL dari [KONTEKS DATA SIGMA] yang memiliki 3 pilar: Pelayanan Kesehatan, Indikator Balita Gizi, dan Intervensi PKMK.
-- Menemukan korelasi antara masalah gizi (Stunting/TBU, Underweight, Wasting) dengan determinan fundamental (seperti capaian ASI Eksklusif, MPASI, Kehadiran Posyandu/Data Entry).
-- Memberikan insight strategis dan rekomendasi kebijakan operasional yang tajam.
+- Menjawab pertanyaan seputar data stunting, gizi balita, kesehatan ibu-anak (KIA), dan intervensi PKMK di Kabupaten Malang secara mendalam dan analitis layaknya seorang Pakar Data Kesehatan.
+- Melakukan analisis menggunakan DATA AKTUAL dari [KONTEKS DATA SIGMA] yang memiliki 3 pilar: Pelayanan Kesehatan, Indikator Balita Gizi, dan Intervensi PKMK.
+- Otomatis menghitung dan memaparkan *delta* (selisih kenaikan/penurunan persentase) saat membandingkan bulan ke bulan, tanpa perlu diminta secara spesifik.
+- Selalu memprioritaskan penyajian data dalam bentuk **Tabel Komparatif Markdown** jika pengguna menanyakan perbandingan (misal: perbandingan stunting antar puskesmas, atau perbandingan bulan Januari vs Februari).
+- Mengkritisi data jika ditemukan anomali (contoh: persentase stunting tinggi namun pemberian MPASI sangat rendah).
 
-Panduan menjawab:
-- JANGAN PERNAH mengarang data (halusinasi). Gunakan angka dari [KONTEKS DATA SIGMA].
-- Jika data terkait tidak ada di konteks, katakan bahwa data tersebut tidak tersedia di sistem saat ini.
-- Analisis Tren Waktu: Anda diberikan data Historis (Bulan ke Bulan) tingkat Kabupaten dan detail kompresi per-Puskesmas. Jawab dengan cerdas jika user meminta perbandingan progres antar bulan (contoh: penurunan/kenaikan stunting dari Januari ke Februari 2026).
-- Gunakan bahasa Indonesia profesional, proaktif, dan analitis.
-- Format jawaban dengan baik menggunakan Markdown. Gunakan **tebal** HANYA pada kata kunci penting di DALAM kalimat. JANGAN MENGGUNAKAN cetak tebal yang berdiri sendiri untuk judul (seperti **Gambaran Umum:**). Gunakan format judul standar markdown (contoh: ### Gambaran Umum) jika ingin membuat struktur bagian.
-- Gunakan rumus prevalensi berikut saat menjelaskan (angka riil lihat konteks):
+Panduan format & menjawab:
+- JANGAN PERNAH mengarang data (halusinasi). Gunakan HANYA angka dari [KONTEKS DATA SIGMA]. Jika data tidak ada, katakan dengan jelas bahwa datanya belum tersedia.
+- Gunakan bahasa Indonesia profesional, tegas, berwibawa, namun tetap suportif dan solutif.
+- Format tabel dengan struktur Markdown yang rapi.
+- JANGAN MENGGUNAKAN cetak tebal yang berdiri sendiri untuk judul (seperti **Gambaran Umum:**). Gunakan format judul standar markdown (contoh: ### Gambaran Umum) untuk membuat struktur bagian.
+- Gunakan cetak tebal (**bold**) HANYA untuk menyoroti angka kritis, nama metrik penting, atau temuan utama di dalam paragraf.
+
+Rumus acuan persentase (angka mentah ada di konteks):
 
 Pilar Pelayanan Kesehatan:
 * % Data Entry = Ditimbang / Sasaran
@@ -181,42 +182,13 @@ export async function POST(req: Request) {
         const sigmaContext = await fetchSigmaContext();
         const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${sigmaContext}`;
 
-        // Initialize Google Auth for Vertex AI
-        const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-        const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+        // Initialize Gemini API
+        const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-        if (!projectId) {
-            console.error("Missing Vertex AI Credentials (GOOGLE_CLOUD_PROJECT)");
-            return Response.json({ content: "Konfigurasi server (GCP Project ID) tidak lengkap." }, { status: 500 });
+        if (!apiKey) {
+            console.error("Missing Gemini API Credentials");
+            return Response.json({ content: "Konfigurasi API Key tidak lengkap." }, { status: 500 });
         }
-
-        let auth;
-        // Check if we have Base64 credentials for Vercel deployment
-        if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-            try {
-                const credsStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-                const credentials = JSON.parse(credsStr);
-                auth = new GoogleAuth({
-                    credentials,
-                    scopes: 'https://www.googleapis.com/auth/cloud-platform'
-                });
-            } catch (err) {
-                console.error("Failed to parse GOOGLE_CREDENTIALS_BASE64", err);
-                return Response.json({ content: "Konfigurasi Base64 Kredensial tidak valid." }, { status: 500 });
-            }
-        }
-        // Fallback to local file path mapping if no Base64
-        else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            auth = new GoogleAuth({
-                scopes: 'https://www.googleapis.com/auth/cloud-platform'
-            });
-        }
-        else {
-            console.error("Missing Vertex AI Credentials (GOOGLE_CREDENTIALS_BASE64 or GOOGLE_APPLICATION_CREDENTIALS)");
-            return Response.json({ content: "Konfigurasi Kredensial GCP tidak ditemukan." }, { status: 500 });
-        }
-
-        const accessToken = await auth.getAccessToken();
 
         // Build Vertex AI Gemini API request (gemini-2.0-flash)
         const geminiMessages = messages.map((m: any) => ({
@@ -224,14 +196,13 @@ export async function POST(req: Request) {
             parts: [{ text: m.content }]
         }));
 
-        const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-3.1-flash-lite';
-        const vertexEndpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${aiModel}:generateContent`;
+        const aiModel = 'gemini-3.1-flash-lite';
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
-        const response = await fetch(vertexEndpoint, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: fullSystemPrompt }] },

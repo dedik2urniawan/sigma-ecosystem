@@ -11,6 +11,8 @@ export default function ChatbotAppLayout({ children }: { children: React.ReactNo
     const [user, setUser] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [threads, setThreads] = useState<any[]>([]);
+    const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState("");
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -27,15 +29,39 @@ export default function ChatbotAppLayout({ children }: { children: React.ReactNo
     }, [router]);
 
     const fetchThreads = async (userId: string) => {
-        const { data, error } = await supabase
-            .from("chatbot_threads")
-            .select("*")
-            .eq("user_id", userId)
-            .order("created_at", { ascending: false });
-
-        if (!error && data) {
-            setThreads(data);
+        try {
+            const stored = localStorage.getItem(`sigma_chat_threads_${userId}`);
+            if (stored) {
+                // sort descending by created_at
+                const parsed = JSON.parse(stored);
+                parsed.sort((a: any, b: any) => b.created_at - a.created_at);
+                setThreads(parsed);
+            }
+        } catch (e) {
+            console.error("Failed to load threads from local storage", e);
         }
+    };
+
+    const handleRenameThread = (threadId: string, newTitle: string) => {
+        if (!newTitle.trim()) return;
+        setThreads(prev => {
+            const updated = prev.map(t => t.id === threadId ? { ...t, title: newTitle } : t);
+            if (user) {
+                localStorage.setItem(`sigma_chat_threads_${user.id}`, JSON.stringify(updated));
+            }
+            return updated;
+        });
+    };
+
+    const startRename = (e: React.MouseEvent, thread: any) => {
+        e.preventDefault();
+        setEditingThreadId(thread.id);
+        setEditingTitle(thread.title);
+    };
+
+    const submitRename = (threadId: string) => {
+        handleRenameThread(threadId, editingTitle);
+        setEditingThreadId(null);
     };
 
     const handleLogout = async () => {
@@ -85,28 +111,57 @@ export default function ChatbotAppLayout({ children }: { children: React.ReactNo
                                 threads.map((thread) => (
                                     <div key={thread.id} className="group relative flex items-center justify-between rounded-lg hover:bg-slate-100 transition-colors">
                                         <Link
-                                            href={`/chatbot/app?thread_id=\${thread.id}`}
-                                            className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:text-slate-900 flex-1 truncate"
+                                            href={`/chatbot/app?thread_id=${thread.id}`}
+                                            className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:text-slate-900 flex-1 min-w-0"
                                         >
-                                            <span className="material-icons-round text-[16px] text-slate-400 group-hover:text-purple-500 transition-colors">chat_bubble_outline</span>
-                                            <span className="text-xs font-medium truncate">{thread.title}</span>
+                                            <span className="material-icons-round text-[16px] text-slate-400 group-hover:text-purple-500 transition-colors flex-shrink-0">chat_bubble_outline</span>
+                                            {editingThreadId === thread.id ? (
+                                                <input
+                                                    autoFocus
+                                                    type="text"
+                                                    value={editingTitle}
+                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    onBlur={() => submitRename(thread.id)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') submitRename(thread.id);
+                                                        if (e.key === 'Escape') setEditingThreadId(null);
+                                                    }}
+                                                    onClick={(e) => e.preventDefault()}
+                                                    className="w-full text-xs font-medium text-slate-800 bg-white border border-purple-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-purple-200"
+                                                />
+                                            ) : (
+                                                <span className="text-xs font-medium truncate">{thread.title}</span>
+                                            )}
                                         </Link>
-                                        <button
-                                            onClick={async (e) => {
-                                                e.preventDefault();
-                                                if (confirm("Hapus percakapan ini secara permanen?")) {
-                                                    await supabase.from("chatbot_threads").delete().eq("id", thread.id);
-                                                    setThreads((prev) => prev.filter((t) => t.id !== thread.id));
-                                                    if (window.location.search.includes(thread.id)) {
-                                                        router.push("/chatbot/app");
+                                        <div className="opacity-0 group-hover:opacity-100 absolute right-2 flex items-center bg-slate-100 rounded-md">
+                                            <button
+                                                onClick={(e) => startRename(e, thread)}
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                                                title="Ganti Nama"
+                                            >
+                                                <span className="material-icons-round text-[14px]">edit</span>
+                                            </button>
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.preventDefault();
+                                                    if (confirm("Hapus percakapan ini secara permanen?")) {
+                                                        setThreads((prev) => {
+                                                            const updated = prev.filter((t) => t.id !== thread.id);
+                                                            if (user) localStorage.setItem(`sigma_chat_threads_${user.id}`, JSON.stringify(updated));
+                                                            return updated;
+                                                        });
+                                                        localStorage.removeItem(`sigma_chat_messages_${thread.id}`);
+                                                        if (window.location.search.includes(thread.id)) {
+                                                            router.push("/chatbot/app");
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                            className="opacity-0 group-hover:opacity-100 absolute right-2 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
-                                            title="Hapus Obrolan"
-                                        >
-                                            <span className="material-icons-round text-[14px]">delete</span>
-                                        </button>
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
+                                                title="Hapus Obrolan"
+                                            >
+                                                <span className="material-icons-round text-[14px]">delete</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))
                             )}
