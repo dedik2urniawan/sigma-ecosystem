@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SystemArchitectureSection from "@/components/SystemArchitectureSection";
 import "./globals.css"; // Ensure global styles are imported if not already contextually available
 
 // Add smooth scrolling to HTML tag via global CSS or inline if possible, 
@@ -550,6 +551,7 @@ export default function Home() {
             </div>
             <div className="hidden md:flex items-center gap-8">
               <a href="#framework" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Framework</a>
+              <a href="#architecture" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Arsitektur</a>
               <a href="#applications" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Aplikasi</a>
               <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Tentang</a>
               <a
@@ -602,10 +604,12 @@ export default function Home() {
               Ecosystem
             </p>
 
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed mb-12 font-medium">
-              Platform terintegrasi untuk surveilans gizi komprehensif,
-              monitoring intervensi PKMK, dan analisis data kesehatan berbasis <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shadow-sm">Artificial Intelligence</span>.
-            </p>
+            <div className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12 font-medium">
+              <h2 className="text-slate-800 font-extrabold block mb-3 text-2xl tracking-tight">Inovasi Pelaporan Stunting Terintegrasi & Surveilans Presisi</h2>
+              <p>
+                Sebuah <strong>Aplikasi Surveilans Kesehatan</strong> dan <strong>Aplikasi AI Kesehatan</strong> yang mentransformasi data berskala besar menjadi wawasan analitik yang <i>actionable</i>. Kami memadukan arsitektur <i>big data</i> dan algoritma <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shadow-sm">Machine Learning</span> sebagai <strong>Aplikasi Stunting</strong> terpadu untuk mempercepat penanganan gizi buruk, memantau intervensi, dan mendukung perumusan kebijakan berbasis bukti.
+              </p>
+            </div>
 
             <div className="grid grid-cols-3 gap-4 md:gap-8 mb-16 w-full max-w-3xl">
               {[
@@ -645,6 +649,9 @@ export default function Home() {
 
         {/* Innovation Section - Tindik Anting */}
         <InnovationSection />
+
+        {/* System Architecture Flow Section */}
+        <SystemArchitectureSection />
 
         {/* Applications Section */}
         <section id="applications" className="py-24 bg-white relative z-10 border-t border-slate-100/50">
@@ -902,7 +909,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-4 mb-4 md:mb-0 text-center md:text-left">
               <span>© 2026 Dinas Kesehatan Kabupaten Malang</span>
               <span className="hidden md:inline">•</span>
-              <span>v2.0.0 (Beta)</span>
+              <span>v2.0.0</span>
             </div>
             <div>
               Crafted with <span className="text-red-400">♥</span> by <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors">DK</a>
