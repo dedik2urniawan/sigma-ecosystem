@@ -325,7 +325,7 @@ export function calculateCompleteness(
 // ───────────────────────────────────────────────────────────────────────────────
 
 export interface GrowthMetricsResult {
-    metrics: Record<string, { current: number; previous: number; delta: number; isPositive: boolean }>;
+    metrics: Record<string, { current: number; previous: number; delta: number; isPositive: boolean; numerator: number; denominator: number; numLabel?: string; denLabel?: string }>;
     summaryTable: any[];
 }
 
@@ -361,72 +361,79 @@ export function calculateGrowthMetrics(
     const prev_ukur_pbtb        = resolvedSum(previousData, resolveDiukurPBTB) / previousMonthsCount;
 
     const calcDiv = (num: number, den: number) => (den > 0 ? (num / den) * 100 : 0);
-    const buildMetric = (currNum: number, currDen: number, prevNum: number, prevDen: number, higherIsBetter: boolean = true) => {
+    const buildMetric = (currNum: number, currDen: number, prevNum: number, prevDen: number, higherIsBetter: boolean = true, numLabel: string = "Numerator", denLabel: string = "Denominator") => {
         const current = calcDiv(currNum, currDen);
         const previous = calcDiv(prevNum, prevDen);
         const delta = current - previous;
         const isPositive = higherIsBetter ? delta >= 0 : delta <= 0;
-        return { current, previous, delta, isPositive };
+        return { current, previous, delta, isPositive, numerator: currNum, denominator: currDen, numLabel, denLabel };
     };
 
     const metrics = {
         "Balita ditimbang (Proyeksi)": buildMetric(
             resolvedSum(currentData, resolveDitimbang) / currentMonthsCount, total_sasaran,
-            resolvedSum(previousData, resolveDitimbang) / previousMonthsCount, prev_sasaran
+            resolvedSum(previousData, resolveDitimbang) / previousMonthsCount, prev_sasaran,
+            true, "D", "S"
         ),
         "Balita ditimbang (Data Rill)": buildMetric(
             resolvedSum(currentData, resolveDitimbang) / currentMonthsCount, total_bulan_ini,
-            resolvedSum(previousData, resolveDitimbang) / previousMonthsCount, prev_bulan_ini
+            resolvedSum(previousData, resolveDitimbang) / previousMonthsCount, prev_bulan_ini,
+            true, "D", "BBI"
         ),
         "Balita ditimbang & diukur": buildMetric(
             resolvedSum(currentData, resolveDitimbangDanDiukur) / currentMonthsCount, total_bulan_ini,
-            resolvedSum(previousData, resolveDitimbangDanDiukur) / previousMonthsCount, prev_bulan_ini
+            resolvedSum(previousData, resolveDitimbangDanDiukur) / previousMonthsCount, prev_bulan_ini,
+            true, "D&U", "BBI"
         ),
         "Balita diukur PB/TB": buildMetric(
             resolvedSum(currentData, resolveDiukurPBTB) / currentMonthsCount, total_bulan_ini,
-            resolvedSum(previousData, resolveDiukurPBTB) / previousMonthsCount, prev_bulan_ini
+            resolvedSum(previousData, resolveDiukurPBTB) / previousMonthsCount, prev_bulan_ini,
+            true, "Diukur PB/TB", "BBI"
         ),
         "Balita memiliki Buku KIA": buildMetric(
             safeSum(currentData, "jumlah_balita_punya_kia") / currentMonthsCount, total_bulan_ini,
-            safeSum(previousData, "jumlah_balita_punya_kia") / previousMonthsCount, prev_bulan_ini
+            safeSum(previousData, "jumlah_balita_punya_kia") / previousMonthsCount, prev_bulan_ini,
+            true, "KIA", "BBI"
         ),
         "Balita Naik BB": buildMetric(
             safeSum(currentData, "jumlah_balita_naik_berat_badannya_n") / currentMonthsCount, total_bulan_ini,
-            safeSum(previousData, "jumlah_balita_naik_berat_badannya_n") / previousMonthsCount, prev_bulan_ini
+            safeSum(previousData, "jumlah_balita_naik_berat_badannya_n") / previousMonthsCount, prev_bulan_ini,
+            true, "N", "BBI"
         ),
         "Balita Naik dengan D Koreksi": buildMetric(
             safeSum(currentData, "jumlah_balita_naik_berat_badannya_n") / currentMonthsCount, total_ditimbang_terkoreksi,
-            safeSum(previousData, "jumlah_balita_naik_berat_badannya_n") / previousMonthsCount, prev_ditimbang_terkoreksi
+            safeSum(previousData, "jumlah_balita_naik_berat_badannya_n") / previousMonthsCount, prev_ditimbang_terkoreksi,
+            true, "N", "D_Kor"
         ),
         "Balita Tidak Naik BB": buildMetric(
             safeSum(currentData, "jumlah_balita_tidak_naik_berat_badannya_t") / currentMonthsCount, total_bulan_ini,
             safeSum(previousData, "jumlah_balita_tidak_naik_berat_badannya_t") / previousMonthsCount, prev_bulan_ini,
-            false
+            false, "T", "BBI"
         ),
         "Balita Tidak Timbang Bulan Lalu": buildMetric(
             safeSum(currentData, "jumlah_balita_tidak_ditimbang_bulan_lalu_o") / currentMonthsCount, total_bulan_ini,
             safeSum(previousData, "jumlah_balita_tidak_ditimbang_bulan_lalu_o") / previousMonthsCount, prev_bulan_ini,
-            false
+            false, "O", "BBI"
         ),
         "Prevalensi Stunting": buildMetric(
             safeSum(currentData, "jumlah_balita_stunting") / currentMonthsCount, total_ukur_pbtb,
             safeSum(previousData, "jumlah_balita_stunting") / previousMonthsCount, prev_ukur_pbtb,
-            false
+            false, "Stunting", "Diukur PB/TB"
         ),
         "Prevalensi Wasting": buildMetric(
             safeSum(currentData, "jumlah_balita_wasting") / currentMonthsCount, total_timbang_ukur,
             safeSum(previousData, "jumlah_balita_wasting") / previousMonthsCount, prev_timbang_ukur,
-            false
+            false, "Wasting", "D&U"
         ),
         "Prevalensi Underweight": buildMetric(
             safeSum(currentData, "jumlah_balita_underweight") / currentMonthsCount, total_timbang,
             safeSum(previousData, "jumlah_balita_underweight") / previousMonthsCount, prev_timbang,
-            false
+            false, "Underweight", "D"
         ),
         "Prevalensi Overweight": buildMetric(
             safeSum(currentData, "jumlah_balita_overweight") / currentMonthsCount, total_timbang,
             safeSum(previousData, "jumlah_balita_overweight") / previousMonthsCount, prev_timbang,
-            false
+            false, "Overweight", "D"
         ),
     };
 
@@ -474,7 +481,14 @@ export function calculateGrowthMetrics(
         stunting: calcDiv((g.jumlah_balita_stunting / currentMonthsCount), (g.jumlah_balita_diukur_pbtb / currentMonthsCount)),
         wasting: calcDiv((g.jumlah_balita_wasting / currentMonthsCount), (g.jumlah_balita_ditimbang_dan_diukur / currentMonthsCount)),
         underweight: calcDiv((g.jumlah_balita_underweight / currentMonthsCount), (g.jumlah_balita_ditimbang / currentMonthsCount)),
-        obesitas: calcDiv((g.jumlah_balita_overweight / currentMonthsCount), (g.jumlah_balita_ditimbang / currentMonthsCount))
+        obesitas: calcDiv((g.jumlah_balita_overweight / currentMonthsCount), (g.jumlah_balita_ditimbang / currentMonthsCount)),
+        // Numerator & Denominators for table
+        num_ds: g.jumlah_balita_ditimbang_dan_diukur / currentMonthsCount,
+        den_ds: g.jumlah_balita_bulan_ini / currentMonthsCount,
+        num_nd_rill: g.jumlah_balita_naik_berat_badannya_n / currentMonthsCount,
+        den_nd_rill: g.jumlah_balita_ditimbang / currentMonthsCount,
+        num_nd_koreksi: g.jumlah_balita_naik_berat_badannya_n / currentMonthsCount,
+        den_nd_koreksi: g.jumlah_balita_ditimbang_terkoreksi_daksen / currentMonthsCount
     }));
 
     return { metrics, summaryTable };

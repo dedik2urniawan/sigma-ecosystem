@@ -235,6 +235,7 @@ export default function SuplemenDashboard() {
                         onChange={(e) => setSelectedYear(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-teal-500 focus:border-teal-500 block p-2.5 outline-none"
                     >
+                        <option value="2024">2024</option>
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
                     </select>

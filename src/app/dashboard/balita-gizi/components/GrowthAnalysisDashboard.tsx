@@ -15,26 +15,40 @@ const MapPuskesmas = dynamic(() => import("@/components/dashboard/MapPuskesmas")
 const MapDesa = dynamic(() => import("@/components/dashboard/MapDesa"), { ssr: false });
 
 // Reusable Metric Card
-function MetricCard({ title, data }: { title: string, data: { current: number; previous: number; delta: number; isPositive: boolean } }) {
+function MetricCard({ title, data }: { title: string, data: { current: number; previous: number; delta: number; isPositive: boolean; numerator?: number; denominator?: number } }) {
     const isNuetral = data.delta === 0;
     const colorClass = isNuetral ? "text-slate-500" : data.isPositive ? "text-emerald-600" : "text-rose-600";
     const bgClass = isNuetral ? "bg-slate-50" : data.isPositive ? "bg-emerald-50" : "bg-rose-50";
     const Icon = isNuetral ? Minus : data.delta > 0 ? TrendingUp : TrendingDown;
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-xs font-semibold text-slate-500 mb-2 truncate" title={title}>{title}</h3>
-            <div className="flex items-end justify-between">
-                <div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+                <h3 className="text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-emerald-600 transition-colors" title={title}>{title}</h3>
+                <div className="flex items-end justify-between mt-1">
                     <div className="text-2xl font-bold text-slate-800">
                         {data.current.toFixed(1)}%
                     </div>
-                </div>
-                <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${colorClass} ${bgClass}`}>
-                    <Icon size={12} strokeWidth={3} />
-                    <span>{Math.abs(data.delta).toFixed(1)}%</span>
+                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${colorClass} ${bgClass}`}>
+                        <Icon size={10} strokeWidth={3} />
+                        <span>{Math.abs(data.delta).toFixed(1)}%</span>
+                    </div>
                 </div>
             </div>
+            
+            {(data.numerator !== undefined && data.denominator !== undefined) && (
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <div className="flex flex-col">
+                        <span className="text-slate-400 font-medium">{data.numLabel || "Numerator"}</span>
+                        <span className="text-slate-700 font-bold">{Math.round(data.numerator).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="h-6 w-px bg-slate-200"></div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-slate-400 font-medium">{data.denLabel || "Denominator"}</span>
+                        <span className="text-slate-700 font-bold">{Math.round(data.denominator).toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -417,10 +431,23 @@ export default function GrowthAnalysisDashboard() {
             ) : metricsResult && (
                 <>
                     {/* Scorecards */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
                         {Object.entries(metricsResult.metrics).map(([key, data]) => (
                             <MetricCard key={key} title={key} data={data} />
                         ))}
+                    </div>
+
+                    {/* Legend untuk Variabel Akronim */}
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 shadow-sm text-xs text-slate-600 mb-6 flex flex-wrap gap-x-6 gap-y-3">
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">D</span> Balita Ditimbang</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">S</span> Sasaran Balita</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">BBI</span> Balita Bulan Ini (Total)</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">D&U</span> Ditimbang & Diukur</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">KIA</span> Memiliki Buku KIA</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">N</span> Balita Naik BB</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">T</span> Balita Tidak Naik BB</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">O</span> Tidak Timbang Bulan Lalu</div>
+                        <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">D_Kor</span> Ditimbang Terkoreksi</div>
                     </div>
 
                     {/* Age Breakdown Panel — tampil untuk data 2026+ */}
@@ -691,25 +718,48 @@ export default function GrowthAnalysisDashboard() {
                                 <thead className="text-xs text-slate-600 font-bold uppercase bg-slate-50 border-y border-slate-200">
                                     <tr>
                                         <th scope="col" className="px-6 py-4">{(effectiveRole === 'superadmin' && selectedPuskesmas === 'ALL') ? 'Puskesmas' : 'Desa/Kelurahan'}</th>
-                                        <th scope="col" className="px-6 py-4">Total Sasaran (S)</th>
-                                        <th scope="col" className="px-6 py-4 text-center">% Balita Ditimbang (D/S)</th>
-                                        <th scope="col" className="px-6 py-4 text-center">% Balita Naik BB (N/D)</th>
-                                        <th scope="col" className="px-6 py-4 text-center">% N/D Koreksi</th>
+                                        <th scope="col" className="px-6 py-4 text-center">Total Sasaran (S)</th>
+                                        <th scope="col" className="px-6 py-4 text-center">Balita Ditimbang (D/S)</th>
+                                        <th scope="col" className="px-6 py-4 text-center">Balita Naik BB (N/D)</th>
+                                        <th scope="col" className="px-6 py-4 text-center">N/D Koreksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {paginatedTable.map((row) => (
                                         <tr key={row.name} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                            <td className="px-6 py-4 text-slate-600">{row.jumlah_sasaran_balita}</td>
-                                            <td className={`px-6 py-4 text-center font-semibold ${row.persen_ds > 100 ? 'bg-rose-100 text-rose-700' : 'text-slate-700'}`}>
-                                                {row.persen_ds.toFixed(2)}%
+                                            <td className="px-6 py-4 text-center text-slate-600 font-medium">
+                                                {Math.round(row.jumlah_sasaran_balita).toLocaleString('id-ID')}
                                             </td>
-                                            <td className={`px-6 py-4 text-center font-semibold ${row.persen_nd_rill > 100 ? 'bg-rose-100 text-rose-700' : 'text-slate-700'}`}>
-                                                {row.persen_nd_rill.toFixed(2)}%
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <span className={`font-bold ${row.persen_ds > 100 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                        {row.persen_ds.toFixed(2)}%
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500 mt-0.5 bg-slate-100 px-2 py-0.5 rounded-full">
+                                                        {Math.round(row.num_ds || 0).toLocaleString('id-ID')} / {Math.round(row.den_ds || 0).toLocaleString('id-ID')}
+                                                    </span>
+                                                </div>
                                             </td>
-                                            <td className={`px-6 py-4 text-center font-semibold ${row.persen_nd_koreksi > 100 ? 'bg-rose-100 text-rose-700' : 'text-slate-700'}`}>
-                                                {row.persen_nd_koreksi.toFixed(2)}%
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <span className={`font-bold ${row.persen_nd_rill > 100 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                        {row.persen_nd_rill.toFixed(2)}%
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500 mt-0.5 bg-slate-100 px-2 py-0.5 rounded-full">
+                                                        {Math.round(row.num_nd_rill || 0).toLocaleString('id-ID')} / {Math.round(row.den_nd_rill || 0).toLocaleString('id-ID')}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <span className={`font-bold ${row.persen_nd_koreksi > 100 ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                        {row.persen_nd_koreksi.toFixed(2)}%
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500 mt-0.5 bg-slate-100 px-2 py-0.5 rounded-full">
+                                                        {Math.round(row.num_nd_koreksi || 0).toLocaleString('id-ID')} / {Math.round(row.den_nd_koreksi || 0).toLocaleString('id-ID')}
+                                                    </span>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

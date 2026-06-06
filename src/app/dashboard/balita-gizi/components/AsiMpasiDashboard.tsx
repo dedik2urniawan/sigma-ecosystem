@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { calculateAsiMpasiMetrics, AsiMpasiMetricsResult } from "@/lib/asiMpasiHelper";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
+import { calculateAsiMpasiMetrics, AsiMpasiMetricsResult, calculateAsiMpasiTrend, AsiMpasiTrendDataPoint } from "@/lib/asiMpasiHelper";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, LineChart, Line, Legend } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
 import { Info, ChevronDown, Activity, AlertTriangle, CheckCircle2, Table as TableIcon, TrendingUp, TrendingDown, Award } from "lucide-react";
 
@@ -33,12 +33,19 @@ export default function AsiMpasiDashboard() {
     const [selectedKelurahan, setSelectedKelurahan] = useState<string>("ALL");
 
     const [metricsResult, setMetricsResult] = useState<AsiMpasiMetricsResult | null>(null);
+    const [trendResult, setTrendResult] = useState<AsiMpasiTrendDataPoint[]>([]);
 
     // UI State
     const [showDefinitions, setShowDefinitions] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedChartMetric, setSelectedChartMetric] = useState<string>('recall_0_5');
+    const [hiddenTrend, setHiddenTrend] = useState<string[]>([]);
     const rowsPerPage = 10;
+
+    const toggleTrend = (e: any) => {
+        const dataKey = e.dataKey;
+        setHiddenTrend(prev => prev.includes(dataKey) ? prev.filter(k => k !== dataKey) : [...prev, dataKey]);
+    };
 
     // Load filter options (Puskesmas & Desa)
     useEffect(() => {
@@ -81,26 +88,39 @@ export default function AsiMpasiDashboard() {
             setLoading(true);
             try {
                 let currentQuery = supabase.from('data_balita_gizi').select('*').eq('tahun', selectedYear);
+                let fullYearQuery = supabase.from('data_balita_gizi').select('*').eq('tahun', selectedYear);
 
                 // Role Logic: Apply Dinkes exception (if valid data length > 0 we exclude dinkes later, or just handle in DB. Actually let's assume DB RLS or we exclude puskesmas_id for dinkes)
                 // Actually matching DataQualityDashboard logic for "Pengecualian Dinkes" is handle by not selecting it or it doesn't exist in ref_desa.
 
                 if (effectiveRole === "admin_puskesmas") {
                     const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                    if (pName) currentQuery = currentQuery.eq('puskesmas', pName);
+                    if (pName) {
+                        currentQuery = currentQuery.eq('puskesmas', pName);
+                        fullYearQuery = fullYearQuery.eq('puskesmas', pName);
+                    }
 
                     if (selectedKelurahan !== "ALL") {
                         const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                        if (kName) currentQuery = currentQuery.eq('kelurahan', kName);
+                        if (kName) {
+                            currentQuery = currentQuery.eq('kelurahan', kName);
+                            fullYearQuery = fullYearQuery.eq('kelurahan', kName);
+                        }
                     }
                 } else if (effectiveRole === "superadmin") {
                     if (selectedPuskesmas !== "ALL") {
                         const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                        if (pName) currentQuery = currentQuery.eq('puskesmas', pName);
+                        if (pName) {
+                            currentQuery = currentQuery.eq('puskesmas', pName);
+                            fullYearQuery = fullYearQuery.eq('puskesmas', pName);
+                        }
 
                         if (selectedKelurahan !== "ALL") {
                             const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                            if (kName) currentQuery = currentQuery.eq('kelurahan', kName);
+                            if (kName) {
+                                currentQuery = currentQuery.eq('kelurahan', kName);
+                                fullYearQuery = fullYearQuery.eq('kelurahan', kName);
+                            }
                         }
                     }
                 }
@@ -141,9 +161,12 @@ export default function AsiMpasiDashboard() {
                 };
 
                 const data = await fetchAllPages(currentQuery);
+                const fullYearData = await fetchAllPages(fullYearQuery);
                 const groupingRole = (effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
                 const metrics = calculateAsiMpasiMetrics(data, groupingRole, selectedMonthOrTW);
+                const trends = calculateAsiMpasiTrend(fullYearData);
                 setMetricsResult(metrics);
+                setTrendResult(trends);
             } catch (error) {
                 console.error("Failed to fetch ASI MPASI data", error);
             } finally {
@@ -173,15 +196,26 @@ export default function AsiMpasiDashboard() {
 
     // Metrics array for mapping cards and charts
     const metricCards = [
-        { id: 'imd', title: '% Bayi Mendapat IMD', val: overallMetrics.imd, color: 'emerald' },
-        { id: 'recall_0_5', title: '% Bayi 0-5 Bln Di-recall', val: overallMetrics.recall_0_5, color: 'teal' },
-        { id: 'asi_0_5', title: '% Bayi 0-5 Bln ASI Eksklusif', val: overallMetrics.asi_0_5, color: 'cyan' },
-        { id: 'asi_6', title: '% Bayi ASI Eksklusif s/d 6 Bln', val: overallMetrics.asi_6, color: 'blue' },
-        { id: 'wawancara_6_23', title: '% Anak 6-23 Bln Diwawancarai', val: overallMetrics.wawancara_6_23, color: 'indigo' },
-        { id: 'mpasi_5_8', title: '% MPASI 5 dari 8 Kelompok', val: overallMetrics.mpasi_5_8, color: 'violet' },
-        { id: 'mpasi_telur_ikan_daging', title: '% MPASI Telur/Ikan/Daging', val: overallMetrics.mpasi_telur_ikan_daging, color: 'purple' },
-        { id: 'mpasi_baik', title: '% MPASI Baik', val: overallMetrics.mpasi_baik, color: 'fuchsia' },
-    ];
+        { id: 'imd', title: '% Bayi Mendapat IMD', data: overallMetrics.imd, color: 'emerald' },
+        { id: 'recall_0_5', title: '% Bayi 0-5 Bln Di-recall', data: overallMetrics.recall_0_5, color: 'teal' },
+        { id: 'asi_0_5', title: '% Bayi 0-5 Bln ASI Eksklusif', data: overallMetrics.asi_0_5, color: 'cyan' },
+        { id: 'asi_6', title: '% Bayi ASI Eksklusif s/d 6 Bln', data: overallMetrics.asi_6, color: 'blue' },
+        { id: 'wawancara_6_23', title: '% Anak 6-23 Bln Diwawancarai', data: overallMetrics.wawancara_6_23, color: 'indigo' },
+        { id: 'mpasi_5_8', title: selectedYear >= 2026 ? '% Anak 6-23 bln mendapat MPASI' : '% MPASI 5 dari 8 Kelompok', data: overallMetrics.mpasi_5_8, color: 'violet' },
+        { id: 'mpasi_telur_ikan_daging', title: selectedYear >= 2026 ? '% Anak usia 6-23 bln mengkonsumsi telur, ikan/daging' : '% MPASI Telur/Ikan/Daging', data: overallMetrics.mpasi_telur_ikan_daging, color: 'purple' },
+        { id: 'mpasi_baik', title: '% MPASI Baik', data: overallMetrics.mpasi_baik, color: 'fuchsia' },
+    ].filter(metric => {
+        if (selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL") return true;
+        
+        const m = Number(selectedMonthOrTW);
+        const isFebAug = m === 2 || m === 8;
+        const isQMonths = m === 3 || m === 6 || m === 9 || m === 12;
+
+        if (metric.id === "recall_0_5" || metric.id === "asi_0_5") return isFebAug;
+        if (metric.id === "wawancara_6_23" || metric.id === "mpasi_5_8" || metric.id === "mpasi_telur_ikan_daging" || metric.id === "mpasi_baik") return isQMonths;
+        
+        return true; 
+    });
 
     return (
         <div className="space-y-6">
@@ -244,6 +278,7 @@ export default function AsiMpasiDashboard() {
                     >
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
 
@@ -373,21 +408,67 @@ export default function AsiMpasiDashboard() {
             {/* Scorecards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {metricCards.map(metric => (
-                    <div key={metric.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <h4 className="text-slate-500 font-semibold text-xs uppercase tracking-wider mb-2">{metric.title}</h4>
-                        {metric.id === "imd" && (!metric.val || metric.val === 0) ? (
-                            <div className="text-sm font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block self-start mt-2 border border-amber-200">
-                                Masih Proses Integrasi
-                            </div>
-                        ) : (
-                            <div className="flex items-end gap-2">
-                                <span className={`text-3xl font-black text-${metric.color}-600`}>
-                                    {metric.val.toFixed(2)}<span className="text-lg text-slate-400">%</span>
-                                </span>
+                    <div key={metric.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                        <div>
+                            <h3 className="text-xs font-semibold text-slate-500 mb-1 group-hover:text-indigo-600 transition-colors">{metric.title}</h3>
+                            {metric.id === "imd" && selectedYear >= 2026 ? (
+                                <div className="text-sm font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg inline-block mt-2 border border-slate-200">
+                                    Variabel dipindahkan ke Laporan Balita KIA
+                                </div>
+                            ) : metric.id === "imd" && (!metric.data.value || metric.data.value === 0) ? (
+                                <div className="text-sm font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block mt-2 border border-amber-200">
+                                    Masih Proses Integrasi
+                                </div>
+                            ) : (
+                                <div className="flex items-end mt-1">
+                                    <div className={`text-3xl font-black text-${metric.color}-600`}>
+                                        {metric.data.value.toFixed(1)}<span className="text-lg text-slate-400">%</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {!(metric.id === "imd" && (selectedYear >= 2026 || !metric.data.value || metric.data.value === 0)) && (
+                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                <div className="flex flex-col">
+                                    <span className="text-slate-400 font-medium">{metric.data.numLabel}</span>
+                                    <span className="text-slate-700 font-bold">{Math.round(metric.data.numerator).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="h-6 w-px bg-slate-200"></div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-slate-400 font-medium">{metric.data.denLabel}</span>
+                                    <span className="text-slate-700 font-bold">{Math.round(metric.data.denominator).toLocaleString('id-ID')}</span>
+                                </div>
                             </div>
                         )}
                     </div>
                 ))}
+            </div>
+
+            {/* Legend untuk Variabel Akronim */}
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 shadow-sm text-xs text-slate-600 mb-2 flex flex-wrap gap-x-6 gap-y-3 mt-4">
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">IMD</span> Inisiasi Menyusu Dini</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">BBL</span> Bayi Baru Lahir</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">Recall</span> Bayi Di-recall 24 Jam</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">B05</span> Bayi Usia 0-5 Bulan</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">ASI</span> Mendapat ASI Eksklusif</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">ASI_6</span> ASI Eksklusif 6 Bulan</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">B6</span> Bayi Usia 6 Bulan</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">Wawancara</span> Anak 6-23 Bulan Diwawancara</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">A6_23</span> Anak Usia 6-23 Bulan</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">M58</span> MPASI 5 dari 8 Kelompok</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">MTID</span> MPASI Telur/Ikan/Daging</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">MBaik</span> MPASI Baik</div>
+            </div>
+
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800 mb-6 flex gap-3 shadow-sm">
+                <Info className="w-5 h-5 shrink-0" />
+                <div className="leading-relaxed">
+                    <strong>Informasi Visibilitas Indikator (Laporan Bulanan):</strong><br/>
+                    • <strong>Februari & Agustus:</strong> Menampilkan indikator Recall 0-5 Bulan dan ASI Eksklusif 0-5 Bulan.<br/>
+                    • <strong>Maret, Juni, September, Desember:</strong> Menampilkan indikator Wawancara 6-23 Bulan beserta evaluasi MPASI.<br/>
+                    • <strong>Setiap Bulan:</strong> Indikator IMD dan ASI Eksklusif s/d 6 Bulan selalu ditampilkan.
+                </div>
             </div>
 
             {/* ── Unified Chart with Metric Selector ── */}
@@ -397,10 +478,18 @@ export default function AsiMpasiDashboard() {
                     { id: 'asi_0_5', label: 'ASI Ekskl. 0-5 Bln', key: 'asi_0_5_rate', gradient: ['#0891b2', '#06b6d4'], emoji: '🤱' },
                     { id: 'asi_6', label: 'ASI Ekskl. 6 Bln', key: 'asi_6_rate', gradient: ['#2563eb', '#3b82f6'], emoji: '💧' },
                     { id: 'wawancara_6_23', label: 'Wawancara 6-23 Bln', key: 'wawancara_rate', gradient: ['#4f46e5', '#6366f1'], emoji: '🎤' },
-                    { id: 'mpasi_5_8', label: 'MPASI 5 Kelompok', key: 'mpasi_5_8_rate', gradient: ['#7c3aed', '#8b5cf6'], emoji: '🥣' },
-                    { id: 'mpasi_telur_ikan_daging', label: 'Telur/Ikan/Daging', key: 'mpasi_telur_rate', gradient: ['#9333ea', '#a855f7'], emoji: '🍗' },
+                    { id: 'mpasi_5_8', label: selectedYear >= 2026 ? 'MPASI (6-23 bln)' : 'MPASI 5 Kelompok', key: 'mpasi_5_8_rate', gradient: ['#7c3aed', '#8b5cf6'], emoji: '🥣' },
+                    { id: 'mpasi_telur_ikan_daging', label: selectedYear >= 2026 ? 'Telur/Ikan/Daging (6-23)' : 'Telur/Ikan/Daging', key: 'mpasi_telur_rate', gradient: ['#9333ea', '#a855f7'], emoji: '🍗' },
                     { id: 'mpasi_baik', label: 'MPASI Baik', key: 'mpasi_baik_rate', gradient: ['#c026d3', '#d946ef'], emoji: '✅' },
-                ];
+                ].filter(metric => {
+                    if (selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL") return true;
+                    const m = Number(selectedMonthOrTW);
+                    const isFebAug = m === 2 || m === 8;
+                    const isQMonths = m === 3 || m === 6 || m === 9 || m === 12;
+                    if (metric.id === "recall_0_5" || metric.id === "asi_0_5") return isFebAug;
+                    if (metric.id === "wawancara_6_23" || metric.id === "mpasi_5_8" || metric.id === "mpasi_telur_ikan_daging" || metric.id === "mpasi_baik") return isQMonths;
+                    return true;
+                });
 
                 const activeMetric = CHART_METRICS.find(m => m.id === selectedChartMetric) || CHART_METRICS[0];
                 const sortedData = [...summaryTable].sort((a, b) => {
@@ -596,13 +685,21 @@ export default function AsiMpasiDashboard() {
                         <thead className="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-y border-slate-200">
                             <tr>
                                 <th className="px-6 py-4">{groupingRole === "superadmin" ? "Puskesmas" : "Kelurahan"}</th>
-                                <th className="px-6 py-4 text-center">Recall 0-5 Bln</th>
-                                <th className="px-6 py-4 text-center">ASI Eksklusif 0-5 Bln</th>
+                                { (selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL" || Number(selectedMonthOrTW) === 2 || Number(selectedMonthOrTW) === 8) && (
+                                    <>
+                                        <th className="px-6 py-4 text-center">Recall 0-5 Bln</th>
+                                        <th className="px-6 py-4 text-center">ASI Eksklusif 0-5 Bln</th>
+                                    </>
+                                )}
                                 <th className="px-6 py-4 text-center">ASI Eksklusif 6 Bln</th>
-                                <th className="px-6 py-4 text-center">Diwawancarai 6-23 Bln</th>
-                                <th className="px-6 py-4 text-center">MPASI 5 Kelompok</th>
-                                <th className="px-6 py-4 text-center">MPASI Telur/Ikan</th>
-                                <th className="px-6 py-4 text-center">MPASI Baik</th>
+                                { (selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL" || [3, 6, 9, 12].includes(Number(selectedMonthOrTW))) && (
+                                    <>
+                                        <th className="px-6 py-4 text-center">Diwawancarai 6-23 Bln</th>
+                                        <th className="px-6 py-4 text-center">{selectedYear >= 2026 ? "MPASI Anak 6-23 Bln" : "MPASI 5 Kelompok"}</th>
+                                        <th className="px-6 py-4 text-center">{selectedYear >= 2026 ? "Makan Telur/Ikan/Daging" : "MPASI Telur/Ikan"}</th>
+                                        <th className="px-6 py-4 text-center">MPASI Baik</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -626,16 +723,19 @@ export default function AsiMpasiDashboard() {
                                     );
                                 };
 
+                                const showFebAug = selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL" || Number(selectedMonthOrTW) === 2 || Number(selectedMonthOrTW) === 8;
+                                const showQMonths = selectedJenisLaporan === "Tahunan TW" || selectedMonthOrTW === "ALL" || [3, 6, 9, 12].includes(Number(selectedMonthOrTW));
+
                                 return summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
                                     <tr key={row.name} className="hover:bg-slate-50 border-b border-slate-100 transition-colors">
                                         <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                        {deficitCell(row.recall_rate, RECALL_TARGET)}
-                                        {deficitCell(row.asi_0_5_rate, asi05Target)}
+                                        {showFebAug && deficitCell(row.recall_rate, RECALL_TARGET)}
+                                        {showFebAug && deficitCell(row.asi_0_5_rate, asi05Target)}
                                         {deficitCell(row.asi_6_rate, asi6Target)}
-                                        {deficitCell(row.wawancara_rate, WAWANCARA_TARGET)}
-                                        {deficitCell(row.mpasi_5_8_rate, mpasiTarget)}
-                                        {deficitCell(row.mpasi_telur_rate, mpasiTarget)}
-                                        {deficitCell(row.mpasi_baik_rate, mpasiTarget)}
+                                        {showQMonths && deficitCell(row.wawancara_rate, WAWANCARA_TARGET)}
+                                        {showQMonths && deficitCell(row.mpasi_5_8_rate, mpasiTarget)}
+                                        {showQMonths && deficitCell(row.mpasi_telur_rate, mpasiTarget)}
+                                        {showQMonths && deficitCell(row.mpasi_baik_rate, mpasiTarget)}
                                     </tr>
                                 ));
                             })()}
@@ -667,6 +767,48 @@ export default function AsiMpasiDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Trend Chart ASI & MPASI */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px] mt-6">
+                <div className="flex items-center gap-2 mb-6">
+                    <Activity className="w-5 h-5 text-indigo-600" />
+                    <h3 className="font-bold text-slate-800">Tren Prevalensi ASI Eksklusif & MPASI ({selectedYear})</h3>
+                </div>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendResult} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
+                            <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
+                            <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
+                            
+                            <Line type="monotone" hide={hiddenTrend.includes("Recall 0-5 Bln")} dataKey="Recall 0-5 Bln" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="Recall 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#14b8a6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 0-5 Bln")} dataKey="ASI Eksklusif 0-5 Bln" stroke="#06b6d4" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="ASI Eksklusif 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#06b6d4' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 6 Bln")} dataKey="ASI Eksklusif 6 Bln" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="ASI Eksklusif 6 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("Diwawancarai 6-23 Bln")} dataKey="Diwawancarai 6-23 Bln" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="Diwawancarai 6-23 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#6366f1' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok")} dataKey="MPASI 5 Kelompok" name={selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok"} stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI 5 Kelompok" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging")} dataKey="MPASI Telur/Ikan/Daging" name={selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging"} stroke="#a855f7" strokeWidth={3} dot={{ r: 4, fill: '#a855f7' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI Telur/Ikan/Daging" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#a855f7' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("MPASI Baik")} dataKey="MPASI Baik" stroke="#d946ef" strokeWidth={3} dot={{ r: 4, fill: '#d946ef' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI Baik" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#d946ef' }} />
+                            </Line>
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
         </div >
     );
 }

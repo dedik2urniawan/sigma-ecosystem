@@ -213,7 +213,9 @@ export default function TatalaksanaDashboard() {
                 <div className="flex-1 min-w-[150px]">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tahun</label>
                     <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block p-2.5 outline-none">
-                        <option value="2025">2025</option><option value="2026">2026</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
                 {effectiveRole === "superadmin" && (
