@@ -15,7 +15,7 @@ const MapPuskesmas = dynamic(() => import("@/components/dashboard/MapPuskesmas")
 const MapDesa = dynamic(() => import("@/components/dashboard/MapDesa"), { ssr: false });
 
 // Reusable Metric Card
-function MetricCard({ title, data }: { title: string, data: { current: number; previous: number; delta: number; isPositive: boolean; numerator?: number; denominator?: number } }) {
+function MetricCard({ title, data }: { title: string, data: { current: number; previous: number; delta: number; isPositive: boolean; numerator?: number; denominator?: number; numLabel?: string; denLabel?: string } }) {
     const isNuetral = data.delta === 0;
     const colorClass = isNuetral ? "text-slate-500" : data.isPositive ? "text-emerald-600" : "text-rose-600";
     const bgClass = isNuetral ? "bg-slate-50" : data.isPositive ? "bg-emerald-50" : "bg-rose-50";
