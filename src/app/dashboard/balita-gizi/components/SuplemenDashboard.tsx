@@ -173,8 +173,11 @@ export default function SuplemenDashboard() {
     const CHART_METRICS = [
         { id: 'vit_a_6_11_feb', label: 'Vit.A 6-11 Bln (Feb)', key: 'vit_a_6_11_feb_rate', gradient: ['#ea580c', '#f97316'], emoji: '💊' },
         { id: 'vit_a_12_59_feb', label: 'Vit.A 12-59 Bln (Feb)', key: 'vit_a_12_59_feb_rate', gradient: ['#d97706', '#f59e0b'], emoji: '🧡' },
+        { id: 'vit_a_54_59_feb', label: 'Vit.A 54-59 Bln (Feb)', key: 'vit_a_54_59_feb_rate', gradient: ['#10b981', '#34d399'], emoji: '🍏' },
+        { id: 'vit_a_6_59_feb', label: 'Vit.A 6-59 Bln (Feb)', key: 'vit_a_6_59_feb_rate', gradient: ['#06b6d4', '#22d3ee'], emoji: '💧' },
         { id: 'vit_a_6_11_aug', label: 'Vit.A 6-11 Bln (Agu)', key: 'vit_a_6_11_aug_rate', gradient: ['#0d9488', '#14b8a6'], emoji: '💚' },
-        { id: 'vit_a_12_59_aug', label: 'Vit.A 12-59 Bln (Agu)', key: 'vit_a_12_59_aug_rate', gradient: ['#0891b2', '#06b6d4'], emoji: '🩵' },
+        { id: 'vit_a_12_59_aug', label: 'Vit.A 12-59 Bln (Agu)', key: 'vit_a_12_59_aug_rate', gradient: ['#0ea5e9', '#38bdf8'], emoji: '🩵' },
+        { id: 'vit_a_6_59_aug', label: 'Vit.A 6-59 Bln (Agu)', key: 'vit_a_6_59_aug_rate', gradient: ['#3b82f6', '#60a5fa'], emoji: '🌊' },
         { id: 'vit_a_6_11_tahunan', label: 'Vit.A 6-11 Tahunan', key: 'vit_a_6_11_tahunan_rate', gradient: ['#2563eb', '#3b82f6'], emoji: '📅' },
         { id: 'vit_a_12_59_tahunan', label: 'Vit.A 12-59 Tahunan', key: 'vit_a_12_59_tahunan_rate', gradient: ['#4f46e5', '#6366f1'], emoji: '📆' },
         { id: 'vit_a_2x', label: 'Vit.A 2× Setahun', key: 'vit_a_2x_rate', gradient: ['#7c3aed', '#8b5cf6'], emoji: '✌️' },
@@ -292,7 +295,7 @@ export default function SuplemenDashboard() {
                     <div className="p-5 border-t border-slate-100 space-y-5 text-sm text-slate-700">
                         {/* Definition 1 */}
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <h4 className="font-bold text-slate-800 mb-2">1. Cakupan Suplementasi Vitamin A Balita 6-59 Bulan</h4>
+                            <h4 className="font-bold text-slate-800 mb-2">1. Cakupan pemberian suplementasi vitamin A pada balita usia 6-59 bulan</h4>
                             <p className="mb-3 border-l-4 border-orange-400 pl-3">Persentase balita usia 6-59 bulan mendapat suplementasi kapsul vitamin A sesuai dosis usianya.</p>
                             <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-slate-200 overflow-x-auto">
                                 <span className="font-semibold whitespace-nowrap">Formula =</span>
@@ -302,12 +305,12 @@ export default function SuplemenDashboard() {
                                 </div>
                                 <span className="font-semibold whitespace-nowrap">× 100%</span>
                             </div>
-                            <p className="mt-3 text-xs text-slate-500"><strong>Sumber Data:</strong> Sigizi Kesga. Pencatatan dilakukan setiap pemberian vitamin A (bulan Februari dan Agustus) sesuai kelompok usia.</p>
+                            <p className="mt-3 text-xs text-slate-500"><strong>Mekanisme pelaporan:</strong> Pencatatan dilakukan setiap saat pemberian vitamin A (bulan Februari dan Agustus) sesuai kelompok usia. Pelaporan tahunan dijumlah dari Feb & Agu.</p>
                         </div>
 
                         {/* Definition 2 */}
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <h4 className="font-bold text-slate-800 mb-2">2. Cakupan Balita 12-59 Bulan Mendapat Vitamin A 2× Setahun</h4>
+                            <h4 className="font-bold text-slate-800 mb-2">2. Cakupan balita usia 12-59 bulan yang mendapat suplementasi vitamin A 2 kali dalam setahun</h4>
                             <p className="mb-3 border-l-4 border-violet-400 pl-3">Persentase balita usia 12-59 bulan mendapat suplementasi vitamin A 2 kali dalam 1 tahun program berjalan.</p>
                             <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-slate-200 overflow-x-auto">
                                 <span className="font-semibold whitespace-nowrap">Formula =</span>
@@ -317,7 +320,7 @@ export default function SuplemenDashboard() {
                                 </div>
                                 <span className="font-semibold whitespace-nowrap">× 100%</span>
                             </div>
-                            <p className="mt-3 text-xs text-slate-500"><strong>Sumber Data:</strong> Sigizi Kesga. Pelaporan pada bulan Agustus sebagai akhir periode program vitamin A tahunan.</p>
+                            <p className="mt-3 text-xs text-slate-500"><strong>Mekanisme pelaporan:</strong> Pencatatan dilakukan setiap saat pemberian vitamin A (bulan Februari dan Agustus) sesuai kelompok usia. Pelaporan pada bulan Agustus sebagai akhir periode program vitamin A tahunan.</p>
                         </div>
 
                         {/* Definition 3 */}
@@ -347,23 +350,42 @@ export default function SuplemenDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 {visibleCards.map(card => (
                     <div key={card.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <h4 className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider mb-1 leading-tight">{card.title}</h4>
-                        {card.subtitle && (
-                            <p className="text-[10px] text-indigo-500 font-medium italic mb-2">({card.subtitle})</p>
-                        )}
+                        <div>
+                            <h4 className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider mb-1 leading-tight">{card.title}</h4>
+                            {card.subtitle && (
+                                <p className="text-[10px] text-indigo-500 font-medium italic mb-2">({card.subtitle})</p>
+                            )}
+                        </div>
                         {card.id === "program_belum" ? (
                             <div className="text-sm font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block self-start mt-2 border border-amber-200">
                                 Belum Dilaksanakan
                             </div>
                         ) : (
-                            <div className="flex items-end gap-2 mt-auto">
-                                <span className={`text-2xl font-black text-${card.color}-600`}>
-                                    {card.val.toFixed(2)}<span className="text-base text-slate-400">%</span>
-                                </span>
+                            <div className="mt-4 flex items-end justify-between">
+                                <div className="flex flex-col">
+                                    <div className="flex items-end gap-1">
+                                        <span className={`text-2xl font-black text-${card.color}-600 leading-none`}>
+                                            {card.val.toFixed(2)}
+                                        </span>
+                                        <span className="text-sm text-slate-400 font-bold mb-0.5">%</span>
+                                    </div>
+                                    {card.numerator !== undefined && card.denominator !== undefined && (
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-center min-w-[32px]">{card.numerator.toLocaleString('id-ID')}</span>
+                                                <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 mt-0.5 text-center min-w-[32px]">{card.denominator.toLocaleString('id-ID')}</span>
+                                            </div>
+                                            <div className="flex flex-col text-[9px] text-slate-400 font-medium leading-[1.3]">
+                                                <span>{card.numLabel || 'Numerator'}</span>
+                                                <span>{card.denLabel || 'Denominator'}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 {card.id !== 'suplemen_mikro' && card.id !== 'program_belum' && (
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${card.val >= vitATarget
-                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                        : 'bg-red-50 text-red-600 border border-red-200'
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg self-start ${card.val >= vitATarget
+                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm'
+                                        : 'bg-red-50 text-red-600 border border-red-200 shadow-sm'
                                         }`}>
                                         Target: {vitATarget}%
                                     </span>
@@ -569,15 +591,18 @@ export default function SuplemenDashboard() {
                                 const keyMap: Record<string, string> = {
                                     'vit_a_6_11_feb': 'vit_a_6_11_feb_rate',
                                     'vit_a_12_59_feb': 'vit_a_12_59_feb_rate',
+                                    'vit_a_54_59_feb': 'vit_a_54_59_feb_rate',
+                                    'vit_a_6_59_feb': 'vit_a_6_59_feb_rate',
                                     'vit_a_6_11_aug': 'vit_a_6_11_aug_rate',
                                     'vit_a_12_59_aug': 'vit_a_12_59_aug_rate',
+                                    'vit_a_6_59_aug': 'vit_a_6_59_aug_rate',
                                     'vit_a_6_11_tahunan': 'vit_a_6_11_tahunan_rate',
                                     'vit_a_12_59_tahunan': 'vit_a_12_59_tahunan_rate',
                                     'vit_a_2x': 'vit_a_2x_rate',
                                     'suplemen_mikro': 'suplemen_mikro_rate',
                                 };
                                 // Cards that are Vitamin A metrics (should be checked against target)
-                                const vitACardIds = ['vit_a_6_11_feb', 'vit_a_12_59_feb', 'vit_a_6_11_aug', 'vit_a_12_59_aug', 'vit_a_6_11_tahunan', 'vit_a_12_59_tahunan', 'vit_a_2x'];
+                                const vitACardIds = ['vit_a_6_11_feb', 'vit_a_12_59_feb', 'vit_a_54_59_feb', 'vit_a_6_59_feb', 'vit_a_6_11_aug', 'vit_a_12_59_aug', 'vit_a_6_59_aug', 'vit_a_6_11_tahunan', 'vit_a_12_59_tahunan', 'vit_a_2x'];
                                 return (
                                     <tr key={row.name} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
