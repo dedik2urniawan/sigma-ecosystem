@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#10b981",
   width: "device-width",
   initialScale: 1,
 };
@@ -52,6 +52,12 @@ export const metadata: Metadata = {
     icon: '/sigma_logo.png',
     shortcut: '/sigma_logo.png',
     apple: '/sigma_logo.png',
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SIGMA Calculator",
   },
 };
 

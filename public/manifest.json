@@ -1,0 +1,28 @@
+{
+  "name": "SIGMA Calculator",
+  "short_name": "SIGMA Calc",
+  "description": "Kalkulator Gizi WHO ZScore & FCT (Aplikasi Kesehatan SIGMA)",
+  "start_url": "/calculator",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/sigma_logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/sigma_logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/sigma_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import FeedbackWidget from "./components/FeedbackWidget";
+import PwaInstallPrompt from "./components/PwaInstallPrompt";
 
 export const metadata: Metadata = {
     title: "SIGMA Calculator - Kalkulator Status Gizi WHO ZScore",
@@ -16,6 +17,7 @@ export default function CalculatorLayout({
         <>
             {children}
             <FeedbackWidget />
+            <PwaInstallPrompt />
         </>
     );
 }
