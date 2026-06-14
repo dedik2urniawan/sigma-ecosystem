@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import FeedbackWidget from "./components/FeedbackWidget";
 
 export const metadata: Metadata = {
     title: "SIGMA Calculator - Kalkulator Status Gizi WHO ZScore",
@@ -11,5 +12,10 @@ export default function CalculatorLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return <>{children}</>;
+    return (
+        <>
+            {children}
+            <FeedbackWidget />
+        </>
+    );
 }
