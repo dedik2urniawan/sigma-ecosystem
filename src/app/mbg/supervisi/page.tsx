@@ -26,6 +26,7 @@ interface SupervisiData {
     puskesmas: string;
     desa: string;
     sppg_id: string;
+    nama_sppg?: string;           // NEW
     nama_yayasan: string;
     nama_ahli_gizi: string;
     score_percentage: number;
@@ -37,8 +38,10 @@ interface SupervisiData {
     open_konsultasi?: string;
     open_edukasi?: string;
     open_kedaruratan?: string;
-    audit_weighting?: any;
-    audit_gizi?: any;
+    audit_weighting?: any[];
+    audit_gizi?: any[];
+    q2_siklus_menu?: string;       // NEW
+    sasaran_penerima?: Record<string, number>; // NEW
     // q1-q21 closed questions
     q1_ans?: boolean; q1_note?: string;
     q2_ans?: boolean; q2_note?: string;
@@ -63,17 +66,22 @@ interface SupervisiData {
     q21_ans?: boolean; q21_note?: string;
 }
 
-const QUESTION_LABELS: Record<string, { label: string; category: string }> = {
+const SIKLUS_MENU_OPTIONS = ["Siklus menu 7 hari", "Siklus menu 10 hari", "Siklus menu 14 hari", "Siklus menu Bulanan"];
+const SASARAN_PENERIMA_LIST = ["Balita", "PAUD", "SD Kelas 1-3", "SD Kelas 4-6", "SMP", "SMA", "Ibu Hamil", "Ibu Menyusui"];
+const KOMPONEN_HIDANGAN = ["Makanan Pokok", "Lauk Hewani", "Lauk Nabati", "Sayuran", "Buah", "Susu"];
+const KOMPONEN_GIZI = ["Kalori (kkal)", "Karbohidrat (g)", "Protein (g)", "Lemak (g)", "Vitamin A (mcg)", "Vitamin C (mg)", "Zat Besi (mg)"];
+
+const QUESTION_LABELS: Record<string, { label: string; category: string; type?: string }> = {
     q1: { label: "Tenaga Ahli Gizi memenuhi kualifikasi", category: "A. SDM & Perencanaan Menu" },
-    q2: { label: "Penyusunan master menu berkala mingguan", category: "A. SDM & Perencanaan Menu" },
+    q2: { label: "Penyusunan master menu berkala (siklus)", category: "A. SDM & Perencanaan Menu", type: "siklus" },
     q3: { label: "Menu disesuaikan per kelompok sasaran", category: "A. SDM & Perencanaan Menu" },
     q4: { label: "Koordinasi antar-tenaga gizi SPPG", category: "A. SDM & Perencanaan Menu" },
     q5: { label: "Bahan pangan wajib terfortifikasi digunakan", category: "A. SDM & Perencanaan Menu" },
     q6: { label: "Mengutamakan bahan makanan lokal", category: "A. SDM & Perencanaan Menu" },
     q7: { label: "Identifikasi alergi/fobia sasaran", category: "A. SDM & Perencanaan Menu" },
     q8: { label: "Struktur menu Gizi Seimbang (4 komponen)", category: "B. Standar Kontribusi Gizi" },
-    q9: { label: "Kontribusi gizi pagi 20-25% AKG", category: "B. Standar Kontribusi Gizi" },
-    q10: { label: "Kontribusi gizi siang 30-35% AKG", category: "B. Standar Kontribusi Gizi" },
+    q9: { label: "Pengolahan makan pagi max 4-6 jam sebelum saji", category: "B. Standar Kontribusi Gizi", type: "sesuai" },
+    q10: { label: "Pengolahan makan siang max 4-6 jam sebelum saji", category: "B. Standar Kontribusi Gizi", type: "sesuai" },
     q11: { label: "Masakan kering/minim kuah", category: "B. Standar Kontribusi Gizi" },
     q12: { label: "SPPG memiliki Sertifikat Halal", category: "B. Standar Kontribusi Gizi" },
     q13: { label: "Memasak max 4-6 jam sebelum makan", category: "C. Food Safety & Operasional" },
@@ -395,6 +403,48 @@ export default function DashboardSupervisi() {
                             </div>
                         </div>
 
+                        {/* ── Poin 6: Penerima Sasaran Score Cards ── */}
+                        {!isLoading && filteredData.some(d => d.sasaran_penerima && Object.keys(d.sasaran_penerima).length > 0) && (() => {
+                            const totals: Record<string, number> = {};
+                            filteredData.forEach(d => {
+                                if (d.sasaran_penerima) {
+                                    Object.entries(d.sasaran_penerima).forEach(([k, v]) => {
+                                        totals[k] = (totals[k] || 0) + (Number(v) || 0);
+                                    });
+                                }
+                            });
+                            const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
+                            const groups = [
+                                { label: "Total Balita", keys: ["Balita"], icon: "child_care", color: "text-pink-600", bg: "bg-pink-50", border: "border-pink-100" },
+                                { label: "Total PAUD", keys: ["PAUD"], icon: "school", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
+                                { label: "Total SD", keys: ["SD Kelas 1-3", "SD Kelas 4-6"], icon: "menu_book", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+                                { label: "Total SMP+SMA", keys: ["SMP", "SMA"], icon: "school", color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-100" },
+                                { label: "Ibu Hamil & Menyusui", keys: ["Ibu Hamil", "Ibu Menyusui"], icon: "pregnant_woman", color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
+                                { label: "Grand Total Penerima", keys: Object.keys(totals), icon: "groups", color: "text-emerald-700", bg: "bg-gradient-to-br from-emerald-500 to-teal-600", border: "border-emerald-200", isGrand: true },
+                            ];
+                            return (
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="material-icons-round text-blue-500">group</span>
+                                        <h3 className="font-bold text-slate-700 text-sm">Rekapitulasi Penerima Sasaran MBG</h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                        {groups.map((g: any) => {
+                                            const val = g.isGrand ? grandTotal : g.keys.reduce((s: number, k: string) => s + (totals[k] || 0), 0);
+                                            return (
+                                                <div key={g.label} className={`rounded-2xl p-4 border relative overflow-hidden ${ g.isGrand ? 'col-span-2 md:col-span-1' : '' } ${g.border} ${g.isGrand ? g.bg : 'bg-white'}`}>
+                                                    <div className={`absolute top-0 right-0 p-2 opacity-10`}><span className={`material-icons-round text-5xl ${g.isGrand ? 'text-white' : g.color}`}>{g.icon}</span></div>
+                                                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 relative z-10 ${g.isGrand ? 'text-white/80' : 'text-slate-500'}`}>{g.label}</p>
+                                                    <p className={`text-2xl font-black relative z-10 ${g.isGrand ? 'text-white' : g.color}`}>{val.toLocaleString()}</p>
+                                                    <p className={`text-[10px] relative z-10 ${g.isGrand ? 'text-white/70' : 'text-slate-400'}`}>orang</p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {/* Map Section */}
                         <div className="bg-white rounded-3xl p-2 border border-slate-200 shadow-sm mb-8">
                             <div className="p-4 border-b border-slate-100 flex items-center gap-2">
@@ -423,10 +473,10 @@ export default function DashboardSupervisi() {
                                     <thead>
                                         <tr>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200">Tanggal</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200">ID SPPG</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200">Kode / Nama SPPG</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200">Puskesmas & Wilayah</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200">Ahli Gizi Pengawas</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200 text-center">Skor Gramasi</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200 text-center">Skor Kesesuaian</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white border-b border-slate-200 text-right">Aksi</th>
                                         </tr>
                                     </thead>
@@ -454,7 +504,8 @@ export default function DashboardSupervisi() {
                                                         </p>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className="text-sm font-mono font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded">{item.sppg_id || "-"}</span>
+                                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">{item.sppg_id || "-"}</span>
+                                                        {item.nama_sppg && <p className="text-xs font-semibold text-slate-700 mt-0.5">{item.nama_sppg}</p>}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <p className="text-sm font-bold text-slate-800">{item.puskesmas}</p>
@@ -543,24 +594,31 @@ export default function DashboardSupervisi() {
                                     </div>
                                 </div>
                                 {/* Body */}
-                                <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                                <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
                                     {/* Identity */}
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div className="bg-slate-50 rounded-2xl p-4">
-                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">ID SPPG</p>
-                                            <p className="font-bold text-amber-700">{item.sppg_id || "-"}</p>
-                                        </div>
-                                        <div className="bg-slate-50 rounded-2xl p-4">
-                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Nama Yayasan</p>
-                                            <p className="font-bold text-slate-800">{item.nama_yayasan || "-"}</p>
-                                        </div>
-                                        <div className="bg-slate-50 rounded-2xl p-4">
-                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Ahli Gizi Pengawas</p>
-                                            <p className="font-bold text-slate-800">{item.nama_ahli_gizi || "-"}</p>
-                                        </div>
-                                        <div className="bg-slate-50 rounded-2xl p-4">
-                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Tanggal Inspeksi</p>
-                                            <p className="font-bold text-slate-800">{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+                                    <div>
+                                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b pb-2">Identitas SPPG</h4>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Kode SPPG</p>
+                                                <p className="font-mono font-bold text-amber-700">{item.sppg_id || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Nama SPPG</p>
+                                                <p className="font-bold text-slate-800">{item.nama_sppg || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Nama Yayasan</p>
+                                                <p className="font-bold text-slate-800">{item.nama_yayasan || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Ahli Gizi Pengawas</p>
+                                                <p className="font-bold text-slate-800">{item.nama_ahli_gizi || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3 col-span-2">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Tanggal Inspeksi</p>
+                                                <p className="font-bold text-slate-800">{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+                                            </div>
                                         </div>
                                     </div>
                                     {/* Compliance Summary Bar */}
@@ -579,8 +637,27 @@ export default function DashboardSupervisi() {
                                             <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">{cat}</h4>
                                             <div className="space-y-2">
                                                 {catQuestions[cat].map(q => {
+                                                    const meta = QUESTION_LABELS[q.id];
+                                                    // Q2 special: show siklus menu
+                                                    if (meta?.type === "siklus") {
+                                                        const siklusVal = item.q2_siklus_menu;
+                                                        return (
+                                                            <div key={q.id} className="flex items-start gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
+                                                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                                                    <span className="material-icons-round text-blue-600 text-sm">event_repeat</span>
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-xs font-medium text-slate-700">{q.label}</p>
+                                                                    {siklusVal && <p className="text-xs font-bold text-blue-700 mt-0.5 bg-blue-100 inline-block px-2 py-0.5 rounded">{siklusVal}</p>}
+                                                                    {(item as any)[`q2_note`] && <p className="text-xs text-slate-400 italic mt-0.5">Catatan: {(item as any)[`q2_note`]}</p>}
+                                                                </div>
+                                                                <span className="text-xs font-black shrink-0 text-blue-600">{siklusVal ? "TERISI" : "-"}</span>
+                                                            </div>
+                                                        );
+                                                    }
                                                     const ans = (item as any)[`${q.id}_ans`];
                                                     const note = (item as any)[`${q.id}_note`];
+                                                    const isSesuai = meta?.type === "sesuai";
                                                     const isYes = ans === true;
                                                     const isNo = ans === false;
                                                     const isNull = ans === null || ans === undefined;
@@ -596,7 +673,7 @@ export default function DashboardSupervisi() {
                                                                 {note && <p className="text-xs text-slate-400 italic mt-0.5">Catatan: {note}</p>}
                                                             </div>
                                                             <span className={`text-xs font-black shrink-0 ${isYes ? "text-emerald-600" : isNo ? "text-red-500" : "text-slate-400"}`}>
-                                                                {isNull ? "-" : isYes ? "YA" : "TIDAK"}
+                                                                {isNull ? "-" : isYes ? (isSesuai ? "SESUAI" : "YA") : (isSesuai ? "TDK SESUAI" : "TIDAK")}
                                                             </span>
                                                         </div>
                                                     );
@@ -609,7 +686,7 @@ export default function DashboardSupervisi() {
                                         <div>
                                             <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Jawaban Kualitatif (Pertanyaan Terbuka)</h4>
                                             <div className="space-y-3">
-                                                {[{key: "open_preferensi", label: "Preferensi Pangan Lokal"}, {key: "open_fortifikasi", label: "Fortifikasi Bahan"}, {key: "open_konsultasi", label: "Konsultasi Gizi"}, {key: "open_edukasi", label: "Edukasi Sasaran"}, {key: "open_kedaruratan", label: "Protokol Kedaruratan"}].map(o => {
+                                                {[{key: "open_preferensi", label: "1. Preferensi Pangan Lokal"}, {key: "open_fortifikasi", label: "2. Fortifikasi Bahan"}, {key: "open_konsultasi", label: "3. Konsultasi Gizi"}, {key: "open_edukasi", label: "4. Edukasi Sasaran"}, {key: "open_kedaruratan", label: "5. Protokol Kedaruratan"}].map(o => {
                                                     const val = (item as any)[o.key];
                                                     if (!val) return null;
                                                     return (
@@ -622,30 +699,86 @@ export default function DashboardSupervisi() {
                                             </div>
                                         </div>
                                     )}
+                                    {/* Penerima Sasaran */}
+                                    {item.sasaran_penerima && Object.keys(item.sasaran_penerima).length > 0 && (
+                                        <div>
+                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Jumlah Penerima Sasaran MBG</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                {Object.entries(item.sasaran_penerima).map(([k, v]) => (
+                                                    <div key={k} className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                                                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-1">{k}</p>
+                                                        <p className="text-xl font-black text-blue-800">{Number(v).toLocaleString()}</p>
+                                                        <p className="text-[10px] text-blue-400">orang</p>
+                                                    </div>
+                                                ))}
+                                                <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl p-3 text-center col-span-2 sm:col-span-4">
+                                                    <p className="text-[10px] font-bold text-white/70 uppercase mb-1">Grand Total Penerima</p>
+                                                    <p className="text-2xl font-black text-white">{Object.values(item.sasaran_penerima).reduce((s, v) => s + (Number(v) || 0), 0).toLocaleString()}</p>
+                                                    <p className="text-[10px] text-white/60">orang</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     {/* Kuantitatif */}
                                     {Array.isArray(item.audit_weighting) && item.audit_weighting.length > 0 && (
                                         <div>
-                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Evaluasi Kuantitatif (Kelompok Sasaran)</h4>
-                                            <div className="space-y-3">
+                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Evaluasi Kuantitatif — Audit Weighting Gramasi</h4>
+                                            <div className="space-y-4">
                                                 {item.audit_weighting.map((s: any, idx: number) => (
                                                     <div key={idx} className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                                                        <p className="text-sm font-bold text-blue-800 mb-2">{s.sasaran_name || `Sasaran ${idx + 1}`}</p>
-                                                        {s.rows && Array.isArray(s.rows) && (
-                                                            <div className="overflow-x-auto">
+                                                        <p className="text-sm font-bold text-blue-800 mb-3">📊 {s.sasaran_name || `Sasaran ${idx + 1}`}</p>
+                                                        {s.auditData && (
+                                                            <div className="overflow-x-auto mb-3">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">A. Gramasi (gram)</p>
                                                                 <table className="w-full text-xs">
                                                                     <thead><tr className="border-b border-blue-200">
                                                                         <th className="text-left py-1 pr-2 text-blue-600 font-bold">Komponen</th>
-                                                                        <th className="text-right py-1 px-2 text-blue-600 font-bold">Standar</th>
-                                                                        <th className="text-right py-1 pl-2 text-blue-600 font-bold">FCT/Sigma</th>
+                                                                        <th className="text-right py-1 px-1 text-blue-600 font-bold">Std</th>
+                                                                        <th className="text-right py-1 px-1 text-blue-600 font-bold">S1</th>
+                                                                        <th className="text-right py-1 px-1 text-blue-600 font-bold">S2</th>
+                                                                        <th className="text-right py-1 px-1 text-blue-600 font-bold">S3</th>
+                                                                        <th className="text-right py-1 pl-1 text-emerald-600 font-bold">Avg</th>
                                                                     </tr></thead>
                                                                     <tbody>
-                                                                        {s.rows.map((row: any, ri: number) => (
-                                                                            <tr key={ri} className="border-b border-blue-100">
-                                                                                <td className="py-1 pr-2 text-slate-700 font-medium">{row.komponen || "-"}</td>
-                                                                                <td className="py-1 px-2 text-right text-slate-600">{row.standar || "-"}</td>
-                                                                                <td className="py-1 pl-2 text-right font-bold text-slate-800">{row.sigma || row.hasil || "-"}</td>
-                                                                            </tr>
-                                                                        ))}
+                                                                        {Object.entries(s.auditData).map(([komponen, data]: [string, any]) => {
+                                                                            const v1 = parseFloat(data.s1) || 0, v2 = parseFloat(data.s2) || 0, v3 = parseFloat(data.s3) || 0;
+                                                                            const avg = v1 && v2 && v3 ? ((v1+v2+v3)/3).toFixed(1) : "-";
+                                                                            return (<tr key={komponen} className="border-b border-blue-100">
+                                                                                <td className="py-1 pr-2 text-slate-700 font-medium">{komponen}</td>
+                                                                                <td className="py-1 px-1 text-right text-slate-500">{data.std || "-"}</td>
+                                                                                <td className="py-1 px-1 text-right text-slate-600">{data.s1 || "-"}</td>
+                                                                                <td className="py-1 px-1 text-right text-slate-600">{data.s2 || "-"}</td>
+                                                                                <td className="py-1 px-1 text-right text-slate-600">{data.s3 || "-"}</td>
+                                                                                <td className="py-1 pl-1 text-right font-bold text-emerald-700">{avg}</td>
+                                                                            </tr>);
+                                                                        })}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
+                                                        {s.giziData && (
+                                                            <div className="overflow-x-auto">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">B. Zat Gizi</p>
+                                                                <table className="w-full text-xs">
+                                                                    <thead><tr className="border-b border-blue-200">
+                                                                        <th className="text-left py-1 pr-2 text-blue-600 font-bold">Zat Gizi</th>
+                                                                        <th className="text-right py-1 px-2 text-blue-600 font-bold">AKG/Resep</th>
+                                                                        <th className="text-right py-1 pl-2 text-blue-600 font-bold">FCT/Sigma</th>
+                                                                        <th className="text-right py-1 pl-2 text-slate-500 font-bold">Deviasi</th>
+                                                                    </tr></thead>
+                                                                    <tbody>
+                                                                        {Object.entries(s.giziData).map(([gizi, data]: [string, any]) => {
+                                                                            const std = parseFloat(data.std) || 0, real = parseFloat(data.real) || 0;
+                                                                            const diff = std > 0 && real > 0 ? (real - std) : null;
+                                                                            return (<tr key={gizi} className="border-b border-blue-100">
+                                                                                <td className="py-1 pr-2 text-slate-700 font-medium">{gizi}</td>
+                                                                                <td className="py-1 px-2 text-right text-slate-600">{data.std || "-"}</td>
+                                                                                <td className="py-1 pl-2 text-right font-bold text-slate-800">{data.real || "-"}</td>
+                                                                                <td className={`py-1 pl-2 text-right font-bold text-xs ${diff === null ? 'text-slate-400' : diff > 0 ? 'text-amber-600' : diff < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                                                                    {diff === null ? "-" : diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)}
+                                                                                </td>
+                                                                            </tr>);
+                                                                        })}
                                                                     </tbody>
                                                                 </table>
                                                             </div>
@@ -689,12 +822,19 @@ export default function DashboardSupervisi() {
                                     </div>
                                 </div>
                                 {/* Body */}
-                                <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                                <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
                                     {/* Identity Fields */}
                                     <div>
                                         <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Identitas SPPG</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {[{key:"nama_yayasan",label:"Nama Yayasan"},{key:"nama_ahli_gizi",label:"Nama Ahli Gizi"},{key:"sppg_id",label:"ID SPPG"},{key:"puskesmas",label:"Puskesmas"},{key:"desa",label:"Desa"}].map(f => (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                {key:"sppg_id",label:"Kode SPPG"},
+                                                {key:"nama_sppg",label:"Nama SPPG"},
+                                                {key:"nama_yayasan",label:"Nama Yayasan"},
+                                                {key:"nama_ahli_gizi",label:"Nama Ahli Gizi"},
+                                                {key:"puskesmas",label:"Puskesmas"},
+                                                {key:"desa",label:"Desa"}
+                                            ].map(f => (
                                                 <div key={f.key}>
                                                     <label className="block text-xs font-bold text-slate-500 mb-1">{f.label}</label>
                                                     <input
@@ -716,20 +856,62 @@ export default function DashboardSupervisi() {
                                                 const ansKey = `${qid}_ans` as keyof SupervisiData;
                                                 const noteKey = `${qid}_note` as keyof SupervisiData;
                                                 const currentAns = (editForm as any)[ansKey];
+                                                // Q2: siklus menu selector
+                                                if (meta.type === "siklus") {
+                                                    const currentSiklus = (editForm as any)["q2_siklus_menu"] || "";
+                                                    return (
+                                                        <div key={qid} className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                                                            <p className="text-xs text-slate-500 font-bold mb-2">{qid.toUpperCase()} — {meta.label}</p>
+                                                            <div className="flex gap-2 flex-wrap mb-2">
+                                                                {SIKLUS_MENU_OPTIONS.map(opt => (
+                                                                    <button key={opt} onClick={() => setEditForm(p => ({...p, q2_siklus_menu: opt, q2_ans: true}))}
+                                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${ currentSiklus === opt ? "bg-blue-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-blue-100"}`}>
+                                                                        {opt}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            <input type="text" placeholder="Catatan..." value={(editForm as any)[noteKey] || ""}
+                                                                onChange={e => setEditForm(p => ({...p, [noteKey]: e.target.value}))}
+                                                                className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-amber-400" />
+                                                        </div>
+                                                    );
+                                                }
+                                                const isSesuai = meta.type === "sesuai";
                                                 return (
                                                     <div key={qid} className="bg-slate-50 rounded-xl p-3">
                                                         <p className="text-xs text-slate-400 font-bold mb-1.5">{qid.toUpperCase()} — {meta.label}</p>
                                                         <div className="flex gap-2 items-center">
-                                                            <button onClick={() => setEditForm(p => ({...p, [ansKey]: true}))} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentAns === true ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600 hover:bg-emerald-100"}`}>YA</button>
-                                                            <button onClick={() => setEditForm(p => ({...p, [ansKey]: false}))} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentAns === false ? "bg-red-500 text-white" : "bg-slate-200 text-slate-600 hover:bg-red-100"}`}>TIDAK</button>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Catatan..."
-                                                                value={(editForm as any)[noteKey] || ""}
+                                                            <button onClick={() => setEditForm(p => ({...p, [ansKey]: true}))} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentAns === true ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600 hover:bg-emerald-100"}`}>
+                                                                {isSesuai ? "SESUAI" : "YA"}
+                                                            </button>
+                                                            <button onClick={() => setEditForm(p => ({...p, [ansKey]: false}))} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentAns === false ? "bg-red-500 text-white" : "bg-slate-200 text-slate-600 hover:bg-red-100"}`}>
+                                                                {isSesuai ? "TDK SESUAI" : "TIDAK"}
+                                                            </button>
+                                                            <input type="text" placeholder="Catatan..." value={(editForm as any)[noteKey] || ""}
                                                                 onChange={e => setEditForm(p => ({...p, [noteKey]: e.target.value}))}
-                                                                className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-amber-400"
-                                                            />
+                                                                className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-amber-400" />
                                                         </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    {/* Penerima Sasaran Edit */}
+                                    <div>
+                                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Jumlah Penerima Sasaran MBG</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            {SASARAN_PENERIMA_LIST.map(sasaran => {
+                                                const currentVal = (editForm.sasaran_penerima as any)?.[sasaran] ?? "";
+                                                return (
+                                                    <div key={sasaran}>
+                                                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">{sasaran}</label>
+                                                        <input type="number" min="0" placeholder="0" value={currentVal}
+                                                            onChange={e => setEditForm(p => ({
+                                                                ...p,
+                                                                sasaran_penerima: { ...(p.sasaran_penerima || {}), [sasaran]: parseInt(e.target.value) || 0 }
+                                                            }))}
+                                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-center font-bold outline-none focus:border-blue-400"
+                                                        />
                                                     </div>
                                                 );
                                             })}
@@ -739,15 +921,12 @@ export default function DashboardSupervisi() {
                                     <div>
                                         <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Jawaban Kualitatif</h4>
                                         <div className="space-y-3">
-                                            {[{key:"open_preferensi",label:"Preferensi Pangan Lokal"},{key:"open_fortifikasi",label:"Fortifikasi Bahan"},{key:"open_konsultasi",label:"Konsultasi Gizi"},{key:"open_edukasi",label:"Edukasi Sasaran"},{key:"open_kedaruratan",label:"Protokol Kedaruratan"}].map(f => (
+                                            {[{key:"open_preferensi",label:"1. Preferensi Pangan Lokal"},{key:"open_fortifikasi",label:"2. Fortifikasi Bahan"},{key:"open_konsultasi",label:"3. Konsultasi Gizi"},{key:"open_edukasi",label:"4. Edukasi Sasaran"},{key:"open_kedaruratan",label:"5. Protokol Kedaruratan"}].map(f => (
                                                 <div key={f.key}>
                                                     <label className="block text-xs font-bold text-slate-500 mb-1">{f.label}</label>
-                                                    <textarea
-                                                        rows={2}
-                                                        value={(editForm as any)[f.key] || ""}
+                                                    <textarea rows={2} value={(editForm as any)[f.key] || ""}
                                                         onChange={e => setEditForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-200 transition-all resize-none"
-                                                    />
+                                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-200 transition-all resize-none" />
                                                 </div>
                                             ))}
                                         </div>

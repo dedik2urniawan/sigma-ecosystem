@@ -16,15 +16,15 @@ const COLORS_PIE = ["#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#06b
 
 const CLOSED_QUESTIONS_META = [
     { id: "q1",  label: "Tenaga Ahli Gizi",               fullLabel: "Apakah SPPG memiliki Tenaga Ahli Gizi yang memenuhi kualifikasi (D3/D4/S1 Gizi atau berpengalaman min. 1 tahun)?", category: "SDM" },
-    { id: "q2",  label: "Penyusunan Master Menu",          fullLabel: "Apakah penyusunan master menu dilakukan berkala setiap minggu oleh Ahli Gizi bersama tim dapur?", category: "SDM" },
+    { id: "q2",  label: "Siklus Penyusunan Master Menu",   fullLabel: "Apakah penyusunan master menu dilakukan secara berkala oleh Ahli Gizi bersama tim dapur? (Siklus: 7/10/14 hari / Bulanan)", category: "SDM" },
     { id: "q3",  label: "Menu per Kelompok Sasaran",       fullLabel: "Apakah master menu disusun spesifik dan disesuaikan berdasarkan variasi kebutuhan gizi masing-masing kelompok sasaran?", category: "SDM" },
     { id: "q4",  label: "Koordinasi Antar SPPG",           fullLabel: "Apakah penentuan bahan pangan dan siklus menu telah dikoordinasikan antar-tenaga gizi SPPG sewilayah?", category: "SDM" },
     { id: "q5",  label: "Bahan Terfortifikasi",            fullLabel: "Apakah bahan pangan wajib terfortifikasi (tepung terigu, minyak, garam beryodium) digunakan dalam setiap pengolahan?", category: "SDM" },
     { id: "q6",  label: "Bahan Makanan Lokal",             fullLabel: "Apakah menu hidangan dirancang dengan mengutamakan bahan makanan lokal yang sudah dikenal masyarakat setempat?", category: "SDM" },
     { id: "q7",  label: "Identifikasi Alergi Sasaran",    fullLabel: "Apakah sudah dilakukan identifikasi sasaran yang memiliki riwayat alergi/intoleransi dan disediakan menu alternatif?", category: "SDM" },
     { id: "q8",  label: "Struktur Menu Seimbang",          fullLabel: "Apakah struktur menu sudah lengkap mengacu prinsip Gizi Seimbang (makanan pokok, lauk-pauk, sayuran, buah)?", category: "Gizi" },
-    { id: "q9",  label: "Kontribusi Gizi Pagi 20-25%",    fullLabel: "Jika MBG disajikan sebagai makan pagi (06.00–09.00), apakah kontribusi gizinya 20–25% dari AKG harian sasaran?", category: "Gizi" },
-    { id: "q10", label: "Kontribusi Gizi Siang 30-35%",   fullLabel: "Jika MBG disajikan sebagai makan siang (11.00–14.00), apakah kontribusi gizinya 30–35% dari AKG harian sasaran?", category: "Gizi" },
+    { id: "q9",  label: "Makan Pagi: Olah Max 4-6 Jam",  fullLabel: "Jika MBG disajikan sebagai makan pagi (06.00–09.00), apakah pengolahan/memasak makanan dilakukan dalam rentang waktu maksimal 4–6 jam sebelum jam makan bersama?", category: "Gizi" },
+    { id: "q10", label: "Makan Siang: Olah Max 4-6 Jam", fullLabel: "Jika MBG disajikan sebagai makan siang (11.00–14.00), apakah pengolahan/memasak makanan dilakukan dalam rentang waktu maksimal 4–6 jam sebelum jam makan bersama?", category: "Gizi" },
     { id: "q11", label: "Kering/Minim Kuah",              fullLabel: "Apakah masakan diupayakan kering atau minim kuah untuk mencegah makanan cepat basi dan risiko tumpah saat distribusi?", category: "Gizi" },
     { id: "q12", label: "Sertifikat Halal",               fullLabel: "Apakah pihak dapur SPPG telah memiliki Sertifikat Halal resmi?", category: "Gizi" },
     { id: "q13", label: "Pengolahan Max 4-6 Jam",         fullLabel: "Apakah pengolahan makanan dilakukan dalam rentang waktu maksimal 4–6 jam sebelum jam makan bersama di sekolah/posyandu?", category: "Food Safety" },
