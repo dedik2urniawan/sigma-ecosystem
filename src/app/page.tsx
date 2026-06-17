@@ -521,6 +521,21 @@ export default function Home() {
         iconBg: "bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-indigo-200",
         button: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
       }
+    },
+    {
+      id: "mbg",
+      title: "SIGMA MBG",
+      desc: "Monitoring & Evaluasi Pelaksanaan Program Makan Bergizi Gratis terintegrasi lintas seksi Dinkes.",
+      icon: "restaurant",
+      status: "New Module",
+      cta: "Launch Portal",
+      link: "/mbg",
+      classes: {
+        badge: "bg-amber-50 text-amber-600 border-amber-100",
+        dot: "bg-amber-500",
+        iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-200",
+        button: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
+      }
     }
   ];
 
