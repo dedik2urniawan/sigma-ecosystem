@@ -68,6 +68,7 @@ interface SupervisiData {
 
 const SIKLUS_MENU_OPTIONS = ["Siklus menu 7 hari", "Siklus menu 10 hari", "Siklus menu 14 hari", "Siklus menu Bulanan"];
 const SASARAN_PENERIMA_LIST = ["Balita", "PAUD", "SD Kelas 1-3", "SD Kelas 4-6", "SMP", "SMA", "Ibu Hamil", "Ibu Menyusui"];
+const KELOMPOK_SASARAN = ["Balita", "PAUD", "SD Kelas 1-3", "SD Kelas 4-6", "SMP", "SMA", "Ibu Hamil", "Ibu Menyusui"];
 const KOMPONEN_HIDANGAN = ["Makanan Pokok", "Lauk Hewani", "Lauk Nabati", "Sayuran", "Buah", "Susu"];
 const KOMPONEN_GIZI = ["Kalori (kkal)", "Karbohidrat (g)", "Protein (g)", "Lemak (g)", "Vitamin A (mcg)", "Vitamin C (mg)", "Zat Besi (mg)"];
 
@@ -403,11 +404,11 @@ export default function DashboardSupervisi() {
                             </div>
                         </div>
 
-                        {/* ── Poin 6: Penerima Sasaran Score Cards ── */}
-                        {!isLoading && filteredData.some(d => d.sasaran_penerima && Object.keys(d.sasaran_penerima).length > 0) && (() => {
+                        {/* ── Penerima Sasaran Score Cards — always show ── */}
+                        {(() => {
                             const totals: Record<string, number> = {};
                             filteredData.forEach(d => {
-                                if (d.sasaran_penerima) {
+                                if (d.sasaran_penerima && typeof d.sasaran_penerima === 'object') {
                                     Object.entries(d.sasaran_penerima).forEach(([k, v]) => {
                                         totals[k] = (totals[k] || 0) + (Number(v) || 0);
                                     });
@@ -420,27 +421,44 @@ export default function DashboardSupervisi() {
                                 { label: "Total SD", keys: ["SD Kelas 1-3", "SD Kelas 4-6"], icon: "menu_book", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
                                 { label: "Total SMP+SMA", keys: ["SMP", "SMA"], icon: "school", color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-100" },
                                 { label: "Ibu Hamil & Menyusui", keys: ["Ibu Hamil", "Ibu Menyusui"], icon: "pregnant_woman", color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
-                                { label: "Grand Total Penerima", keys: Object.keys(totals), icon: "groups", color: "text-emerald-700", bg: "bg-gradient-to-br from-emerald-500 to-teal-600", border: "border-emerald-200", isGrand: true },
+                                { label: "Grand Total Penerima", keys: SASARAN_PENERIMA_LIST, icon: "groups", color: "text-white", bg: "bg-gradient-to-br from-emerald-500 to-teal-600", border: "border-emerald-200", isGrand: true },
                             ];
                             return (
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="material-icons-round text-blue-500">group</span>
-                                        <h3 className="font-bold text-slate-700 text-sm">Rekapitulasi Penerima Sasaran MBG</h3>
+                                <div className="mb-6 bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons-round text-blue-600 text-lg">group</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-800">Rekapitulasi Penerima Sasaran MBG</h3>
+                                            <p className="text-xs text-slate-400">Total penerima berdasarkan kelompok sasaran dari seluruh SPPG tersupervisi</p>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                                        {groups.map((g: any) => {
-                                            const val = g.isGrand ? grandTotal : g.keys.reduce((s: number, k: string) => s + (totals[k] || 0), 0);
-                                            return (
-                                                <div key={g.label} className={`rounded-2xl p-4 border relative overflow-hidden ${ g.isGrand ? 'col-span-2 md:col-span-1' : '' } ${g.border} ${g.isGrand ? g.bg : 'bg-white'}`}>
-                                                    <div className={`absolute top-0 right-0 p-2 opacity-10`}><span className={`material-icons-round text-5xl ${g.isGrand ? 'text-white' : g.color}`}>{g.icon}</span></div>
-                                                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 relative z-10 ${g.isGrand ? 'text-white/80' : 'text-slate-500'}`}>{g.label}</p>
-                                                    <p className={`text-2xl font-black relative z-10 ${g.isGrand ? 'text-white' : g.color}`}>{val.toLocaleString()}</p>
-                                                    <p className={`text-[10px] relative z-10 ${g.isGrand ? 'text-white/70' : 'text-slate-400'}`}>orang</p>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                    {isLoading ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                            {[...Array(6)].map((_, i) => (
+                                                <div key={i} className="rounded-2xl p-4 border border-slate-100 bg-slate-50 animate-pulse h-20" />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                            {groups.map((g: any) => {
+                                                const val = g.isGrand ? grandTotal : g.keys.reduce((s: number, k: string) => s + (totals[k] || 0), 0);
+                                                return (
+                                                    <div key={g.label} className={`rounded-2xl p-4 border relative overflow-hidden ${g.border} ${g.isGrand ? g.bg : 'bg-white'}`}>
+                                                        <div className="absolute top-0 right-0 p-2 opacity-10"><span className={`material-icons-round text-5xl ${g.isGrand ? 'text-white' : g.color}`}>{g.icon}</span></div>
+                                                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 relative z-10 ${g.isGrand ? 'text-white/80' : 'text-slate-500'}`}>{g.label}</p>
+                                                        <p className={`text-2xl font-black relative z-10 ${g.isGrand ? 'text-white' : g.color}`}>{val.toLocaleString()}</p>
+                                                        <p className={`text-[10px] relative z-10 ${g.isGrand ? 'text-white/70' : 'text-slate-400'}`}>orang</p>
+                                                        {grandTotal === 0 && !g.isGrand && <div className="absolute inset-0 flex items-end p-2"><span className="text-[9px] text-slate-300 italic">belum ada data</span></div>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {grandTotal === 0 && !isLoading && (
+                                        <p className="text-xs text-slate-400 mt-3 italic text-center">💡 Data penerima sasaran akan muncul setelah form supervisi diisi dengan tabel penerima. Silakan edit data yang sudah ada atau buat laporan baru.</p>
+                                    )}
                                 </div>
                             );
                         })()}
@@ -930,6 +948,165 @@ export default function DashboardSupervisi() {
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+                                    {/* ─── Evaluasi Kuantitatif Edit ─── */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Evaluasi Kuantitatif (Audit Gramasi & Zat Gizi)</h4>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const defaultAudit = KOMPONEN_HIDANGAN.reduce((acc: any, k) => ({ ...acc, [k]: { std: "", s1: "", s2: "", s3: "" } }), {});
+                                                    const defaultGizi = KOMPONEN_GIZI.reduce((acc: any, k) => ({ ...acc, [k]: { std: "", real: "" } }), {});
+                                                    const newSasaran = { id: Date.now().toString(), sasaran_name: "", auditData: defaultAudit, giziData: defaultGizi };
+                                                    setEditForm(p => ({
+                                                        ...p,
+                                                        audit_weighting: [...(Array.isArray(p.audit_weighting) ? p.audit_weighting : []), newSasaran]
+                                                    }));
+                                                }}
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                            >
+                                                <span className="material-icons-round text-sm">add</span> Tambah Sasaran
+                                            </button>
+                                        </div>
+                                        {(!Array.isArray(editForm.audit_weighting) || editForm.audit_weighting.length === 0) && (
+                                            <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center">
+                                                <span className="material-icons-round text-3xl text-slate-300 mb-2 block">analytics</span>
+                                                <p className="text-sm text-slate-400 mb-3">Belum ada data evaluasi kuantitatif</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const defaultAudit = KOMPONEN_HIDANGAN.reduce((acc: any, k) => ({ ...acc, [k]: { std: "", s1: "", s2: "", s3: "" } }), {});
+                                                        const defaultGizi = KOMPONEN_GIZI.reduce((acc: any, k) => ({ ...acc, [k]: { std: "", real: "" } }), {});
+                                                        setEditForm(p => ({ ...p, audit_weighting: [{ id: Date.now().toString(), sasaran_name: "", auditData: defaultAudit, giziData: defaultGizi }] }));
+                                                    }}
+                                                    className="px-4 py-2 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition-colors"
+                                                >
+                                                    + Tambah Data Kuantitatif
+                                                </button>
+                                            </div>
+                                        )}
+                                        {Array.isArray(editForm.audit_weighting) && editForm.audit_weighting.map((sas: any, sIdx: number) => (
+                                            <div key={sas.id || sIdx} className="border border-blue-200 rounded-2xl overflow-hidden mb-4">
+                                                {/* Sasaran Header */}
+                                                <div className="bg-blue-50 px-4 py-3 flex items-center justify-between border-b border-blue-200">
+                                                    <div className="flex items-center gap-2 flex-1">
+                                                        <span className="material-icons-round text-blue-500 text-sm">groups</span>
+                                                        <select
+                                                            value={sas.sasaran_name || ""}
+                                                            onChange={e => {
+                                                                const updated = [...editForm.audit_weighting!];
+                                                                updated[sIdx] = { ...updated[sIdx], sasaran_name: e.target.value };
+                                                                setEditForm(p => ({ ...p, audit_weighting: updated }));
+                                                            }}
+                                                            className="flex-1 rounded-lg border border-blue-200 bg-white px-2 py-1 text-xs font-bold text-blue-800 outline-none focus:border-blue-500"
+                                                        >
+                                                            <option value="">-- Pilih Kelompok Sasaran --</option>
+                                                            {KELOMPOK_SASARAN.map(k => <option key={k} value={k}>{k}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    {editForm.audit_weighting!.length > 1 && (
+                                                        <button type="button" onClick={() => {
+                                                            const updated = [...editForm.audit_weighting!];
+                                                            updated.splice(sIdx, 1);
+                                                            setEditForm(p => ({ ...p, audit_weighting: updated }));
+                                                        }} className="ml-2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                            <span className="material-icons-round text-sm">delete</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="p-4 space-y-4">
+                                                    {/* A. Audit Weighting Gramasi */}
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">A. Audit Weighting Gramasi (gram)</p>
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-xs">
+                                                                <thead>
+                                                                    <tr className="bg-blue-50">
+                                                                        <th className="text-left py-2 px-2 text-blue-600 font-bold rounded-tl-lg">Komponen Hidangan</th>
+                                                                        <th className="text-center py-2 px-2 text-blue-600 font-bold">Standar (g)</th>
+                                                                        <th className="text-center py-2 px-2 text-blue-600 font-bold">Sampel 1</th>
+                                                                        <th className="text-center py-2 px-2 text-blue-600 font-bold">Sampel 2</th>
+                                                                        <th className="text-center py-2 px-2 text-blue-600 font-bold rounded-tr-lg">Sampel 3</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-slate-100">
+                                                                    {KOMPONEN_HIDANGAN.map(komponen => {
+                                                                        const row = sas.auditData?.[komponen] || { std: "", s1: "", s2: "", s3: "" };
+                                                                        return (
+                                                                            <tr key={komponen} className="hover:bg-slate-50">
+                                                                                <td className="py-1.5 px-2 font-medium text-slate-700">{komponen}</td>
+                                                                                {["std","s1","s2","s3"].map(field => (
+                                                                                    <td key={field} className="py-1 px-1">
+                                                                                        <input type="number" step="0.1" min="0"
+                                                                                            value={row[field] || ""}
+                                                                                            onChange={e => {
+                                                                                                const updated = [...editForm.audit_weighting!];
+                                                                                                updated[sIdx] = {
+                                                                                                    ...updated[sIdx],
+                                                                                                    auditData: { ...updated[sIdx].auditData, [komponen]: { ...row, [field]: e.target.value } }
+                                                                                                };
+                                                                                                setEditForm(p => ({ ...p, audit_weighting: updated }));
+                                                                                            }}
+                                                                                            className="w-full rounded-lg border border-slate-200 px-2 py-1 text-center text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
+                                                                                            placeholder="0"
+                                                                                        />
+                                                                                    </td>
+                                                                                ))}
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    {/* B. Audit Analisis Zat Gizi */}
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2">B. Audit Analisis Zat Gizi</p>
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-xs">
+                                                                <thead>
+                                                                    <tr className="bg-purple-50">
+                                                                        <th className="text-left py-2 px-2 text-purple-600 font-bold rounded-tl-lg">Zat Gizi</th>
+                                                                        <th className="text-center py-2 px-2 text-purple-600 font-bold">AKG / Resep (std)</th>
+                                                                        <th className="text-center py-2 px-2 text-purple-600 font-bold rounded-tr-lg">Hasil FCT/Sigma Calculator</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-slate-100">
+                                                                    {KOMPONEN_GIZI.map(gizi => {
+                                                                        const giziRow = sas.giziData?.[gizi] || { std: "", real: "" };
+                                                                        const diff = parseFloat(giziRow.real) - parseFloat(giziRow.std);
+                                                                        const hasDiff = giziRow.real && giziRow.std;
+                                                                        return (
+                                                                            <tr key={gizi} className="hover:bg-slate-50">
+                                                                                <td className="py-1.5 px-2 font-medium text-slate-700">{gizi}</td>
+                                                                                {["std","real"].map(field => (
+                                                                                    <td key={field} className="py-1 px-1">
+                                                                                        <input type="number" step="0.01" min="0"
+                                                                                            value={giziRow[field] || ""}
+                                                                                            onChange={e => {
+                                                                                                const updated = [...editForm.audit_weighting!];
+                                                                                                updated[sIdx] = {
+                                                                                                    ...updated[sIdx],
+                                                                                                    giziData: { ...updated[sIdx].giziData, [gizi]: { ...giziRow, [field]: e.target.value } }
+                                                                                                };
+                                                                                                setEditForm(p => ({ ...p, audit_weighting: updated }));
+                                                                                            }}
+                                                                                            className="w-full rounded-lg border border-slate-200 px-2 py-1 text-center text-xs outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-200"
+                                                                                            placeholder="0"
+                                                                                        />
+                                                                                    </td>
+                                                                                ))}
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                                 {/* Footer */}
