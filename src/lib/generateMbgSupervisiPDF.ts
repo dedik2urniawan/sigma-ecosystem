@@ -170,11 +170,152 @@ export async function generateMbgSupervisiPDF(item: SupervisiPDFInput): Promise<
 
     y = (doc as any).lastAutoTable.finalY + 10;
 
-    // Tambahkan halaman baru jika sisa spasi tidak cukup untuk tanda tangan
-    if (y > pageH - 50) {
-        doc.addPage();
-        y = 20;
+    // Helper to check page break
+    const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > pageH - margin) {
+            doc.addPage();
+            y = margin;
+        }
+    };
+
+    // ── Bagian 2: Pertanyaan Terbuka ─────────────────────────────────────────
+    checkPageBreak(20);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("B. HASIL OBSERVASI PERTANYAAN TERBUKA", margin, y);
+    y += 4;
+
+    const openQuestionsData = [
+        ["1. Preferensi Menu Lokal", item.open_preferensi || "-"],
+        ["2. Hambatan Fortifikasi", item.open_fortifikasi || "-"],
+        ["3. Topik Konsultasi Gizi", item.open_konsultasi || "-"],
+        ["4. Rencana Edukasi Gizi", item.open_edukasi || "-"],
+        ["5. Protokol Kedaruratan", item.open_kedaruratan || "-"]
+    ];
+
+    autoTable(doc, {
+        startY: y,
+        head: [["Topik", "Catatan Observasi"]],
+        body: openQuestionsData,
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+        columnStyles: {
+            0: { cellWidth: 50, fontStyle: "bold" },
+            1: { cellWidth: "auto" }
+        },
+        margin: { left: margin, right: margin }
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 10;
+
+    // ── Bagian 3: Tabel Sasaran MBG ──────────────────────────────────────────
+    if (item.sasaran_penerima && Object.keys(item.sasaran_penerima).length > 0) {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text("C. DETAIL JUMLAH PENERIMA SASARAN MBG", margin, y);
+        y += 4;
+
+        const sasaranData = Object.entries(item.sasaran_penerima)
+            .filter(([_, val]) => typeof val === "number" && val > 0)
+            .map(([sasaran, jumlah], idx) => [(idx + 1).toString(), sasaran, (jumlah as number).toString()]);
+
+        if (sasaranData.length > 0) {
+            autoTable(doc, {
+                startY: y,
+                head: [["No", "Kelompok Sasaran", "Jumlah Penerima"]],
+                body: sasaranData,
+                theme: "grid",
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+                columnStyles: {
+                    0: { cellWidth: 10, halign: "center" },
+                    1: { cellWidth: 80 },
+                    2: { cellWidth: "auto", halign: "right" }
+                },
+                margin: { left: margin, right: margin }
+            });
+            y = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text("Tidak ada data sasaran penerima.", margin, y);
+            y += 10;
+        }
     }
+
+    // ── Bagian 4: Evaluasi Kuantitatif ───────────────────────────────────────
+    if ((item.audit_weighting && item.audit_weighting.length > 0) || (item.audit_gizi && item.audit_gizi.length > 0)) {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text("D. ANALISIS EVALUASI KUANTITATIF", margin, y);
+        y += 6;
+
+        // Tabel Audit Gramasi
+        if (item.audit_weighting && item.audit_weighting.length > 0) {
+            item.audit_weighting.forEach((sasaranAudit: any) => {
+                checkPageBreak(30);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(`A. Audit Weighting Gramasi (Gram) - Sasaran: ${sasaranAudit.id}`, margin, y);
+                y += 4;
+
+                const auditData: any[][] = [];
+                if (sasaranAudit.makananPokok) auditData.push(["Makanan Pokok", sasaranAudit.makananPokok.std, sasaranAudit.makananPokok.s1, sasaranAudit.makananPokok.s2, sasaranAudit.makananPokok.s3]);
+                if (sasaranAudit.laukHewani) auditData.push(["Lauk Hewani", sasaranAudit.laukHewani.std, sasaranAudit.laukHewani.s1, sasaranAudit.laukHewani.s2, sasaranAudit.laukHewani.s3]);
+                if (sasaranAudit.laukNabati) auditData.push(["Lauk Nabati", sasaranAudit.laukNabati.std, sasaranAudit.laukNabati.s1, sasaranAudit.laukNabati.s2, sasaranAudit.laukNabati.s3]);
+                if (sasaranAudit.sayuran) auditData.push(["Sayuran", sasaranAudit.sayuran.std, sasaranAudit.sayuran.s1, sasaranAudit.sayuran.s2, sasaranAudit.sayuran.s3]);
+                if (sasaranAudit.buah) auditData.push(["Buah", sasaranAudit.buah.std, sasaranAudit.buah.s1, sasaranAudit.buah.s2, sasaranAudit.buah.s3]);
+                if (sasaranAudit.susu) auditData.push(["Susu", sasaranAudit.susu.std, sasaranAudit.susu.s1, sasaranAudit.susu.s2, sasaranAudit.susu.s3]);
+
+                autoTable(doc, {
+                    startY: y,
+                    head: [["Komponen Hidangan", "Standar (g)", "Sampel 1 (g)", "Sampel 2 (g)", "Sampel 3 (g)"]],
+                    body: auditData,
+                    theme: "grid",
+                    styles: { fontSize: 8, cellPadding: 2, halign: "center" },
+                    headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+                    columnStyles: { 0: { halign: "left", cellWidth: 50 } },
+                    margin: { left: margin, right: margin }
+                });
+                y = (doc as any).lastAutoTable.finalY + 8;
+            });
+        }
+
+        // Tabel Audit Gizi
+        if (item.audit_gizi && item.audit_gizi.length > 0) {
+            item.audit_gizi.forEach((giziAudit: any) => {
+                checkPageBreak(30);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(`B. Audit Analisis Zat Gizi - Sasaran: ${giziAudit.id}`, margin, y);
+                y += 4;
+
+                const giziData: any[][] = [];
+                if (giziAudit.energi) giziData.push(["Energi (Kal)", giziAudit.energi.std, giziAudit.energi.real]);
+                if (giziAudit.protein) giziData.push(["Protein (g)", giziAudit.protein.std, giziAudit.protein.real]);
+                if (giziAudit.lemak) giziData.push(["Lemak (g)", giziAudit.lemak.std, giziAudit.lemak.real]);
+                if (giziAudit.karbohidrat) giziData.push(["Karbohidrat (g)", giziAudit.karbohidrat.std, giziAudit.karbohidrat.real]);
+
+                autoTable(doc, {
+                    startY: y,
+                    head: [["Komponen Gizi", "Standar AKG/Resep", "Hasil FCT/Sigma"]],
+                    body: giziData,
+                    theme: "grid",
+                    styles: { fontSize: 8, cellPadding: 2, halign: "center" },
+                    headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+                    columnStyles: { 0: { halign: "left", cellWidth: 50 } },
+                    margin: { left: margin, right: margin }
+                });
+                y = (doc as any).lastAutoTable.finalY + 8;
+            });
+        }
+    }
+
+    // Tambahkan halaman baru jika sisa spasi tidak cukup untuk tanda tangan (min 40px)
+    checkPageBreak(40);
 
     // ── Tanda Tangan ─────────────────────────────────────────────────────────
     doc.setFont("helvetica", "normal");
