@@ -310,7 +310,7 @@ export default function SupervisiFormPage() {
                         <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wide">Periode Siklus Menu:</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                             {SIKLUS_MENU_OPTIONS.map(opt => (
-                                <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${q2SiklusMenu === opt ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}>
+                                <label key={opt} onClick={() => setQ2SiklusMenu(opt)} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${q2SiklusMenu === opt ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}>
                                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${q2SiklusMenu === opt ? 'border-amber-500' : 'border-slate-300'}`}>
                                         {q2SiklusMenu === opt && <div className="w-2 h-2 rounded-full bg-amber-500"></div>}
                                     </div>
