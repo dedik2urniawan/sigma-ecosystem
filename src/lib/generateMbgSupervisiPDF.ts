@@ -259,16 +259,17 @@ export async function generateMbgSupervisiPDF(item: SupervisiPDFInput): Promise<
                 checkPageBreak(30);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
-                doc.text(`A. Audit Weighting Gramasi (Gram) - Sasaran: ${sasaranAudit.id}`, margin, y);
+                doc.text(`A. Audit Weighting Gramasi (Gram) - Sasaran: ${sasaranAudit.sasaran_name || sasaranAudit.id}`, margin, y);
                 y += 4;
 
                 const auditData: any[][] = [];
-                if (sasaranAudit.makananPokok) auditData.push(["Makanan Pokok", sasaranAudit.makananPokok.std, sasaranAudit.makananPokok.s1, sasaranAudit.makananPokok.s2, sasaranAudit.makananPokok.s3]);
-                if (sasaranAudit.laukHewani) auditData.push(["Lauk Hewani", sasaranAudit.laukHewani.std, sasaranAudit.laukHewani.s1, sasaranAudit.laukHewani.s2, sasaranAudit.laukHewani.s3]);
-                if (sasaranAudit.laukNabati) auditData.push(["Lauk Nabati", sasaranAudit.laukNabati.std, sasaranAudit.laukNabati.s1, sasaranAudit.laukNabati.s2, sasaranAudit.laukNabati.s3]);
-                if (sasaranAudit.sayuran) auditData.push(["Sayuran", sasaranAudit.sayuran.std, sasaranAudit.sayuran.s1, sasaranAudit.sayuran.s2, sasaranAudit.sayuran.s3]);
-                if (sasaranAudit.buah) auditData.push(["Buah", sasaranAudit.buah.std, sasaranAudit.buah.s1, sasaranAudit.buah.s2, sasaranAudit.buah.s3]);
-                if (sasaranAudit.susu) auditData.push(["Susu", sasaranAudit.susu.std, sasaranAudit.susu.s1, sasaranAudit.susu.s2, sasaranAudit.susu.s3]);
+                const ad = sasaranAudit.auditData || {};
+                if (ad.makananPokok) auditData.push(["Makanan Pokok", ad.makananPokok.std, ad.makananPokok.s1, ad.makananPokok.s2, ad.makananPokok.s3]);
+                if (ad.laukHewani) auditData.push(["Lauk Hewani", ad.laukHewani.std, ad.laukHewani.s1, ad.laukHewani.s2, ad.laukHewani.s3]);
+                if (ad.laukNabati) auditData.push(["Lauk Nabati", ad.laukNabati.std, ad.laukNabati.s1, ad.laukNabati.s2, ad.laukNabati.s3]);
+                if (ad.sayuran) auditData.push(["Sayuran", ad.sayuran.std, ad.sayuran.s1, ad.sayuran.s2, ad.sayuran.s3]);
+                if (ad.buah) auditData.push(["Buah", ad.buah.std, ad.buah.s1, ad.buah.s2, ad.buah.s3]);
+                if (ad.susu) auditData.push(["Susu", ad.susu.std, ad.susu.s1, ad.susu.s2, ad.susu.s3]);
 
                 autoTable(doc, {
                     startY: y,
@@ -290,14 +291,15 @@ export async function generateMbgSupervisiPDF(item: SupervisiPDFInput): Promise<
                 checkPageBreak(30);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
-                doc.text(`B. Audit Analisis Zat Gizi - Sasaran: ${giziAudit.id}`, margin, y);
+                doc.text(`B. Audit Analisis Zat Gizi - Sasaran: ${giziAudit.sasaran_name || giziAudit.id}`, margin, y);
                 y += 4;
 
                 const giziData: any[][] = [];
-                if (giziAudit.energi) giziData.push(["Energi (Kal)", giziAudit.energi.std, giziAudit.energi.real]);
-                if (giziAudit.protein) giziData.push(["Protein (g)", giziAudit.protein.std, giziAudit.protein.real]);
-                if (giziAudit.lemak) giziData.push(["Lemak (g)", giziAudit.lemak.std, giziAudit.lemak.real]);
-                if (giziAudit.karbohidrat) giziData.push(["Karbohidrat (g)", giziAudit.karbohidrat.std, giziAudit.karbohidrat.real]);
+                const gd = giziAudit.giziData || {};
+                if (gd.energi) giziData.push(["Energi (Kal)", gd.energi.std, gd.energi.real]);
+                if (gd.protein) giziData.push(["Protein (g)", gd.protein.std, gd.protein.real]);
+                if (gd.lemak) giziData.push(["Lemak (g)", gd.lemak.std, gd.lemak.real]);
+                if (gd.karbohidrat) giziData.push(["Karbohidrat (g)", gd.karbohidrat.std, gd.karbohidrat.real]);
 
                 autoTable(doc, {
                     startY: y,
