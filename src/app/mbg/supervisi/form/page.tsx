@@ -71,6 +71,8 @@ export default function SupervisiFormPage() {
     const [namaSppg, setNamaSppg] = useState("");       // NEW: Nama SPPG
     const [namaYayasan, setNamaYayasan] = useState("");
     const [namaAhliGizi, setNamaAhliGizi] = useState("");
+    const [namaPetugasDinkes, setNamaPetugasDinkes] = useState(""); // NEW: Petugas Dinkes
+    const [namaKepalaSppg, setNamaKepalaSppg] = useState("");       // NEW: Kepala SPPG
     const [lat, setLat] = useState("");
     const [lng, setLng] = useState("");
 
@@ -222,6 +224,8 @@ export default function SupervisiFormPage() {
                 nama_sppg: namaSppg,           // NEW
                 nama_yayasan: namaYayasan,
                 nama_ahli_gizi: namaAhliGizi,
+                nama_petugas_dinkes: namaPetugasDinkes, // NEW
+                nama_kepala_sppg: namaKepalaSppg,       // NEW
                 lat: parseFloat(lat) || 0,
                 lng: parseFloat(lng) || 0,
                 ...spreadAnswers,
@@ -462,6 +466,26 @@ export default function SupervisiFormPage() {
                                     <input
                                         type="text"
                                         value={namaAhliGizi} onChange={e => setNamaAhliGizi(e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 shadow-sm bg-white px-4 py-3 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm"
+                                    />
+                                </div>
+
+                                {/* Petugas Supervisi Dinkes & Kepala SPPG */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Petugas Supervisi (Dinkes)</label>
+                                    <input
+                                        type="text"
+                                        value={namaPetugasDinkes} onChange={e => setNamaPetugasDinkes(e.target.value)}
+                                        placeholder="Nama Petugas Dinkes..."
+                                        className="w-full rounded-xl border border-slate-300 shadow-sm bg-white px-4 py-3 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Kepala Supervisi SPPG</label>
+                                    <input
+                                        type="text"
+                                        value={namaKepalaSppg} onChange={e => setNamaKepalaSppg(e.target.value)}
+                                        placeholder="Nama Kepala/PJ SPPG..."
                                         className="w-full rounded-xl border border-slate-300 shadow-sm bg-white px-4 py-3 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm"
                                     />
                                 </div>

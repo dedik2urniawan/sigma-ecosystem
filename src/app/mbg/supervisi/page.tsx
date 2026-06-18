@@ -1,5 +1,7 @@
 "use client";
 
+import { generateMbgSupervisiPDF } from "@/lib/generateMbgSupervisiPDF";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -29,6 +31,8 @@ interface SupervisiData {
     nama_sppg?: string;           // NEW
     nama_yayasan: string;
     nama_ahli_gizi: string;
+    nama_petugas_dinkes?: string;
+    nama_kepala_sppg?: string;
     score_percentage: number;
     lat: number;
     lng: number;
@@ -561,12 +565,19 @@ export default function DashboardSupervisi() {
                                                              <button onClick={() => setModalState({ isOpen: true, type: "view", id: item.id })} className="p-2 text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Lihat Detail">
                                                                  <span className="material-icons-round text-lg">visibility</span>
                                                              </button>
+                                                             <button onClick={() => generateMbgSupervisiPDF(item)} className="p-2 text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors" title="Print PDF">
+                                                                 <span className="material-icons-round text-lg">print</span>
+                                                             </button>
+                                                             {role !== 'eksekutif' && role !== 'dinas_kesehatan' && (
+                                                             <>
                                                              <button onClick={() => openEditModal(item)} className="p-2 text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors" title="Edit Data">
                                                                  <span className="material-icons-round text-lg">edit</span>
                                                              </button>
                                                              <button onClick={() => handleDelete(item.id)} className="p-2 text-red-400 bg-red-50 hover:bg-red-100 rounded-lg transition-colors" title="Hapus Data">
                                                                  <span className="material-icons-round text-lg">delete</span>
                                                              </button>
+                                                             </>
+                                                             )}
                                                          </div>
                                                     </td>
                                                 </tr>
@@ -641,6 +652,14 @@ export default function DashboardSupervisi() {
                                             <div className="bg-slate-50 rounded-xl p-3">
                                                 <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Ahli Gizi Pengawas</p>
                                                 <p className="font-bold text-slate-800">{item.nama_ahli_gizi || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Petugas Dinkes</p>
+                                                <p className="font-bold text-slate-800">{item.nama_petugas_dinkes || "-"}</p>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-xl p-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Kepala SPPG</p>
+                                                <p className="font-bold text-slate-800">{item.nama_kepala_sppg || "-"}</p>
                                             </div>
                                             <div className="bg-slate-50 rounded-xl p-3 col-span-2">
                                                 <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Tanggal Inspeksi</p>
@@ -859,6 +878,8 @@ export default function DashboardSupervisi() {
                                                 {key:"nama_sppg",label:"Nama SPPG"},
                                                 {key:"nama_yayasan",label:"Nama Yayasan"},
                                                 {key:"nama_ahli_gizi",label:"Nama Ahli Gizi"},
+                                                {key:"nama_petugas_dinkes",label:"Petugas Dinkes"},
+                                                {key:"nama_kepala_sppg",label:"Kepala SPPG"},
                                                 {key:"puskesmas",label:"Puskesmas"},
                                                 {key:"desa",label:"Desa"}
                                             ].map(f => (
