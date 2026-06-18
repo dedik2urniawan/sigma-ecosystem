@@ -218,12 +218,21 @@ export default function DashboardSupervisi() {
         if (!modalState.id) return;
         setIsSavingEdit(true);
         try {
+            // Keep audit_gizi in sync with audit_weighting since both contain the same combined data structure
+            const payload = {
+                ...editForm,
+                audit_gizi: editForm.audit_weighting
+            };
+
             const res = await fetch(`/api/mbg/supervisi/${modalState.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(editForm)
+                body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error("Gagal menyimpan.");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.error || "Gagal menyimpan.");
+            }
             const updated = await res.json();
             if (updated.success && updated.data) {
                 setData(prev => prev.map(d => d.id === modalState.id ? { ...d, ...updated.data } : d));

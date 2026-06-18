@@ -7,15 +7,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const body = await request.json();
         const supabase = await createSupabaseServer();
         const { id: _id, created_at, ...updateData } = body;
+
+        // DEBUG
+        console.log("PATCH /api/mbg/supervisi/[id] - updateData:", Object.keys(updateData));
+
         const { data, error } = await supabase
             .from("mbg_supervisi")
             .update(updateData)
             .eq("id", id)
             .select()
             .single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+            
+        if (error) {
+            console.error("Supabase update error:", error);
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ success: true, data });
-    } catch { return NextResponse.json({ error: "Internal Server Error" }, { status: 500 }); }
+    } catch (e: any) { 
+        console.error("Server error:", e);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 }); 
+    }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
