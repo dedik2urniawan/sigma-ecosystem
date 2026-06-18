@@ -264,12 +264,12 @@ export async function generateMbgSupervisiPDF(item: SupervisiPDFInput): Promise<
 
                 const auditData: any[][] = [];
                 const ad = sasaranAudit.auditData || {};
-                if (ad.makananPokok) auditData.push(["Makanan Pokok", ad.makananPokok.std, ad.makananPokok.s1, ad.makananPokok.s2, ad.makananPokok.s3]);
-                if (ad.laukHewani) auditData.push(["Lauk Hewani", ad.laukHewani.std, ad.laukHewani.s1, ad.laukHewani.s2, ad.laukHewani.s3]);
-                if (ad.laukNabati) auditData.push(["Lauk Nabati", ad.laukNabati.std, ad.laukNabati.s1, ad.laukNabati.s2, ad.laukNabati.s3]);
-                if (ad.sayuran) auditData.push(["Sayuran", ad.sayuran.std, ad.sayuran.s1, ad.sayuran.s2, ad.sayuran.s3]);
-                if (ad.buah) auditData.push(["Buah", ad.buah.std, ad.buah.s1, ad.buah.s2, ad.buah.s3]);
-                if (ad.susu) auditData.push(["Susu", ad.susu.std, ad.susu.s1, ad.susu.s2, ad.susu.s3]);
+                if (ad["Makanan Pokok"]) auditData.push(["Makanan Pokok", ad["Makanan Pokok"].std, ad["Makanan Pokok"].s1, ad["Makanan Pokok"].s2, ad["Makanan Pokok"].s3]);
+                if (ad["Lauk Hewani"]) auditData.push(["Lauk Hewani", ad["Lauk Hewani"].std, ad["Lauk Hewani"].s1, ad["Lauk Hewani"].s2, ad["Lauk Hewani"].s3]);
+                if (ad["Lauk Nabati"]) auditData.push(["Lauk Nabati", ad["Lauk Nabati"].std, ad["Lauk Nabati"].s1, ad["Lauk Nabati"].s2, ad["Lauk Nabati"].s3]);
+                if (ad["Sayuran"]) auditData.push(["Sayuran", ad["Sayuran"].std, ad["Sayuran"].s1, ad["Sayuran"].s2, ad["Sayuran"].s3]);
+                if (ad["Buah"]) auditData.push(["Buah", ad["Buah"].std, ad["Buah"].s1, ad["Buah"].s2, ad["Buah"].s3]);
+                if (ad["Susu"]) auditData.push(["Susu", ad["Susu"].std, ad["Susu"].s1, ad["Susu"].s2, ad["Susu"].s3]);
 
                 autoTable(doc, {
                     startY: y,
@@ -296,10 +296,10 @@ export async function generateMbgSupervisiPDF(item: SupervisiPDFInput): Promise<
 
                 const giziData: any[][] = [];
                 const gd = giziAudit.giziData || {};
-                if (gd.energi) giziData.push(["Energi (Kal)", gd.energi.std, gd.energi.real]);
-                if (gd.protein) giziData.push(["Protein (g)", gd.protein.std, gd.protein.real]);
-                if (gd.lemak) giziData.push(["Lemak (g)", gd.lemak.std, gd.lemak.real]);
-                if (gd.karbohidrat) giziData.push(["Karbohidrat (g)", gd.karbohidrat.std, gd.karbohidrat.real]);
+                if (gd["Kalori (kkal)"]) giziData.push(["Kalori (kkal)", gd["Kalori (kkal)"].std, gd["Kalori (kkal)"].real]);
+                if (gd["Protein (g)"]) giziData.push(["Protein (g)", gd["Protein (g)"].std, gd["Protein (g)"].real]);
+                if (gd["Lemak (g)"]) giziData.push(["Lemak (g)", gd["Lemak (g)"].std, gd["Lemak (g)"].real]);
+                if (gd["Karbohidrat (g)"]) giziData.push(["Karbohidrat (g)", gd["Karbohidrat (g)"].std, gd["Karbohidrat (g)"].real]);
 
                 autoTable(doc, {
                     startY: y,
