@@ -29,12 +29,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 }
 
+import { createClient } from "@supabase/supabase-js";
+
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const supabase = await createSupabaseServer();
-        const { error } = await supabase.from("mbg_supervisi").delete().eq("id", id);
+        
+        // Use service role key to bypass RLS for deletion
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        const { data, error } = await supabaseAdmin
+            .from("mbg_supervisi")
+            .delete()
+            .eq("id", id)
+            .select();
+            
         if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true });
-    } catch { return NextResponse.json({ error: "Internal Server Error" }, { status: 500 }); }
+        if (!data || data.length === 0) return NextResponse.json({ error: "Gagal menghapus data" }, { status: 404 });
+        
+        return NextResponse.json({ success: true, data });
+    } catch { 
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 }); 
+    }
 }
