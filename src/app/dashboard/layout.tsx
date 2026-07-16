@@ -285,46 +285,74 @@ export default function DashboardLayout({
                             </div>
                         )}
                         {sidebarCollapsed && <div className="border-t border-slate-100 my-2"></div>}
-                        {[
-                            { id: 'bimtek-gizi', label: 'Bimtek Gizi', icon: 'assignment', href: '/dashboard/bimtek-gizi', ready: true },
-                            { id: 'pkp', label: 'PKP', icon: 'assessment', href: '/dashboard/pkp', ready: false },
-                        ].map((item) => (
+                        {/* Monev Report — Bimtek Gizi (all roles) */}
+                        <Link
+                            href="/dashboard/bimtek-gizi"
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
+                  ${isActive("/dashboard/bimtek-gizi")
+                                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                }
+                  ${sidebarCollapsed ? "justify-center" : ""}
+                `}
+                            title={sidebarCollapsed ? "Bimtek Gizi" : undefined}
+                        >
+                            <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/bimtek-gizi") ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`}>
+                                assignment
+                            </span>
+                            {!sidebarCollapsed && <span className="truncate">Bimtek Gizi</span>}
+                        </Link>
+
+                        {/* Bimtek RS — superadmin & stakeholder only (di antara Bimtek Gizi dan PKP) */}
+                        {(user?.role === "superadmin" || user?.role === "stakeholder") && (
                             <Link
-                                key={item.id}
-                                href={item.href}
+                                href="/dashboard/bimtek-rs"
                                 onClick={() => setSidebarOpen(false)}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                  ${isActive(item.href)
-                                        ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+                  ${isActive("/dashboard/bimtek-rs")
+                                        ? "bg-cyan-50 text-cyan-700 shadow-sm border border-cyan-100"
                                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                     }
                   ${sidebarCollapsed ? "justify-center" : ""}
                 `}
-                                title={sidebarCollapsed ? item.label : undefined}
+                                title={sidebarCollapsed ? "Bimtek RS" : undefined}
                             >
-                                <span
-                                    className={`material-icons-round text-xl shrink-0 ${isActive(item.href)
-                                        ? "text-emerald-600"
-                                        : "text-slate-400 group-hover:text-slate-600"
-                                        }`}
-                                >
-                                    {item.icon}
+                                <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/bimtek-rs") ? "text-cyan-600" : "text-slate-400 group-hover:text-slate-600"}`}>
+                                    local_hospital
                                 </span>
-                                {!sidebarCollapsed && (
-                                    <>
-                                        <span className="truncate">{item.label}</span>
-                                        {!item.ready && (
-                                            <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0">
-                                                Soon
-                                            </span>
-                                        )}
-                                    </>
-                                )}
-                                {sidebarCollapsed && !item.ready && (
-                                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>
-                                )}
+                                {!sidebarCollapsed && <span className="truncate">Bimtek RS</span>}
                             </Link>
-                        ))}
+                        )}
+
+                        {/* PKP — paling bawah */}
+                        <Link
+                            href="/dashboard/pkp"
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
+                  ${isActive("/dashboard/pkp")
+                                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                }
+                  ${sidebarCollapsed ? "justify-center" : ""}
+                `}
+                            title={sidebarCollapsed ? "PKP" : undefined}
+                        >
+                            <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/pkp") ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`}>
+                                assessment
+                            </span>
+                            {!sidebarCollapsed && (
+                                <>
+                                    <span className="truncate">PKP</span>
+                                    <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0">
+                                        Soon
+                                    </span>
+                                </>
+                            )}
+                            {sidebarCollapsed && (
+                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>
+                            )}
+                        </Link>
 
                         {/* Upload - Superadmin only */}
                         {user?.role === "superadmin" && (
