@@ -553,7 +553,7 @@ export default function MassalCalculatorPage() {
             const data: RawRow[] = utils.sheet_to_json(ws, { raw: true, defval: "" });
 
             if (data.length === 0) { setFileError("File kosong atau format tidak dikenali."); return; }
-            if (data.length > 1000) { setFileError(`File memiliki ${data.length} baris (maks 1000). Silakan bagi menjadi beberapa file.`); return; }
+            if (data.length > 2500) { setFileError(`File memiliki ${data.length} baris (maks 2500). Silakan bagi menjadi beberapa file.`); return; }
 
             const hdrs = Object.keys(data[0]);
             const autoMap = autoDetectColumns(hdrs);
@@ -725,7 +725,7 @@ export default function MassalCalculatorPage() {
                     <div className="mt-10">
                         <div className="text-center mb-8">
                             <h2 className="text-2xl font-black text-slate-900 mb-2">Upload File Excel</h2>
-                            <p className="text-slate-500 text-sm">Format .xlsx atau .xls · Maksimal 1000 baris data</p>
+                            <p className="text-slate-500 text-sm">Format .xlsx atau .xls · Maksimal 2500 baris data</p>
                         </div>
                         <div
                             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

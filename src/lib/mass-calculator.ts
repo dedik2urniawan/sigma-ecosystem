@@ -690,7 +690,7 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
         "ZScore BBU", "Klasifikasi BBU",
         "ZScore TBU", "Klasifikasi TBU",
         "ZScore BBTB", "Klasifikasi BBTB",
-        "Weight Age", "Length Age", "CA", "Probable Stunting", "Red Flag",
+        "Weight Age", "Length Age", "CA", "BB Ideal", "Probable Stunting", "Red Flag",
     ];
     const rowData = result.valid.map((r, i) => [
         i + 1, r.nama, r.wilayah, r.desa,
@@ -704,6 +704,7 @@ export async function exportMassExcel(result: MassAnalysisResult, filename: stri
         r.assessment.probableStunting.weightAge ?? "-",
         r.assessment.probableStunting.lengthAge ?? "-",
         r.assessment.probableStunting.chronologicalAge,
+        r.assessment.bbu.lms?.M?.toFixed(1) ?? "-",
         r.assessment.probableStunting.isProbableStunting ? "TERINDIKASI" : "Tidak",
         r.assessment.hasAnyRedFlag ? "YA" : "Tidak",
     ]);
