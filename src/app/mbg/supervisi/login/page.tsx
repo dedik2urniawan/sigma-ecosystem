@@ -107,11 +107,45 @@ export default function MbgLoginPage() {
 
     useEffect(() => {
         setMounted(true);
-        // If already logged in via Supabase session, go straight to supervisi
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                router.push("/mbg/supervisi");
+        // If already logged in, repopulate sessionStorage then redirect
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (!session?.user) return;
+
+            // Re-fetch role so sessionStorage is always fresh before redirecting
+            const { data: appUser } = await supabase
+                .from("app_users")
+                .select("role, puskesmas_id")
+                .eq("id", session.user.id)
+                .single();
+
+            let role = "user";
+            let puskesmasName: string | null = null;
+
+            if (appUser) {
+                role = appUser.role?.toLowerCase()?.trim() || "user";
+                if (appUser.puskesmas_id) {
+                    const { data: pkmData } = await supabase
+                        .from("puskesmas")
+                        .select("nama")
+                        .eq("id", appUser.puskesmas_id)
+                        .single();
+                    if (pkmData) puskesmasName = pkmData.nama;
+                }
+            } else {
+                const emailLower = session.user.email?.toLowerCase() || "";
+                if (emailLower.includes("dinkes") || emailLower === "admin@dinkes.go.id") {
+                    role = "superadmin";
+                }
             }
+
+            const allowedRoles = ["superadmin", "admin_dinkes", "admin_puskesmas", "stakeholder"];
+            if (!allowedRoles.includes(role)) return; // don't redirect, show login
+
+            sessionStorage.setItem("mbg_role", role);
+            if (puskesmasName) sessionStorage.setItem("mbg_puskesmas", puskesmasName);
+            else sessionStorage.removeItem("mbg_puskesmas");
+
+            router.push("/mbg/supervisi");
         });
     }, [router]);
 

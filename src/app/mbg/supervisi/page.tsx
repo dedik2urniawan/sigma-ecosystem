@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { generateMbgSupervisiPDF } from "@/lib/generateMbgSupervisiPDF";
 
@@ -123,16 +123,73 @@ export default function DashboardSupervisi() {
     const [editForm, setEditForm] = useState<Partial<SupervisiData>>({});
 
     useEffect(() => {
-        const storedRole = sessionStorage.getItem("mbg_role");
-        const storedPuskesmas = sessionStorage.getItem("mbg_puskesmas");
-        if (!storedRole) {
-            router.push("/mbg/supervisi/login");
-        } else {
-            setRole(storedRole);
-            setPuskesmasName(storedPuskesmas);
-            fetchRefs(storedRole, storedPuskesmas);
-            fetchData(storedRole, storedPuskesmas);
-        }
+        const initAuth = async () => {
+            // Fast path: sessionStorage cache (same tab navigation)
+            const cachedRole = sessionStorage.getItem("mbg_role");
+            const cachedPuskesmas = sessionStorage.getItem("mbg_puskesmas");
+
+            if (cachedRole) {
+                setRole(cachedRole);
+                setPuskesmasName(cachedPuskesmas);
+                fetchRefs(cachedRole, cachedPuskesmas);
+                fetchData(cachedRole, cachedPuskesmas);
+                return;
+            }
+
+            // Slow path: sessionStorage empty (e.g. after page refresh)
+            // Check Supabase session as source of truth — prevents redirect loop
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) {
+                router.push("/mbg/supervisi/login");
+                return;
+            }
+
+            // Re-fetch role from app_users
+            const { data: appUser } = await supabase
+                .from("app_users")
+                .select("role, puskesmas_id")
+                .eq("id", session.user.id)
+                .single();
+
+            let resolvedRole = "user";
+            let resolvedPuskesmas: string | null = null;
+
+            if (appUser) {
+                resolvedRole = appUser.role?.toLowerCase()?.trim() || "user";
+                if (appUser.puskesmas_id) {
+                    const { data: pkmData } = await supabase
+                        .from("puskesmas")
+                        .select("nama")
+                        .eq("id", appUser.puskesmas_id)
+                        .single();
+                    if (pkmData) resolvedPuskesmas = pkmData.nama;
+                }
+            } else {
+                const emailLower = session.user.email?.toLowerCase() || "";
+                if (emailLower.includes("dinkes") || emailLower === "admin@dinkes.go.id") {
+                    resolvedRole = "superadmin";
+                }
+            }
+
+            const allowedRoles = ["superadmin", "admin_dinkes", "admin_puskesmas", "stakeholder"];
+            if (!allowedRoles.includes(resolvedRole)) {
+                await supabase.auth.signOut();
+                router.push("/mbg/supervisi/login");
+                return;
+            }
+
+            // Repopulate sessionStorage for next renders in this session
+            sessionStorage.setItem("mbg_role", resolvedRole);
+            if (resolvedPuskesmas) sessionStorage.setItem("mbg_puskesmas", resolvedPuskesmas);
+            else sessionStorage.removeItem("mbg_puskesmas");
+
+            setRole(resolvedRole);
+            setPuskesmasName(resolvedPuskesmas);
+            fetchRefs(resolvedRole, resolvedPuskesmas);
+            fetchData(resolvedRole, resolvedPuskesmas);
+        };
+
+        initAuth();
     }, [router]);
 
     const fetchRefs = async (currentRole: string, currentPuskesmas: string | null) => {
