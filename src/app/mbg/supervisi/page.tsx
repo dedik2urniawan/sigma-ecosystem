@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { generateMbgSupervisiPDF } from "@/lib/generateMbgSupervisiPDF";
 
@@ -205,8 +205,13 @@ export default function DashboardSupervisi() {
                 if (dData) setDesaOptions(dData.map((d: any) => ({ id: d.id, name: d.desa_kel, puskesmas_name: d.puskesmas })));
 
                 if (currentRole === "admin_puskesmas" && currentPuskesmas) {
-                    const cleanStored = currentPuskesmas.toLowerCase().replace('puskesmas', '').trim();
-                    const myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase().includes(cleanStored));
+                    const needle = currentPuskesmas.toLowerCase().replace('puskesmas', '').trim();
+                    // 1. Try exact match first (e.g. "lawang" === "lawang")
+                    let myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase() === needle);
+                    // 2. If no exact match, try starts-with (e.g. "puskesmas lawang")
+                    if (!myPuskesmas) myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase().startsWith(needle));
+                    // 3. Last resort: contains — but prefer exact/startsWith to avoid "Bululawang" matching "lawang"
+                    if (!myPuskesmas) myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase() === currentPuskesmas.toLowerCase());
                     if (myPuskesmas) {
                         setFilterPuskesmas(myPuskesmas.name);
                     }

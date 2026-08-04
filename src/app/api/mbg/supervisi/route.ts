@@ -39,8 +39,9 @@ export async function GET(request: Request) {
             .limit(limit);
 
         if (role === 'admin_puskesmas' && puskesmas) {
-            const cleanPuskesmas = puskesmas.toLowerCase().replace('puskesmas', '').trim();
-            query = query.ilike('puskesmas', `%${cleanPuskesmas}%`);
+            // Use exact match (ilike without wildcards) to prevent
+            // e.g. "Lawang" from matching "Bululawang"
+            query = query.ilike('puskesmas', puskesmas);
         }
 
         const { data, error } = await query;
