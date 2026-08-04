@@ -83,11 +83,42 @@ export default function SupervisiFormPage() {
     const [filteredDesa, setFilteredDesa] = useState<{ id: string; name: string }[]>([]);
 
     useEffect(() => {
-        const storedRole = localStorage.getItem("mbg_role");
-        const storedPuskesmas = localStorage.getItem("mbg_puskesmas");
-        if (storedRole) setRole(storedRole);
+        const initAuthAndRefs = async () => {
+            let storedRole = sessionStorage.getItem("mbg_role");
+            let storedPuskesmas = sessionStorage.getItem("mbg_puskesmas");
 
-        const fetchRefs = async () => {
+            if (!storedRole) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    const { data: appUser } = await supabase
+                        .from("app_users")
+                        .select("role, puskesmas_id")
+                        .eq("id", session.user.id)
+                        .single();
+
+                    if (appUser) {
+                        storedRole = appUser.role?.toLowerCase()?.trim() || "user";
+                        if (appUser.puskesmas_id) {
+                            const { data: pkmData } = await supabase
+                                .from("ref_puskesmas")
+                                .select("nama")
+                                .eq("id", appUser.puskesmas_id)
+                                .single();
+                            if (pkmData) storedPuskesmas = pkmData.nama;
+                        }
+                    } else {
+                        const emailLower = session.user.email?.toLowerCase() || "";
+                        if (emailLower.includes("dinkes") || emailLower === "admin@dinkes.go.id") {
+                            storedRole = "superadmin";
+                        }
+                    }
+                    if (storedRole) sessionStorage.setItem("mbg_role", storedRole);
+                    if (storedPuskesmas) sessionStorage.setItem("mbg_puskesmas", storedPuskesmas);
+                }
+            }
+
+            if (storedRole) setRole(storedRole);
+
             try {
                 const res = await fetch("/api/mbg/refs");
                 const data = await res.json();
@@ -101,8 +132,11 @@ export default function SupervisiFormPage() {
                     setDesaOptions(dOptions);
 
                     if (storedRole === "admin_puskesmas" && storedPuskesmas) {
-                        const cleanStored = storedPuskesmas.toLowerCase().replace('puskesmas', '').trim();
-                        const myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase().includes(cleanStored));
+                        const needle = storedPuskesmas.toLowerCase().replace('puskesmas', '').trim();
+                        let myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase() === needle);
+                        if (!myPuskesmas) myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase().startsWith(needle));
+                        if (!myPuskesmas) myPuskesmas = pOptions.find((p: any) => p.name.toLowerCase().includes(needle));
+
                         if (myPuskesmas) {
                             pOptions = [myPuskesmas];
                             setPuskesmas(myPuskesmas.name);
@@ -115,14 +149,20 @@ export default function SupervisiFormPage() {
                 console.error("Failed to fetch refs", e);
             }
         };
-        fetchRefs();
+
+        initAuthAndRefs();
     }, []);
 
     useEffect(() => {
-        if (puskesmas && role === "superadmin") {
-            setFilteredDesa(desaOptions.filter(d => d.puskesmas_name === puskesmas));
+        if (puskesmas) {
+            setFilteredDesa(desaOptions.filter(d => 
+                d.puskesmas_name === puskesmas || 
+                d.puskesmas_name?.toLowerCase() === puskesmas.toLowerCase()
+            ));
+        } else {
+            setFilteredDesa([]);
         }
-    }, [puskesmas, desaOptions, role]);
+    }, [puskesmas, desaOptions]);
 
     // Closed Questions State (answer: yes/no/siklus)
     const [closedAnswers, setClosedAnswers] = useState<Record<string, { answer: boolean | null, note: string }>>( 
