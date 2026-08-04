@@ -123,8 +123,8 @@ export default function DashboardSupervisi() {
     const [editForm, setEditForm] = useState<Partial<SupervisiData>>({});
 
     useEffect(() => {
-        const storedRole = localStorage.getItem("mbg_role");
-        const storedPuskesmas = localStorage.getItem("mbg_puskesmas");
+        const storedRole = sessionStorage.getItem("mbg_role");
+        const storedPuskesmas = sessionStorage.getItem("mbg_puskesmas");
         if (!storedRole) {
             router.push("/mbg/supervisi/login");
         } else {
@@ -192,9 +192,10 @@ export default function DashboardSupervisi() {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("mbg_role");
-        localStorage.removeItem("mbg_puskesmas");
+    const handleLogout = async () => {
+        sessionStorage.removeItem("mbg_role");
+        sessionStorage.removeItem("mbg_puskesmas");
+        await supabase?.auth?.signOut().catch(() => {});
         router.push("/mbg/supervisi/login");
     };
 

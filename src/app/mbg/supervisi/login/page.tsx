@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 // ─── Animated Particles Background (Amber/Orange Theme) ─────────
 const ParticlesBackground = () => {
@@ -59,13 +60,12 @@ const ParticlesBackground = () => {
                 if (p.x < 0 || p.x > width) p.vx *= -1;
                 if (p.y < 0 || p.y > height) p.vy *= -1;
 
-                ctx.fillStyle = `rgba(245, 158, 11, ${p.alpha})`; // amber-500
+                ctx.fillStyle = `rgba(245, 158, 11, ${p.alpha})`;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // Draw connections
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;
@@ -107,35 +107,86 @@ export default function MbgLoginPage() {
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+        // If already logged in via Supabase session, go straight to supervisi
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                router.push("/mbg/supervisi");
+            }
+        });
+    }, [router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        // Simulasi Auth
-        setTimeout(() => {
-            const emailLower = email.toLowerCase();
-            // Prioritize checking for pkm or puskesmas to catch "pkmgondanglegi@dinkes.go.id"
-            if (emailLower.includes("pkm") || emailLower.includes("puskesmas")) {
-                localStorage.setItem("mbg_role", "admin_puskesmas");
-                // Ekstrak nama puskesmas misal: puskesmas.singosari@gmail.com -> Singosari or pkmgondanglegi@dinkes.go.id -> gondanglegi
-                let pkmName = emailLower.split("@")[0];
-                if (pkmName.includes(".")) pkmName = pkmName.split(".")[1];
-                pkmName = pkmName.replace("puskesmas", "").replace("pkm", "").trim();
-                if (!pkmName) pkmName = "Singosari";
-                localStorage.setItem("mbg_puskesmas", "Puskesmas " + pkmName.charAt(0).toUpperCase() + pkmName.slice(1));
-                router.push("/mbg/supervisi");
-            } else if (emailLower.includes("dinkes") || emailLower.includes("superadmin")) {
-                localStorage.setItem("mbg_role", "superadmin");
-                localStorage.removeItem("mbg_puskesmas");
-                router.push("/mbg/supervisi");
-            } else {
-                setError("Email tidak dikenali. Gunakan email dinkes atau puskesmas.");
+        try {
+            // ── Step 1: Real Supabase Auth ───────────────────────────────────
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                email: email.trim().toLowerCase(),
+                password,
+            });
+
+            if (authError || !authData.user) {
+                setError("Email atau password salah. Silakan periksa kembali.");
                 setIsLoading(false);
+                return;
             }
-        }, 1500);
+
+            // ── Step 2: Lookup role dari tabel app_users (sama seperti SIGMA RCS) ──
+            const { data: appUser } = await supabase
+                .from("app_users")
+                .select("role, puskesmas_id, nama_lengkap")
+                .eq("id", authData.user.id)
+                .single();
+
+            let role = "user";
+            let puskesmasName: string | null = null;
+
+            if (appUser) {
+                role = appUser.role?.toLowerCase()?.trim() || "user";
+
+                // Ambil nama puskesmas jika user punya puskesmas_id
+                if (appUser.puskesmas_id) {
+                    const { data: pkmData } = await supabase
+                        .from("puskesmas")
+                        .select("nama")
+                        .eq("id", appUser.puskesmas_id)
+                        .single();
+                    if (pkmData) puskesmasName = pkmData.nama;
+                }
+            } else {
+                // Fallback: tidak ada di app_users, cek email
+                const emailLower = authData.user.email?.toLowerCase() || "";
+                if (emailLower.includes("dinkes") || emailLower === "admin@dinkes.go.id") {
+                    role = "superadmin";
+                }
+            }
+
+            // ── Step 3: Validasi role diizinkan untuk MBG ───────────────────
+            const allowedRoles = ["superadmin", "admin_dinkes", "admin_puskesmas", "stakeholder"];
+            if (!allowedRoles.includes(role)) {
+                await supabase.auth.signOut();
+                setError("Akun Anda tidak memiliki akses ke portal Supervisi MBG. Hubungi administrator.");
+                setIsLoading(false);
+                return;
+            }
+
+            // ── Step 4: Simpan context ke sessionStorage untuk halaman supervisi ──
+            sessionStorage.setItem("mbg_role", role);
+            if (puskesmasName) {
+                sessionStorage.setItem("mbg_puskesmas", puskesmasName);
+            } else {
+                sessionStorage.removeItem("mbg_puskesmas");
+            }
+
+            router.push("/mbg/supervisi");
+
+        } catch (err) {
+            console.error("MBG Login error:", err);
+            setError("Terjadi kesalahan sistem. Silakan coba lagi.");
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -145,12 +196,10 @@ export default function MbgLoginPage() {
             <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900">
                 <ParticlesBackground />
 
-                {/* Decorative gradient orbs */}
                 <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] bg-amber-500/20 rounded-full blur-[120px]"></div>
                 <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] bg-orange-500/20 rounded-full blur-[120px]"></div>
 
                 <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
-                    {/* Top: Logo */}
                     <Link href="/" className="flex items-center gap-3 group w-fit">
                         <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/10 p-1 group-hover:bg-white/20 transition-colors">
                             <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
@@ -161,7 +210,6 @@ export default function MbgLoginPage() {
                         </div>
                     </Link>
 
-                    {/* Center: Headline */}
                     <div className="max-w-xl">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8">
                             <span className="relative flex h-2 w-2">
@@ -184,7 +232,6 @@ export default function MbgLoginPage() {
                             Akses data real-time monitoring kepatuhan gramasi, audit keamanan pangan, dan distribusi Makan Bergizi Gratis se-Kabupaten Malang.
                         </p>
 
-                        {/* Feature pills */}
                         <div className="flex flex-wrap gap-3">
                             {[
                                 { icon: "shield", label: "RLS Protected" },
@@ -199,18 +246,17 @@ export default function MbgLoginPage() {
                         </div>
                     </div>
 
-                    {/* Bottom: Footer */}
                     <div className="text-xs text-slate-500">
                         © 2026 Dinas Kesehatan Kabupaten Malang • SIGMA Ecosystem v2.0
                         <br />
-                        Crafted with <span className="text-red-400">♥</span> by <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-amber-400 hover:text-amber-300 transition-colors">DK</a>
+                        Crafted with <span className="text-red-400">♥</span> by{" "}
+                        <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer" className="font-bold text-amber-400 hover:text-amber-300 transition-colors">DK</a>
                     </div>
                 </div>
             </div>
 
             {/* ─── Right Panel: Login Form ──────────────────────── */}
             <div className="w-full lg:w-[45%] flex items-center justify-center relative px-6 py-12">
-                {/* Subtle background pattern */}
                 <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]"></div>
 
                 <div className={`w-full max-w-md relative z-10 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
@@ -226,7 +272,6 @@ export default function MbgLoginPage() {
                         </div>
                     </div>
 
-                    {/* Welcome text */}
                     <div className="mb-10">
                         <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
                             Selamat Datang
@@ -236,22 +281,17 @@ export default function MbgLoginPage() {
                         </p>
                     </div>
 
-                    {/* Error Alert */}
                     {error && (
-                        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-in">
+                        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
                             <span className="material-icons-round text-red-500 text-lg shrink-0 mt-0.5">error</span>
-                            <div>
-                                <p className="text-sm font-semibold text-red-800">{error}</p>
-                            </div>
-                            <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-600 shrink-0">
+                            <p className="text-sm font-semibold text-red-800 flex-1">{error}</p>
+                            <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 shrink-0">
                                 <span className="material-icons-round text-lg">close</span>
                             </button>
                         </div>
                     )}
 
-                    {/* Login Form */}
                     <form onSubmit={handleLogin} className="space-y-5">
-                        {/* Email Field */}
                         <div>
                             <label htmlFor="email" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
                                 Email Instansi
@@ -273,7 +313,6 @@ export default function MbgLoginPage() {
                             </div>
                         </div>
 
-                        {/* Password Field */}
                         <div>
                             <label htmlFor="password" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
                                 Password
@@ -305,7 +344,6 @@ export default function MbgLoginPage() {
                             </div>
                         </div>
 
-                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={isLoading || !email || !password}
@@ -329,20 +367,18 @@ export default function MbgLoginPage() {
                         </button>
                     </form>
 
-                    {/* Divider */}
                     <div className="flex items-center gap-4 my-8">
                         <div className="flex-1 h-px bg-slate-200"></div>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold font-mono">Informasi Simulasi</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold font-mono">Informasi Akses</span>
                         <div className="flex-1 h-px bg-slate-200"></div>
                     </div>
 
-                    {/* Info Cards */}
                     <div className="space-y-3">
                         <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
-                            <span className="material-icons-round text-amber-600 text-lg shrink-0 mt-0.5">info</span>
+                            <span className="material-icons-round text-amber-600 text-lg shrink-0 mt-0.5">verified_user</span>
                             <div>
-                                <p className="text-xs font-semibold text-amber-800 mb-0.5">Simulasi Mode (Bypass Auth)</p>
-                                <p className="text-[11px] text-amber-700/80">Ketik email dengan kata <b>&quot;dinkes&quot;</b> untuk Superadmin, atau <b>&quot;puskesmas.[nama]&quot;</b> untuk Admin Puskesmas.</p>
+                                <p className="text-xs font-semibold text-amber-800 mb-0.5">Autentikasi Terintegrasi SIGMA RCS</p>
+                                <p className="text-[11px] text-amber-700/80">Gunakan <b>username dan password</b> yang sama dengan akun SIGMA RCS Anda. Role dan akses wilayah disesuaikan otomatis berdasarkan data administrator.</p>
                             </div>
                         </div>
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
@@ -359,7 +395,6 @@ export default function MbgLoginPage() {
                         </div>
                     </div>
 
-                    {/* Back link */}
                     <div className="mt-8 text-center">
                         <Link href="/mbg" className="text-sm text-slate-400 hover:text-amber-600 transition-colors inline-flex items-center gap-1 group">
                             <span className="material-icons-round text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
