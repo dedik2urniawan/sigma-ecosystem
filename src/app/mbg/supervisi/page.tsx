@@ -158,7 +158,7 @@ export default function DashboardSupervisi() {
                 resolvedRole = appUser.role?.toLowerCase()?.trim() || "user";
                 if (appUser.puskesmas_id) {
                     const { data: pkmData } = await supabase
-                        .from("puskesmas")
+                        .from("ref_puskesmas")
                         .select("nama")
                         .eq("id", appUser.puskesmas_id)
                         .single();

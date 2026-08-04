@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -125,7 +125,7 @@ export default function MbgLoginPage() {
                 role = appUser.role?.toLowerCase()?.trim() || "user";
                 if (appUser.puskesmas_id) {
                     const { data: pkmData } = await supabase
-                        .from("puskesmas")
+                        .from("ref_puskesmas")
                         .select("nama")
                         .eq("id", appUser.puskesmas_id)
                         .single();
@@ -183,7 +183,7 @@ export default function MbgLoginPage() {
                 // Ambil nama puskesmas jika user punya puskesmas_id
                 if (appUser.puskesmas_id) {
                     const { data: pkmData } = await supabase
-                        .from("puskesmas")
+                        .from("ref_puskesmas")
                         .select("nama")
                         .eq("id", appUser.puskesmas_id)
                         .single();
