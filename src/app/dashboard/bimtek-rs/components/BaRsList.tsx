@@ -21,7 +21,7 @@ interface Session {
 
 export default function BaRsList({ onOpenForm }: Props) {
     const { user } = useAuth();
-    const isSuperadmin = user?.role === "superadmin";
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "admin_dinkes" || user?.role !== "stakeholder";
     const isStakeholder = user?.role === "stakeholder";
 
     const [rsOptions, setRsOptions] = useState<{ id: string; nama: string }[]>([]);

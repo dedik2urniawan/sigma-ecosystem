@@ -54,7 +54,7 @@ const SECTION_COLORS = [
 
 export default function SupervisiRsForm({ sessionId, rsOptions, onBack }: Props) {
     const { user } = useAuth();
-    const isSuperadmin = user?.role === "superadmin";
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "admin_dinkes" || user?.role !== "stakeholder";
     const isStakeholder = user?.role === "stakeholder";
 
     const [meta, setMeta] = useState<SessionMeta>({
@@ -72,12 +72,16 @@ export default function SupervisiRsForm({ sessionId, rsOptions, onBack }: Props)
     useEffect(() => {
         async function loadSession() {
             setLoading(true);
-            const { data: s } = await supabase
+            const { data: s, error: sErr } = await supabase
                 .from("supervisi_rs_sessions")
                 .select("rs_id, tanggal_supervisi, tim_supervisor, penanggung_jawab, status")
                 .eq("id", sessionId).single();
 
-            if (!s) { setLoading(false); return; }
+            if (sErr || !s) {
+                console.error("Error loading supervisi session:", sErr);
+                setLoading(false);
+                return;
+            }
 
             setMeta({
                 rs_id: s.rs_id,
@@ -155,24 +159,25 @@ export default function SupervisiRsForm({ sessionId, rsOptions, onBack }: Props)
         if (isStakeholder) return;
         setSaving(true);
         try {
-            await supabase.from("supervisi_rs_sessions").update({
+            const { error: sessionErr } = await supabase.from("supervisi_rs_sessions").update({
                 rs_id: meta.rs_id,
-                tanggal_supervisi: meta.tanggal_supervisi,
-                tim_supervisor: meta.tim_supervisor || null,
-                penanggung_jawab: meta.penanggung_jawab || null,
+                tanggal_supervisi: meta.tanggal_supervisi || new Date().toISOString().split("T")[0],
+                tim_supervisor: meta.tim_supervisor?.trim() || null,
+                penanggung_jawab: meta.penanggung_jawab?.trim() || null,
                 status: markCompleted ? "completed" : meta.status,
                 updated_at: new Date().toISOString(),
             }).eq("id", sessionId);
+            if (sessionErr) throw sessionErr;
 
             const upsertData = items.map(item => ({
                 session_id: sessionId,
                 section: item.section,
                 item_number: item.item_number,
                 item_label: item.item_label,
-                score: item.score,
-                bukti_url: item.bukti_url,
-                catatan: item.catatan,
-                rtl: item.rtl,
+                score: item.score === null || item.score === undefined ? null : Number(item.score),
+                bukti_url: item.bukti_url?.trim() || null,
+                catatan: item.catatan?.trim() || null,
+                rtl: item.rtl?.trim() || null,
             }));
 
             const { error } = await supabase
@@ -202,9 +207,16 @@ export default function SupervisiRsForm({ sessionId, rsOptions, onBack }: Props)
     const handleRevertToDraft = async () => {
         if (!confirm("Kembalikan ke Draft?")) return;
         setSaving(true);
-        const { error } = await supabase.from("supervisi_rs_sessions").update({ status: "draft" }).eq("id", sessionId);
-        if (!error) setMeta(prev => ({ ...prev, status: "draft" }));
-        setSaving(false);
+        try {
+            const { error } = await supabase.from("supervisi_rs_sessions").update({ status: "draft", updated_at: new Date().toISOString() }).eq("id", sessionId);
+            if (error) throw error;
+            setMeta(prev => ({ ...prev, status: "draft" }));
+            alert("Berhasil dikembalikan ke Draft!");
+        } catch (err: any) {
+            alert("Gagal mengembalikan ke Draft: " + (err?.message || "Terjadi kesalahan."));
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleGeneratePDF = async () => {

@@ -31,7 +31,7 @@ interface Session {
 
 export default function SupervisiRsList() {
     const { user } = useAuth();
-    const isSuperadmin = user?.role === "superadmin";
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "admin_dinkes" || user?.role !== "stakeholder";
     const isStakeholder = user?.role === "stakeholder";
 
     const [rsOptions, setRsOptions] = useState<RsOption[]>([]);

@@ -117,101 +117,49 @@ ALTER TABLE ref_rumah_sakit ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "ref_rs_authenticated_read" ON ref_rumah_sakit
     FOR SELECT TO authenticated USING (true);
 
--- supervisi_rs_sessions: superadmin full access, stakeholder read-only
+-- supervisi_rs_sessions: RLS
 ALTER TABLE supervisi_rs_sessions ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "supervisi_rs_sessions_select" ON supervisi_rs_sessions
     FOR SELECT TO authenticated USING (true);
-
 CREATE POLICY "supervisi_rs_sessions_insert" ON supervisi_rs_sessions
-    FOR INSERT TO authenticated
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
-
+    FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "supervisi_rs_sessions_update" ON supervisi_rs_sessions
-    FOR UPDATE TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
-
+    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "supervisi_rs_sessions_delete" ON supervisi_rs_sessions
-    FOR DELETE TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
+    FOR DELETE TO authenticated USING (true);
 
 -- supervisi_rs_items: RLS
 ALTER TABLE supervisi_rs_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "supervisi_rs_items_select" ON supervisi_rs_items
     FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "supervisi_rs_items_write" ON supervisi_rs_items
-    FOR ALL TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
+CREATE POLICY "supervisi_rs_items_insert" ON supervisi_rs_items
+    FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "supervisi_rs_items_update" ON supervisi_rs_items
+    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "supervisi_rs_items_delete" ON supervisi_rs_items
+    FOR DELETE TO authenticated USING (true);
 
 -- ba_rs_sessions: RLS
 ALTER TABLE ba_rs_sessions ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "ba_rs_sessions_select" ON ba_rs_sessions
     FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "ba_rs_sessions_write" ON ba_rs_sessions
-    FOR ALL TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
+CREATE POLICY "ba_rs_sessions_insert" ON ba_rs_sessions
+    FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "ba_rs_sessions_update" ON ba_rs_sessions
+    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "ba_rs_sessions_delete" ON ba_rs_sessions
+    FOR DELETE TO authenticated USING (true);
 
 -- ba_rs_items: RLS
 ALTER TABLE ba_rs_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "ba_rs_items_select" ON ba_rs_items
     FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "ba_rs_items_write" ON ba_rs_items
-    FOR ALL TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM app_users
-            WHERE id = auth.uid() AND role = 'superadmin'
-        )
-    );
+CREATE POLICY "ba_rs_items_insert" ON ba_rs_items
+    FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "ba_rs_items_update" ON ba_rs_items
+    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "ba_rs_items_delete" ON ba_rs_items
+    FOR DELETE TO authenticated USING (true);
 
 -- ─── 8. Helper Function: Updated_at trigger ────────────────
 CREATE OR REPLACE FUNCTION update_updated_at_column()

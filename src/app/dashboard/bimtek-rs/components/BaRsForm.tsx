@@ -41,7 +41,7 @@ const EMPTY_ROW = (): ProgramRow => ({
 
 export default function BaRsForm({ sessionId, onBack }: Props) {
     const { user } = useAuth();
-    const isSuperadmin = user?.role === "superadmin";
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "admin_dinkes" || user?.role !== "stakeholder";
     const isStakeholder = user?.role === "stakeholder";
 
     const [meta, setMeta] = useState<SessionMeta>({
@@ -66,12 +66,16 @@ export default function BaRsForm({ sessionId, onBack }: Props) {
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const { data: s } = await supabase
+            const { data: s, error: sErr } = await supabase
                 .from("ba_rs_sessions")
                 .select("rs_id, rs_name, tanggal_kegiatan, tempat_kegiatan, status, pj_dinkes_nama, pj_dinkes_nip, direktur_rs_nama, direktur_rs_nip")
                 .eq("id", sessionId).single();
 
-            if (!s) { setLoading(false); return; }
+            if (sErr || !s) {
+                console.error("Error loading session:", sErr);
+                setLoading(false);
+                return;
+            }
 
             setMeta({
                 rs_id: s.rs_id, rs_name: s.rs_name,
@@ -115,17 +119,24 @@ export default function BaRsForm({ sessionId, onBack }: Props) {
     const handleSaveMeta = async () => {
         if (isStakeholder) return;
         setSavingMeta(true);
-        const { error } = await supabase.from("ba_rs_sessions").update({
-            tanggal_kegiatan: meta.tanggal_kegiatan,
-            tempat_kegiatan: meta.tempat_kegiatan || null,
-            pj_dinkes_nama: meta.pj_dinkes_nama || null,
-            pj_dinkes_nip: meta.pj_dinkes_nip || null,
-            direktur_rs_nama: meta.direktur_rs_nama || null,
-            direktur_rs_nip: meta.direktur_rs_nip || null,
-            updated_at: new Date().toISOString(),
-        }).eq("id", sessionId);
-        setSavingMeta(false);
-        if (error) alert("Gagal menyimpan: " + error.message);
+        try {
+            const { error } = await supabase.from("ba_rs_sessions").update({
+                tanggal_kegiatan: meta.tanggal_kegiatan || new Date().toISOString().split("T")[0],
+                tempat_kegiatan: meta.tempat_kegiatan?.trim() || null,
+                pj_dinkes_nama: meta.pj_dinkes_nama?.trim() || null,
+                pj_dinkes_nip: meta.pj_dinkes_nip?.trim() || null,
+                direktur_rs_nama: meta.direktur_rs_nama?.trim() || null,
+                direktur_rs_nip: meta.direktur_rs_nip?.trim() || null,
+                updated_at: new Date().toISOString(),
+            }).eq("id", sessionId);
+
+            if (error) throw error;
+            alert("Informasi Berita Acara berhasil disimpan!");
+        } catch (err: any) {
+            alert("Gagal menyimpan informasi: " + (err?.message || "Terjadi kesalahan."));
+        } finally {
+            setSavingMeta(false);
+        }
     };
 
     const handleRowChange = (programId: string, rowIdx: number, field: "hasil_supervisi" | "rencana_tindak_lanjut", value: string) => {
@@ -164,23 +175,28 @@ export default function BaRsForm({ sessionId, onBack }: Props) {
         setSavingProgram(programId);
         try {
             const prog = BA_RS_PROGRAMS.find(p => p.id === programId);
-            await supabase.from("ba_rs_items").delete().eq("session_id", sessionId).eq("program", programId);
-            const rows = (programs[programId] || []).filter(r => r.hasil_supervisi || r.rencana_tindak_lanjut);
+            const { error: delErr } = await supabase.from("ba_rs_items").delete().eq("session_id", sessionId).eq("program", programId);
+            if (delErr) throw delErr;
+
+            const rows = (programs[programId] || []).filter(r => r.hasil_supervisi?.trim() || r.rencana_tindak_lanjut?.trim());
             if (rows.length > 0) {
-                const { error } = await supabase.from("ba_rs_items").insert(
+                const { error: insErr } = await supabase.from("ba_rs_items").insert(
                     rows.map((r, i) => ({
                         session_id: sessionId,
                         program: programId,
                         program_label: prog?.label || "",
                         item_order: i + 1,
-                        hasil_supervisi: r.hasil_supervisi,
-                        rencana_tindak_lanjut: r.rencana_tindak_lanjut,
+                        hasil_supervisi: r.hasil_supervisi?.trim() || null,
+                        rencana_tindak_lanjut: r.rencana_tindak_lanjut?.trim() || null,
                     }))
                 );
-                if (error) { alert("Gagal simpan: " + error.message); return; }
+                if (insErr) throw insErr;
             }
             setSavedPrograms(prev => ({ ...prev, [programId]: true }));
             setDirtyPrograms(prev => ({ ...prev, [programId]: false }));
+            alert(`Program ${prog?.label || programId} berhasil disimpan!`);
+        } catch (err: any) {
+            alert("Gagal simpan program: " + (err?.message || "Terjadi kesalahan."));
         } finally {
             setSavingProgram(null);
         }
@@ -189,15 +205,27 @@ export default function BaRsForm({ sessionId, onBack }: Props) {
     const handleCompleteSession = async () => {
         if (!isSuperadmin) return;
         if (!confirm("Tandai Berita Acara ini sebagai Selesai?")) return;
-        await supabase.from("ba_rs_sessions").update({ status: "completed" }).eq("id", sessionId);
-        setMeta(prev => ({ ...prev, status: "completed" }));
+        try {
+            const { error } = await supabase.from("ba_rs_sessions").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", sessionId);
+            if (error) throw error;
+            setMeta(prev => ({ ...prev, status: "completed" }));
+            alert("Berita Acara berhasil ditandai Selesai!");
+        } catch (err: any) {
+            alert("Gagal menyelesaikan sesi: " + (err?.message || "Terjadi kesalahan."));
+        }
     };
 
     const handleRevertToDraft = async () => {
         if (!isSuperadmin) return;
         if (!confirm("Kembalikan ke Draft?")) return;
-        await supabase.from("ba_rs_sessions").update({ status: "draft" }).eq("id", sessionId);
-        setMeta(prev => ({ ...prev, status: "draft" }));
+        try {
+            const { error } = await supabase.from("ba_rs_sessions").update({ status: "draft", updated_at: new Date().toISOString() }).eq("id", sessionId);
+            if (error) throw error;
+            setMeta(prev => ({ ...prev, status: "draft" }));
+            alert("Berhasil dikembalikan ke Draft!");
+        } catch (err: any) {
+            alert("Gagal mengembalikan ke Draft: " + (err?.message || "Terjadi kesalahan."));
+        }
     };
 
     const handleGeneratePDF = async () => {
