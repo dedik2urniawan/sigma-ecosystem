@@ -167,12 +167,26 @@ export default function MapInsiden({ data, label, selectedPuskesmas = null }: Ma
         [data, label, normalizeString]
     );
 
+    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    useEffect(() => {
+        return () => {
+            if (mapRef.current) {
+                try {
+                    mapRef.current.remove();
+                } catch {
+                    // silent
+                }
+                mapRef.current = null;
+            }
+        };
+    }, []);
+
     if (!geojsonData) {
         return (
             <div className="w-full h-[500px] bg-slate-100 rounded-2xl flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-8 h-8 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-3"></div>
-                    <span className="text-sm text-slate-400">Memuat peta...</span>
+                    <span className="text-sm text-slate-400">Memuat peta insiden...</span>
                 </div>
             </div>
         );
@@ -182,6 +196,7 @@ export default function MapInsiden({ data, label, selectedPuskesmas = null }: Ma
         <div className="relative">
             <div className="rounded-2xl overflow-hidden border border-slate-200" style={{ height: "500px" }}>
                 <MapContainer
+                    key={`map-insiden-${label}-${selectedPuskesmas || 'all'}`}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}

@@ -93,11 +93,26 @@ export default function MapScoring({ scores }: MapScoringProps) {
         });
     }, [scores, normalizeString]);
 
+    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    useEffect(() => {
+        return () => {
+            if (mapRef.current) {
+                try {
+                    mapRef.current.remove();
+                } catch {
+                    // silent
+                }
+                mapRef.current = null;
+            }
+        };
+    }, []);
+
     if (!geojsonData) return <div className="animate-pulse bg-slate-100 rounded-2xl h-[400px] w-full" />;
 
     return (
         <div className="relative rounded-2xl overflow-hidden border border-slate-200" style={{ height: "400px" }}>
             <MapContainer
+                key={`map-scoring-${scores.length}`}
                 center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM}
                 style={{ height: "100%", width: "100%", background: "#f1f5f9" }}
                 ref={mapRef} zoomControl={false} scrollWheelZoom={false}

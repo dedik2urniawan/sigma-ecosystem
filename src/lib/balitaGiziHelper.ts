@@ -614,6 +614,8 @@ export function calculateAgeGroupBreakdown(
 export interface TrendDataPoint {
     bulan: number;
     bulanName: string;
+    "D/S": number;
+    "D/S (Cakupan Penimbangan)": number;
     "Balita ditimbang (Proyeksi)": number;
     "Balita ditimbang (Data Rill)": number;
     "Balita ditimbang & diukur": number;
@@ -645,6 +647,8 @@ export function calculateTrendMetrics(yearData: TransactionData[]): TrendDataPoi
         if (monthData.length === 0) {
             trendData.push({
                 bulan: m, bulanName: months[m - 1],
+                "D/S": 0,
+                "D/S (Cakupan Penimbangan)": 0,
                 "Balita ditimbang (Proyeksi)": 0, "Balita ditimbang (Data Rill)": 0,
                 "Balita ditimbang & diukur": 0, "Balita diukur PB/TB": 0,
                 "Balita memiliki Buku KIA": 0, "Balita Naik BB": 0,
@@ -662,9 +666,14 @@ export function calculateTrendMetrics(yearData: TransactionData[]): TrendDataPoi
         const total_timbang_ukur = resolvedMonthSum(monthData, resolveDitimbangDanDiukur);
         const total_ukur_pbtb = resolvedMonthSum(monthData, resolveDiukurPBTB);
 
+        // D/S = Balita Ditimbang / Balita Bulan Ini (BBI / Data Rill)
+        const dsVal = calcDiv(total_timbang, total_bulan_ini);
+
         trendData.push({
             bulan: m,
             bulanName: months[m - 1],
+            "D/S": dsVal,
+            "D/S (Cakupan Penimbangan)": dsVal,
             "Balita ditimbang (Proyeksi)": calcDiv(total_timbang, total_sasaran),
             "Balita ditimbang (Data Rill)": calcDiv(total_timbang, total_bulan_ini),
             "Balita ditimbang & diukur": calcDiv(total_timbang_ukur, total_bulan_ini),

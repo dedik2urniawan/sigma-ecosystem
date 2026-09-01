@@ -55,24 +55,32 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
             const [yStr, mStr] = key.split("-");
             const y = Number(yStr);
             const m = Number(mStr);
-            const totalUk = rows.reduce((acc, r) => acc + (r.jumlah_timbang_ukur || 0), 0);
+            const totalUk = rows.reduce((acc, r) => acc + (Number(r.jumlah_timbang_ukur) || 0), 0);
+            const totalSasaran = rows.reduce((acc, r) => {
+                const s = r.data_sasaran ?? ((r.data_sasaran_l || 0) + (r.data_sasaran_p || 0));
+                return acc + (Number(s) || Number(r.sasaran) || 0);
+            }, 0);
+            const totalTimbang = rows.reduce((acc, r) => acc + (Number(r.jumlah_timbang_ukur) || Number(r.jumlah_timbang) || 0), 0);
 
-            if (totalUk === 0) return null;
+            if (totalUk === 0 && totalSasaran === 0 && totalTimbang === 0) return null;
 
             const stunting = rows.reduce((acc, r) => acc + (r.stunting || 0), 0);
             const wasting = rows.reduce((acc, r) => acc + (r.wasting || 0), 0);
             const underweight = rows.reduce((acc, r) => acc + (r.underweight || 0), 0);
             const obesitas = rows.reduce((acc, r) => acc + (r.obesitas || 0), 0);
 
+            const ds = totalSasaran > 0 ? (totalTimbang / totalSasaran) * 100 : (rows[0]?.d_per_s || rows[0]?.pct_data_entry || 0);
+
             return {
                 year: y,
                 month: m,
                 // If multiple years, show "Jan 25", else "Jan"
                 label: distinctYears > 1 ? `${BULAN_LABELS[m]} ${y.toString().slice(-2)}` : BULAN_LABELS[m],
-                stunting: (stunting / totalUk) * 100,
-                wasting: (wasting / totalUk) * 100,
-                underweight: (underweight / totalUk) * 100,
-                obesitas: (obesitas / totalUk) * 100,
+                ds: Number(ds.toFixed(1)),
+                stunting: totalUk > 0 ? Number(((stunting / totalUk) * 100).toFixed(1)) : 0,
+                wasting: totalUk > 0 ? Number(((wasting / totalUk) * 100).toFixed(1)) : 0,
+                underweight: totalUk > 0 ? Number(((underweight / totalUk) * 100).toFixed(1)) : 0,
+                obesitas: totalUk > 0 ? Number(((obesitas / totalUk) * 100).toFixed(1)) : 0,
             };
         }).filter((r): r is NonNullable<typeof r> => r !== null);
 
@@ -95,13 +103,13 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
                 </div>
                 <div>
                     <h3 className="text-base font-bold text-slate-900">Analisis Tren {year || "Semua Tahun"}</h3>
-                    <p className="text-xs text-slate-400">Perkembangan prevalensi masalah gizi bulan ke bulan</p>
+                    <p className="text-xs text-slate-400">Perkembangan prevalensi masalah gizi dan cakupan penimbangan (D/S) bulan ke bulan</p>
                 </div>
             </div>
 
-            <div className="h-[300px] w-full">
+            <div className="h-[320px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ top: 15, right: 30, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis
                             dataKey="label"
@@ -120,7 +128,7 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
                             contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                             itemStyle={{ fontSize: 12, fontWeight: 600 }}
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            formatter={(val: any) => [`${Number(val).toFixed(2)}%`, ""]}
+                            formatter={(val: any) => [`${Number(val).toFixed(1)}%`, ""]}
                         />
                         <Legend
                             content={({ payload }) => (
@@ -153,20 +161,23 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
                             )}
                         />
 
-
-                        <Line hide={hiddenMetrics.includes("stunting")} type="monotone" dataKey="stunting" name="Stunting" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }}>
+                        <Line hide={hiddenMetrics.includes("ds")} type="monotone" dataKey="ds" name="D/S" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "#10b981" }} activeDot={{ r: 6 }}>
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            <LabelList dataKey="ds" position="top" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#10b981", fontWeight: "bold" }} />
+                        </Line>
+                        <Line hide={hiddenMetrics.includes("stunting")} type="monotone" dataKey="stunting" name="Stunting" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "#ef4444" }} activeDot={{ r: 6 }}>
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             <LabelList dataKey="stunting" position="top" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#ef4444", fontWeight: "bold" }} />
                         </Line>
-                        <Line hide={hiddenMetrics.includes("wasting")} type="monotone" dataKey="wasting" name="Wasting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }}>
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            <LabelList dataKey="wasting" position="bottom" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#f59e0b", fontWeight: "bold" }} />
-                        </Line>
-                        <Line hide={hiddenMetrics.includes("underweight")} type="monotone" dataKey="underweight" name="Underweight" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }}>
+                        <Line hide={hiddenMetrics.includes("underweight")} type="monotone" dataKey="underweight" name="Underweight" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "#3b82f6" }} activeDot={{ r: 6 }}>
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             <LabelList dataKey="underweight" position="top" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#3b82f6", fontWeight: "bold" }} />
                         </Line>
-                        <Line hide={hiddenMetrics.includes("obesitas")} type="monotone" dataKey="obesitas" name="Obesitas" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }}>
+                        <Line hide={hiddenMetrics.includes("wasting")} type="monotone" dataKey="wasting" name="Wasting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "#f59e0b" }} activeDot={{ r: 6 }}>
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            <LabelList dataKey="wasting" position="bottom" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#f59e0b", fontWeight: "bold" }} />
+                        </Line>
+                        <Line hide={hiddenMetrics.includes("obesitas")} type="monotone" dataKey="obesitas" name="Obesitas" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: "#8b5cf6" }} activeDot={{ r: 6 }}>
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             <LabelList dataKey="obesitas" position="bottom" offset={10} formatter={(v: any) => `${Number(v).toFixed(1)}%`} style={{ fontSize: 10, fill: "#8b5cf6", fontWeight: "bold" }} />
                         </Line>

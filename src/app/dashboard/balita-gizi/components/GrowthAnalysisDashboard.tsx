@@ -602,7 +602,7 @@ export default function GrowthAnalysisDashboard() {
                                     <option value="obesitas">Overweight (Obesitas)</option>
                                 </select>
                             </div>
-                            <div className="w-full flex-1 relative rounded-xl overflow-hidden border border-slate-100">
+                            <div key={`map-wrapper-${effectiveRole}-${selectedPuskesmas}-${selectedKelurahan}-${selectedMapMetric}`} className="w-full flex-1 relative rounded-xl overflow-hidden border border-slate-100">
                                 {effectiveRole === "superadmin" && selectedPuskesmas === "ALL" ? (
                                     <MapPuskesmas
                                         key={`map-puskesmas-${selectedMapMetric}`}
@@ -612,7 +612,7 @@ export default function GrowthAnalysisDashboard() {
                                     />
                                 ) : (
                                     <MapDesa
-                                        key={`map-desa-${selectedMapMetric}`}
+                                        key={`map-desa-${selectedMapMetric}-${selectedKelurahan}`}
                                         data={mapData}
                                         metric={selectedMapMetric}
                                         selectedDesa={selectedKelurahan !== "ALL" ? kelurahanOptions.find(p => p.id === selectedKelurahan)?.name : null}
@@ -635,17 +635,20 @@ export default function GrowthAnalysisDashboard() {
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
                                         <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
                                         <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleGizi} />
-                                        <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Stunting")} dataKey="Prevalensi Stunting" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444' }} activeDot={{ r: 6 }}>
-                                            <LabelList dataKey="Prevalensi Stunting" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#ef4444' }} />
+                                        <Line type="monotone" hide={hiddenGizi.includes("D/S")} dataKey="D/S" name="D/S" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }}>
+                                            <LabelList dataKey="D/S" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#10b981', fontWeight: 'bold' }} />
                                         </Line>
-                                        <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Wasting")} dataKey="Prevalensi Wasting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: '#f59e0b' }} activeDot={{ r: 6 }}>
-                                            <LabelList dataKey="Prevalensi Wasting" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#f59e0b' }} />
+                                        <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Stunting")} dataKey="Prevalensi Stunting" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444' }} activeDot={{ r: 6 }}>
+                                            <LabelList dataKey="Prevalensi Stunting" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#ef4444' }} />
                                         </Line>
                                         <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Underweight")} dataKey="Prevalensi Underweight" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}>
-                                            <LabelList dataKey="Prevalensi Underweight" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
+                                            <LabelList dataKey="Prevalensi Underweight" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
+                                        </Line>
+                                        <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Wasting")} dataKey="Prevalensi Wasting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: '#f59e0b' }} activeDot={{ r: 6 }}>
+                                            <LabelList dataKey="Prevalensi Wasting" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#f59e0b' }} />
                                         </Line>
                                         <Line type="monotone" hide={hiddenGizi.includes("Prevalensi Overweight")} dataKey="Prevalensi Overweight" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} activeDot={{ r: 6 }}>
-                                            <LabelList dataKey="Prevalensi Overweight" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
+                                            <LabelList dataKey="Prevalensi Overweight" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
                                         </Line>
                                     </LineChart>
                                 </ResponsiveContainer>

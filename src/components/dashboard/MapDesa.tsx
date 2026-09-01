@@ -196,6 +196,20 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
         [data, metric, normalizeString]
     );
 
+    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    useEffect(() => {
+        return () => {
+            if (mapRef.current) {
+                try {
+                    mapRef.current.remove();
+                } catch {
+                    // silent
+                }
+                mapRef.current = null;
+            }
+        };
+    }, []);
+
     if (!geojsonData) {
         return (
             <div className="w-full h-[500px] bg-slate-100 rounded-2xl flex items-center justify-center">
@@ -215,6 +229,7 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
                 style={{ height: "500px" }}
             >
                 <MapContainer
+                    key={`map-desa-${metric}-${selectedDesa || 'all'}-${selectedPuskesmas || 'all'}`}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}
