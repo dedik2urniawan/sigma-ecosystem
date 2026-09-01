@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SSOAuthBanner from "@/components/SSOAuthBanner";
+import ModuleSwitcher from "@/components/ModuleSwitcher";
 
 // ─── Animated Data Grid Background ─────────────────────────────────────────
 const DataGridBackground = () => {
@@ -405,7 +407,17 @@ export default function RCSLandingPage() {
     return (
         <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 font-display selection:bg-emerald-100 selection:text-emerald-900">
 
-            {/* ─── Navigation ──────────────────────────────────────────── */}
+            {/* ─── SSO Auth Banner (sticky top, only when logged in) ─── */}
+            <SSOAuthBanner
+                appPath="/dashboard"
+                ctaLabel="Masuk ke Dashboard"
+                accentColor="emerald"
+                ctaIcon="dashboard"
+            />
+
+            {/* ─── Module Switcher (floating, only when logged in) ────── */}
+            <ModuleSwitcher mode="floating" />
+
             <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white/90 backdrop-blur-xl shadow-sm border-b border-slate-100/50" : "bg-transparent"}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
@@ -424,13 +436,14 @@ export default function RCSLandingPage() {
                             <a href="#indicators" className="text-[11px] font-semibold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wide">Indikator</a>
                             <a href="#architecture" className="text-[11px] font-semibold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wide">Arsitektur</a>
                             <Link
-                                href="/login"
+                                href="/sso/login?redirect_to=/dashboard"
                                 className="px-6 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2"
                             >
                                 <span className="material-icons-round text-sm">login</span>
                                 Akses Dashboard
                             </Link>
                         </div>
+
 
                         <button className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
                             <span className="material-icons-round">menu</span>
@@ -481,7 +494,7 @@ export default function RCSLandingPage() {
 
                                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                                     <Link
-                                        href="/login"
+                                        href="/sso/login?redirect_to=/dashboard"
                                         className="px-8 py-4 rounded-xl bg-emerald-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-1 flex items-center justify-center gap-3 group"
                                     >
                                         <span className="material-icons-round text-lg">dashboard</span>

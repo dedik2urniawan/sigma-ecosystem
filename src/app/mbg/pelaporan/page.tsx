@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import SSOModuleDropdown from "@/components/SSOModuleDropdown";
 
 export default function MbgPelaporanPage() {
     const [activeTab, setActiveTab] = useState<"sasaran" | "gizi">("sasaran");
@@ -23,6 +24,10 @@ export default function MbgPelaporanPage() {
                                 <h1 className="font-bold text-slate-900 leading-tight">Portal SPPG (Pelaporan MBG)</h1>
                                 <p className="text-[10px] font-mono text-emerald-600 uppercase tracking-widest">Sekolah / Yayasan</p>
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <SSOModuleDropdown align="right" />
                         </div>
                     </div>
                 </div>

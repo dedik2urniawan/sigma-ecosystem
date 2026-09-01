@@ -514,7 +514,7 @@ export default function Home() {
       icon: "medical_services",
       status: "Active",
       cta: "Access Dashboard",
-      link: "https://pkmk-malangkab.app/landing-page.html", // Updated Link
+      link: "https://pkmk-malangkab.app/landing-page.html",
       classes: {
         badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
         dot: "bg-indigo-500",
@@ -570,7 +570,7 @@ export default function Home() {
               <a href="#applications" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Aplikasi</a>
               <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Tentang</a>
               <a
-                href="/rcs"
+                href="/sso/login"
                 className="px-6 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 hover:shadow-indigo-200 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2"
               >
                 <span className="material-icons-round text-sm">login</span>
@@ -651,10 +651,10 @@ export default function Home() {
                 <span className="material-icons-round text-lg group-hover:translate-y-1 transition-transform">keyboard_arrow_down</span>
               </a>
               <a
-                href="/rcs"
+                href="/sso/login"
                 className="flex-1 px-8 py-4 rounded-xl bg-white text-slate-700 font-bold text-xs uppercase tracking-widest border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm hover:shadow-md hover:-translate-y-1 flex items-center justify-center gap-2"
               >
-                Dashboard KPI Gizi
+                Masuk ke Sistem
                 <span className="material-icons-round text-lg text-slate-400">login</span>
               </a>
             </div>

@@ -8,6 +8,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import MbgAnalyticalDashboard from "@/components/mbg/MbgAnalyticalDashboard";
 import { supabase } from "@/lib/supabase";
+import SSOModuleDropdown from "@/components/SSOModuleDropdown";
 
 // Dynamic import for Leaflet Map to prevent SSR issues
 const SupervisiMap = dynamic(() => import("@/components/mbg/SupervisiMap"), {
@@ -344,7 +345,8 @@ export default function DashboardSupervisi() {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <SSOModuleDropdown align="right" />
                         <div className="hidden sm:block text-right">
                             <p className="text-sm font-bold text-slate-800">{role === 'superadmin' ? 'Superadmin Dinkes' : 'Admin Puskesmas'}</p>
                             <p className="text-xs text-slate-500">{puskesmasName || 'Kabupaten Malang'}</p>

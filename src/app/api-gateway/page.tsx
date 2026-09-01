@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import SSOAuthBanner from "@/components/SSOAuthBanner";
+import ModuleSwitcher from "@/components/ModuleSwitcher";
 
 const ENDPOINTS = [
     {
@@ -130,6 +132,17 @@ function CodeDemo() {
 export default function ApiGatewayLanding() {
     return (
         <div className="min-h-screen bg-[#060b18] text-white">
+            {/* ─── SSO Auth Banner ─────────────────────────────────── */}
+            <SSOAuthBanner
+                appPath="/api-gateway/portal"
+                ctaLabel="Masuk ke Portal API"
+                accentColor="indigo"
+                ctaIcon="hub"
+            />
+
+            {/* ─── Module Switcher ─────────────────────────────────── */}
+            <ModuleSwitcher mode="floating" />
+
             {/* BG */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -153,7 +166,7 @@ export default function ApiGatewayLanding() {
                     <div className="flex items-center gap-3">
                         <a href="#endpoints" className="text-slate-400 hover:text-white text-xs font-medium transition-colors hidden sm:block">Endpoints</a>
                         <a href="#cara-kerja" className="text-slate-400 hover:text-white text-xs font-medium transition-colors hidden sm:block">Cara Kerja</a>
-                        <Link href="/api-gateway/portal"
+                        <Link href="/sso/login?redirect_to=/api-gateway/portal"
                             className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/20">
                             Portal Login →
                         </Link>

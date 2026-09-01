@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import VisitorTracker from "./components/VisitorTracker";
+import SSOAuthBanner from "@/components/SSOAuthBanner";
+import ModuleSwitcher from "@/components/ModuleSwitcher";
 
 // ============================================================
 // Feature Cards Data
@@ -39,42 +41,17 @@ const calculatorFeatures = [
         title: "Analisis Status Gizi Massal",
         titleEn: "Population Nutritional Survey",
         description:
-            "Upload data Excel untuk perhitungan massal dan analisis prevalensi status gizi populasi. Dilengkapi distribusi WHO TEAM, prevalensi per wilayah, dan laporan komprehensif.",
+            "Analisis data antropometri gizi secara massal/agregat dari survei atau batch input. Hitung prevalensi stunting, wasting, dan underweight tingkat wilayah dengan visualisasi distribusi dan filtering.",
         icon: "groups",
         status: "Tersedia",
-        statusColor: "amber",
-        link: "/calculator/massal",
-        features: [
-            "Upload Excel / CSV",
-            "Perhitungan Massal Otomatis",
-            "Analisis Prevalensi WHO",
-            "Probable Stunting Massal",
-            "Export Laporan Lengkap",
-        ],
-        gradient: "from-amber-500 to-orange-600",
-        shadow: "shadow-amber-200",
-        border: "border-amber-100",
-        badgeBg: "bg-amber-50 text-amber-700 border-amber-200",
-        badgeDot: "bg-amber-500",
-        btnClass: "bg-amber-600 hover:bg-amber-700 shadow-amber-200",
-        available: true,
-    },
-    {
-        id: "fct",
-        title: "Analisis Komposisi Pangan (FCT)",
-        titleEn: "Food Composition Table Analysis",
-        description:
-            "Hitung kandungan gizi makanan dan bandingkan dengan Angka Kecukupan Gizi (AKG/RDA). Analisis asupan gizi harian dan identifikasi defisiensi nutrisi spesifik.",
-        icon: "restaurant_menu",
-        status: "Tersedia",
         statusColor: "blue",
-        link: "/calculator/fct",
+        link: "/calculator/survey",
         features: [
-            "Database Pangan Indonesia",
-            "Perbandingan dengan AKG",
-            "Analisis Multi-Nutrisi",
-            "Dietary Assessment",
-            "Rekomendasi Menu",
+            "Upload Excel / CSV massal",
+            "Kalkulasi ZScore otomatis",
+            "Prevalensi Stunting, Wasting, Underweight",
+            "Distribusi Kurva Gaussian",
+            "Export laporan rekapitulasi",
         ],
         gradient: "from-blue-500 to-indigo-600",
         shadow: "shadow-blue-200",
@@ -82,6 +59,31 @@ const calculatorFeatures = [
         badgeBg: "bg-blue-50 text-blue-700 border-blue-200",
         badgeDot: "bg-blue-500",
         btnClass: "bg-blue-600 hover:bg-blue-700 shadow-blue-200",
+        available: true,
+    },
+    {
+        id: "akg",
+        title: "Kalkulator Kebutuhan Gizi & AKG",
+        titleEn: "Dietary & RDA Calculator",
+        description:
+            "Hitung Angka Kecukupan Gizi (AKG) harian individu berdasarkan usia, jenis kelamin, dan aktivitas fisik. Termasuk estimasi kebutuhan energi, protein, lemak, karbohidrat, dan mikronutrien penting.",
+        icon: "calculate",
+        status: "Tersedia",
+        statusColor: "amber",
+        link: "/calculator/akg",
+        features: [
+            "AKG Kemenkes 2019 terbaru",
+            "Kebutuhan Makronutrien & Mikronutrien",
+            "Koreksi status fisiologis (Ibu Hamil/Menyusui)",
+            "Rekomendasi porsi harian",
+            "Export ringkasan AKG",
+        ],
+        gradient: "from-amber-500 to-orange-600",
+        shadow: "shadow-amber-200",
+        border: "border-amber-100",
+        badgeBg: "bg-amber-50 text-amber-700 border-amber-200",
+        badgeDot: "bg-amber-500",
+        btnClass: "bg-amber-600 hover:bg-amber-700 shadow-amber-200",
         available: true,
     },
 ];
@@ -102,6 +104,17 @@ const stats = [
 export default function CalculatorPage() {
     return (
         <div className="min-h-screen bg-slate-50 font-display">
+            {/* ─── SSO Auth Banner (sticky top, only when logged in) ─── */}
+            <SSOAuthBanner
+                appPath="/calculator/individual"
+                ctaLabel="Buka Kalkulator"
+                accentColor="blue"
+                ctaIcon="calculate"
+            />
+
+            {/* ─── Module Switcher (floating) ───────────────────────── */}
+            <ModuleSwitcher mode="floating" />
+
             {/* ---- NAVIGATION ---- */}
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import SessionTimeout from "@/components/SessionTimeout";
+import UnifiedSessionTimeout from "@/components/UnifiedSessionTimeout";
+import SSOModuleDropdown from "@/components/SSOModuleDropdown";
 
 // ─── Auth Context ───────────────────────────────────────────────────────────
 interface UserData {
@@ -151,7 +152,7 @@ export default function DashboardLayout({
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        router.push("/login");
+        router.push("/sso/login");
     };
 
     if (loading) {
@@ -171,7 +172,7 @@ export default function DashboardLayout({
 
     return (
         <AuthContext.Provider value={{ user, loading }}>
-            <SessionTimeout />
+            <UnifiedSessionTimeout />
             <div className="flex min-h-screen bg-slate-100 font-display">
                 {/* ─── Mobile Overlay ──────────────────────────── */}
                 {sidebarOpen && (
@@ -461,6 +462,8 @@ export default function DashboardLayout({
 
                         {/* Right side */}
                         <div className="ml-auto flex items-center gap-3">
+                            <SSOModuleDropdown align="right" />
+
                             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

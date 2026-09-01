@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ApiGatewaySessionTimeout from "@/components/ApiGatewaySessionTimeout";
+import SSOModuleDropdown from "@/components/SSOModuleDropdown";
 
 interface GwUser {
     id: string;
@@ -140,6 +141,7 @@ export default function ApiGatewayPortal() {
                             <span className="text-slate-400 text-xs">Portal</span>
                         </div>
                         <div className="flex items-center gap-3">
+                            <SSOModuleDropdown align="right" theme="dark" />
                             <div className="text-right">
                                 <p className="text-white text-xs font-bold">{gwUser?.name}</p>
                                 <p className="text-slate-500 text-[10px]">{gwUser?.organization}</p>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import SSOModuleDropdown from "@/components/SSOModuleDropdown";
 
 export default function ChatbotAppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -207,10 +208,7 @@ export default function ChatbotAppLayout({ children }: { children: React.ReactNo
                         )}
                     </div>
                     <div className="flex items-center gap-3">
-                        <Link href="/rcs" className="text-xs font-bold text-slate-500 hover:text-purple-600 flex items-center gap-1.5 uppercase tracking-wide border border-transparent hover:border-purple-100 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-all">
-                            <span className="material-icons-round text-sm">dashboard</span>
-                            <span className="hidden sm:inline">RCS Dashboard</span>
-                        </Link>
+                        <SSOModuleDropdown align="right" />
                     </div>
                 </header>
 

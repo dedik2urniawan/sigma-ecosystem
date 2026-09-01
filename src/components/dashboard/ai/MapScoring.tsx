@@ -103,7 +103,11 @@ export default function MapScoring({ scores }: MapScoringProps) {
                 ref={mapRef} zoomControl={false} scrollWheelZoom={false}
                 dragging={true} doubleClickZoom={true} touchZoom={true}
             >
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                <TileLayer
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={16}
+                />
                 <GeoJSON data={geojsonData} style={style} onEachFeature={onEachFeature} ref={geoJsonRef as any} />
             </MapContainer>
 

@@ -3,6 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SSOAuthBanner from "@/components/SSOAuthBanner";
+import ModuleSwitcher from "@/components/ModuleSwitcher";
+
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -169,7 +172,20 @@ export default function ChatbotLanding() {
 
     return (
         <div className="flex flex-col min-h-screen relative overflow-hidden bg-slate-50 text-slate-800 font-display selection:bg-purple-100 selection:text-purple-900">
+
+            {/* ─── SSO Auth Banner ─────────────────────────────────── */}
+            <SSOAuthBanner
+                appPath="/chatbot/app"
+                ctaLabel="Buka Chatbot AI"
+                accentColor="purple"
+                ctaIcon="smart_toy"
+            />
+
+            {/* ─── Module Switcher ─────────────────────────────────── */}
+            <ModuleSwitcher mode="floating" />
+
             {/* Navigation */}
+
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 shadow-sm transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
@@ -192,11 +208,12 @@ export default function ChatbotLanding() {
                             </div>
                         </Link>
                         <div className="hidden md:flex items-center gap-8">
-                            <Link href="/chatbot/login" className="px-6 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-purple-600 transition-all shadow-lg shadow-slate-200 hover:shadow-purple-200 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2">
+                            <Link href="/sso/login?redirect_to=/chatbot/app" className="px-6 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-purple-600 transition-all shadow-lg shadow-slate-200 hover:shadow-purple-200 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2">
                                 <span className="material-icons-round text-sm">login</span>
                                 Masuk Chatbot
                             </Link>
                         </div>
+
                     </div>
                 </div>
             </nav>

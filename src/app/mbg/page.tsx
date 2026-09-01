@@ -1,9 +1,24 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import SSOAuthBanner from "@/components/SSOAuthBanner";
+import ModuleSwitcher from "@/components/ModuleSwitcher";
 
 export default function MbgLandingPage() {
     return (
         <div className="min-h-screen bg-slate-50 font-display">
+            {/* ─── SSO Auth Banner ─────────────────────────────────── */}
+            <SSOAuthBanner
+                appPath="/mbg/supervisi"
+                ctaLabel="Masuk ke Portal MBG"
+                accentColor="amber"
+                ctaIcon="restaurant"
+            />
+
+            {/* ─── Module Switcher ─────────────────────────────────── */}
+            <ModuleSwitcher mode="floating" />
+
             {/* Header / Navbar */}
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
