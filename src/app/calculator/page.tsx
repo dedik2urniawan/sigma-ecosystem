@@ -45,7 +45,7 @@ const calculatorFeatures = [
         icon: "groups",
         status: "Tersedia",
         statusColor: "blue",
-        link: "/calculator/survey",
+        link: "/calculator/massal",
         features: [
             "Upload Excel / CSV massal",
             "Kalkulasi ZScore otomatis",
@@ -70,7 +70,7 @@ const calculatorFeatures = [
         icon: "calculate",
         status: "Tersedia",
         statusColor: "amber",
-        link: "/calculator/akg",
+        link: "/calculator/fct",
         features: [
             "AKG Kemenkes 2019 terbaru",
             "Kebutuhan Makronutrien & Mikronutrien",
