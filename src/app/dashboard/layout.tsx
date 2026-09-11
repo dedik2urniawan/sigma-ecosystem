@@ -3,6 +3,7 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import UnifiedSessionTimeout from "@/components/UnifiedSessionTimeout";
@@ -173,7 +174,7 @@ export default function DashboardLayout({
     return (
         <AuthContext.Provider value={{ user, loading }}>
             <UnifiedSessionTimeout />
-            <div className="flex min-h-screen bg-slate-100 font-display">
+            <div className="min-h-screen bg-slate-100 font-display w-full relative">
                 {/* ─── Mobile Overlay ──────────────────────────── */}
                 {sidebarOpen && (
                     <div
@@ -184,31 +185,23 @@ export default function DashboardLayout({
 
                 {/* ─── Sidebar ────────────────────────────────── */}
                 <aside
-                    className={`fixed lg:sticky top-0 left-0 h-screen z-50 flex flex-col bg-white border-r border-slate-200 shadow-sm transition-all duration-300 ease-in-out
+                    className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-slate-200 shadow-sm transition-all duration-300 ease-in-out shrink-0
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
             ${sidebarCollapsed ? "w-20" : "w-72"}
           `}
                 >
                     {/* Logo */}
                     <div className={`flex items-center h-16 border-b border-slate-100 shrink-0 ${sidebarCollapsed ? "px-4 justify-center" : "px-6"}`}>
-                        <Link href="/rcs" className="flex items-center gap-3 group">
-                            <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-white border border-slate-100 shadow p-0.5 shrink-0">
-                                <Image
-                                    src="/sigma_logo.png"
-                                    alt="SIGMA"
-                                    fill
-                                    className="object-contain"
-                                />
-                            </div>
-                            {!sidebarCollapsed && (
-                                <div className="flex flex-col">
-                                    <span className="font-extrabold text-sm text-slate-900 leading-none tracking-tight">
-                                        SIGMA
+                        <Link href="/rcs" className="flex items-center gap-2.5 group" aria-label="SIGMA RCS Dashboard">
+                            {sidebarCollapsed ? (
+                                <SigmaLogo variant="mark" className="w-8 h-8 object-contain" priority />
+                            ) : (
+                                <>
+                                    <SigmaLogo variant="primary" className="h-7 w-auto object-contain" priority />
+                                    <span className="text-[9px] text-emerald-600 font-bold tracking-[0.15em] uppercase font-mono border-l border-slate-200 pl-2">
+                                        RCS
                                     </span>
-                                    <span className="text-[9px] text-emerald-600 font-bold tracking-[0.15em] uppercase font-mono">
-                                        RCS Dashboard
-                                    </span>
-                                </div>
+                                </>
                             )}
                         </Link>
 
@@ -436,7 +429,7 @@ export default function DashboardLayout({
                 </aside>
 
                 {/* ─── Main Content ───────────────────────────── */}
-                <div className="flex-1 flex flex-col min-h-screen">
+                <div className={`flex flex-col min-h-screen min-w-0 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}`}>
                     {/* Top Header */}
                     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 h-16 flex items-center px-4 lg:px-8 shrink-0">
                         <button
@@ -477,7 +470,7 @@ export default function DashboardLayout({
                     </header>
 
                     {/* Page Content */}
-                    <main className="flex-1 p-4 lg:p-8">{children}</main>
+                    <main className="flex-1 p-4 lg:p-8 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
 
                     {/* Footer */}
                     <footer className="border-t border-slate-200 bg-white px-4 lg:px-8 py-4 flex items-center justify-between text-xs text-slate-400">

@@ -1,0 +1,4 @@
+SIGMA Ecosystem Brand Kit
+Version: 2026.09.11
+Prepared for: Web, Next.js App Router, PWA, iOS, social sharing, chatbot, SSO, and print
+

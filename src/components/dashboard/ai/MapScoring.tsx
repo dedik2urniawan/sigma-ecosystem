@@ -30,6 +30,7 @@ export default function MapScoring({ scores }: MapScoringProps) {
     const [geojsonData, setGeojsonData] = useState<any>(null);
     const mapRef = useRef<L.Map | null>(null);
     const geoJsonRef = useRef<L.GeoJSON | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         fetch("/puskesmas_fix.geojson")
@@ -58,7 +59,7 @@ export default function MapScoring({ scores }: MapScoringProps) {
             weight: 1,
             opacity: 1,
             color: "#ffffff",
-            fillOpacity: 0.8,
+            fillOpacity: score > 0 ? 0.8 : 0.4,
         };
     }, [scores, normalizeString]);
 
@@ -84,35 +85,34 @@ export default function MapScoring({ scores }: MapScoringProps) {
         (layer as L.Path).on({
             mouseover: (e) => {
                 const l = e.target;
-                l.setStyle({ weight: 3, color: "#10b981", fillOpacity: 0.95 });
+                l.setStyle({ weight: 2, color: "#000", fillOpacity: 1 });
                 l.bringToFront();
             },
             mouseout: (e) => {
-                if (geoJsonRef.current) geoJsonRef.current.resetStyle(e.target);
-            },
+                if (geoJsonRef.current) {
+                    geoJsonRef.current.resetStyle(e.target);
+                }
+            }
         });
     }, [scores, normalizeString]);
 
-    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    // Safe cleanup on unmount for Leaflet container in React 19 / Fast Refresh
     useEffect(() => {
+        const container = containerRef.current;
         return () => {
-            if (mapRef.current) {
-                try {
-                    mapRef.current.remove();
-                } catch {
-                    // silent
-                }
-                mapRef.current = null;
+            if (container) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                delete (container as any)._leaflet_id;
             }
+            mapRef.current = null;
         };
     }, []);
 
     if (!geojsonData) return <div className="animate-pulse bg-slate-100 rounded-2xl h-[400px] w-full" />;
 
     return (
-        <div className="relative rounded-2xl overflow-hidden border border-slate-200" style={{ height: "400px" }}>
+        <div ref={containerRef} className="relative rounded-2xl overflow-hidden border border-slate-200" style={{ height: "400px" }}>
             <MapContainer
-                key={`map-scoring-${scores.length}`}
                 center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM}
                 style={{ height: "100%", width: "100%", background: "#f1f5f9" }}
                 ref={mapRef} zoomControl={false} scrollWheelZoom={false}

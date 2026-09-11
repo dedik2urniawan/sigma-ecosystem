@@ -196,17 +196,15 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
         [data, metric, normalizeString]
     );
 
-    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    // Safe cleanup on unmount for Leaflet container in React 19 / Fast Refresh
     useEffect(() => {
+        const container = containerRef.current;
         return () => {
-            if (mapRef.current) {
-                try {
-                    mapRef.current.remove();
-                } catch {
-                    // silent
-                }
-                mapRef.current = null;
+            if (container) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                delete (container as any)._leaflet_id;
             }
+            mapRef.current = null;
         };
     }, []);
 
@@ -229,7 +227,6 @@ export default function MapDesa({ data, metric, selectedDesa = null, selectedPus
                 style={{ height: "500px" }}
             >
                 <MapContainer
-                    key={`map-desa-${metric}-${selectedDesa || 'all'}-${selectedPuskesmas || 'all'}`}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}

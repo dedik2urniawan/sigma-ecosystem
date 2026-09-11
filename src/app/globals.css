@@ -12,6 +12,15 @@
   --color-rcs-green: #10b981;
   --color-rcs-green-hover: #059669;
 
+  /* SIGMA Ecosystem 2026 Brand Tokens */
+  --color-sigma-50: #eff9ff;
+  --color-sigma-400: #17d2fb;
+  --color-sigma-500: #0a9ffb;
+  --color-sigma-600: #0062ff;
+  --color-sigma-700: #0051f1;
+  --color-sigma-900: #17274d;
+  --background-image-sigma-brand: linear-gradient(135deg, #0051F1 0%, #0A9FFB 52%, #17D2FB 100%);
+
   --font-display: 'Public Sans', sans-serif;
 
   --animate-spin-slow: spin 20s linear infinite;
@@ -40,7 +49,7 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-display);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Utilities from HTML */

@@ -1,0 +1,37 @@
+import type { MetadataRoute } from "next";
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: "SIGMA Ecosystem",
+    short_name: "SIGMA",
+    description: "AI & Health Technology Ecosystem",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    orientation: "portrait-primary",
+    background_color: "#EFF9FF",
+    theme_color: "#0062FF",
+    categories: ["health", "medical", "productivity"],
+    icons: [
+      {
+        src: "/icons/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-maskable-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+  };
+}
+

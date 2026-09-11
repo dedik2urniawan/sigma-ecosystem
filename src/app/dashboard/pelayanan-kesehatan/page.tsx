@@ -20,6 +20,7 @@ import { jsPDF } from "jspdf";
 import LevelDesaContent from "@/components/dashboard/LevelDesaContent";
 import InsidenStuntingContent from "@/components/dashboard/InsidenStuntingContent";
 import TrendAnalysisChart from "@/components/dashboard/TrendAnalysisChart";
+import PlausibilitasAnalysisSection from "@/components/dashboard/PlausibilitasAnalysisSection";
 import CiafDashboardView from "@/components/dashboard/ciaf/CiafDashboardView";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
 
@@ -770,7 +771,7 @@ export default function PelayananKesehatanPage() {
 
 
     return (
-        <div className="space-y-8" ref={dashboardRef} id="dashboard-content">
+        <div className="space-y-8 w-full max-w-full min-w-0" ref={dashboardRef} id="dashboard-content">
             <AiAdvisorPanel data={aiContext} />
 
             {/* ─── Header ──────────────────────────────────────────── */}
@@ -963,8 +964,17 @@ export default function PelayananKesehatanPage() {
                                     {/* ─── Trend Analysis ───────────────────────────────── */}
                                     <TrendAnalysisChart data={trendData} year={filterTahun} />
 
+                                    {/* ─── Analisis Plausibilitas & Insidens Rate ────────── */}
+                                    <PlausibilitasAnalysisSection
+                                        data={trendData}
+                                        year={filterTahun}
+                                        puskesmas={filterPuskesmas}
+                                        allData={dataPuskesmas}
+                                        filterBulan={filterBulan}
+                                    />
+
                                     {/* ─── Interactive Map ───────────────────────────────── */}
-                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm w-full max-w-full min-w-0">
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                                             <div className="flex items-center gap-3">
                                                 <span className="material-icons-round text-emerald-600 text-xl">map</span>
@@ -991,7 +1001,7 @@ export default function PelayananKesehatanPage() {
                                     </div>
 
                                     {/* ─── Charts ───────────────────────────────────────── */}
-                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm w-full max-w-full min-w-0">
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                                             <div className="flex items-center gap-3">
                                                 <span className="material-icons-round text-emerald-600 text-xl">bar_chart</span>
@@ -1013,7 +1023,7 @@ export default function PelayananKesehatanPage() {
                                             </select>
                                         </div>
 
-                                        <div className="h-[520px]">
+                                        <div className="h-[520px] w-full min-w-0">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 130 }}>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -1085,7 +1095,7 @@ export default function PelayananKesehatanPage() {
                                     </div>
 
                                     {/* ─── Data Table ───────────────────────────────────── */}
-                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full min-w-0">
                                         <div className="p-6 border-b border-slate-100">
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                 <div className="flex items-center gap-3">
@@ -1118,7 +1128,7 @@ export default function PelayananKesehatanPage() {
                                         </div>
 
                                         {/* Scrollable table container with sticky header */}
-                                        <div className={`overflow-x-auto ${tableRowsPerPage === 0 ? "max-h-[600px] overflow-y-auto" : ""}`}>
+                                        <div className={`w-full max-w-full overflow-x-auto min-w-0 ${tableRowsPerPage === 0 ? "max-h-[600px] overflow-y-auto" : ""}`}>
                                             <table className="w-full text-sm">
                                                 <thead className="sticky top-0 z-20">
                                                     <tr className="bg-slate-50 border-b border-slate-200">

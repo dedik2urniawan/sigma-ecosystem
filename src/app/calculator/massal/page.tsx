@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import SigmaLogo from "@/components/SigmaLogo";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell, Legend,
@@ -623,15 +624,12 @@ export default function MassalCalculatorPage() {
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 shadow-sm">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6">
                     <div className="flex justify-between h-16 items-center">
-                        <div className="flex items-center gap-3">
-                            <Link href="/" className="relative w-9 h-9 shadow-md rounded-xl overflow-hidden bg-white flex items-center justify-center border border-slate-100 p-1">
-                                <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
-                            </Link>
-                            <div>
-                                <div className="font-extrabold text-sm text-slate-900 leading-none">SIGMA Calculator</div>
+                        <Link href="/" className="flex items-center gap-3 group" aria-label="SIGMA Calculator">
+                            <SigmaLogo variant="primary" className="h-8 w-auto object-contain" priority />
+                            <div className="border-l border-slate-200 pl-3">
                                 <div className="text-[9px] text-amber-600 font-bold tracking-[0.2em] uppercase font-mono">Mass Assessment</div>
                             </div>
-                        </div>
+                        </Link>
                         <Link href="/calculator" className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-amber-600 transition-colors py-2 px-3 rounded-lg hover:bg-amber-50">
                             <span className="material-icons-round text-sm">arrow_back</span>Kembali
                         </Link>

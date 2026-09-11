@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import SSOAuthBanner from "@/components/SSOAuthBanner";
 import ModuleSwitcher from "@/components/ModuleSwitcher";
 
@@ -189,22 +190,12 @@ export default function ChatbotLanding() {
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 shadow-sm transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="relative w-11 h-11 shadow-lg shadow-purple-100 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-slate-100 p-1 group cursor-pointer hover:shadow-purple-200 transition-shadow">
-                                <Image
-                                    src="/sigma_logo.png"
-                                    alt="SIGMA Logo"
-                                    fill
-                                    className="object-contain group-hover:scale-105 transition-transform duration-500"
-                                />
-                            </div>
-                            <div className="flex flex-col justify-center">
-                                <h1 className="font-extrabold text-xl tracking-tight text-slate-900 leading-none">
-                                    SIGMA
-                                </h1>
-                                <p className="text-[10px] text-purple-600 font-bold tracking-[0.2em] uppercase mt-0.5 font-mono">
+                        <Link href="/" className="flex items-center gap-3" aria-label="SIGMA Advisor">
+                            <SigmaLogo variant="primary" className="h-9 w-auto object-contain" priority />
+                            <div className="border-l border-slate-200 pl-3 flex flex-col justify-center">
+                                <span className="text-[10px] text-purple-600 font-bold tracking-[0.2em] uppercase font-mono">
                                     ADVISOR
-                                </p>
+                                </span>
                             </div>
                         </Link>
                         <div className="hidden md:flex items-center gap-8">

@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -234,14 +235,11 @@ export default function MbgLoginPage() {
                 <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] bg-orange-500/20 rounded-full blur-[120px]"></div>
 
                 <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
-                    <Link href="/" className="flex items-center gap-3 group w-fit">
-                        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/10 p-1 group-hover:bg-white/20 transition-colors">
-                            <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
-                        </div>
-                        <div>
-                            <span className="font-extrabold text-xl text-white tracking-tight">SIGMA</span>
-                            <span className="text-amber-400 font-bold text-xs ml-2 tracking-widest uppercase font-mono">MBG</span>
-                        </div>
+                    <Link href="/" className="flex items-center gap-3 group w-fit" aria-label="SIGMA MBG">
+                        <SigmaLogo variant="white" className="h-9 w-auto object-contain" priority />
+                        <span className="text-amber-400 font-bold text-xs border-l border-white/20 pl-3 tracking-widest uppercase font-mono">
+                            MBG
+                        </span>
                     </Link>
 
                     <div className="max-w-xl">
@@ -297,13 +295,12 @@ export default function MbgLoginPage() {
 
                     {/* Mobile: Logo */}
                     <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white border border-slate-100 shadow-lg p-1">
-                            <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
-                        </div>
-                        <div>
-                            <span className="font-extrabold text-2xl text-slate-900 tracking-tight">SIGMA</span>
-                            <span className="text-amber-600 font-bold text-sm ml-2">MBG</span>
-                        </div>
+                        <Link href="/" className="flex items-center gap-3" aria-label="SIGMA MBG">
+                            <SigmaLogo variant="primary" className="h-9 w-auto object-contain" priority />
+                            <span className="text-amber-600 font-bold text-xs border-l border-slate-200 pl-3 tracking-widest uppercase font-mono">
+                                MBG
+                            </span>
+                        </Link>
                     </div>
 
                     <div className="mb-10">

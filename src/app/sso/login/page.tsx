@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getDefaultLandingByRole, isAllowedRedirect, type SigmaRole } from "@/lib/sso-utils";
@@ -108,15 +109,15 @@ const ModuleOrbitLight = () => {
             `}</style>
 
             {/* Center SIGMA Logo */}
-            <div className="absolute z-20 w-24 h-24 rounded-3xl bg-white border border-emerald-200/90 flex items-center justify-center shadow-xl shadow-emerald-200/60 p-3">
+            <div className="absolute z-20 w-24 h-24 rounded-3xl bg-white border border-cyan-200/90 flex items-center justify-center shadow-xl shadow-cyan-500/15 p-3.5">
                 <div className="relative w-full h-full">
-                    <Image src="/sigma_logo.png" alt="SIGMA" fill className="object-contain" priority />
+                    <SigmaLogo variant="mark" alt="SIGMA Core" fill className="object-contain" priority />
                 </div>
             </div>
 
             {/* Light Orbit Rings */}
-            <div className="absolute w-60 h-60 rounded-full border border-emerald-200/60" />
-            <div className="absolute w-72 h-72 rounded-full border border-emerald-100/80" />
+            <div className="absolute w-60 h-60 rounded-full border border-cyan-200/50" />
+            <div className="absolute w-72 h-72 rounded-full border border-cyan-100/70" />
 
             {/* Orbiting Modules */}
             {mounted && (
@@ -227,21 +228,8 @@ function SSOLoginContent() {
                 <div className="relative z-10 flex flex-col justify-between h-full p-12 xl:p-16 w-full">
                     {/* Top Logo */}
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm p-1.5 group-hover:border-emerald-300 transition-colors">
-                                <Image src="/sigma_logo.png" alt="SIGMA" fill className="object-contain" priority />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-2xl tracking-tight text-slate-900">SIGMA</span>
-                                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-md uppercase font-mono tracking-wider">
-                                        Ecosystem
-                                    </span>
-                                </div>
-                                <p className="text-xs font-medium text-slate-500">
-                                    Dinas Kesehatan Kabupaten Malang
-                                </p>
-                            </div>
+                        <Link href="/" className="flex items-center group" aria-label="SIGMA Ecosystem">
+                            <SigmaLogo variant="primary" className="h-10 w-auto object-contain" priority />
                         </Link>
                     </div>
 
@@ -293,14 +281,10 @@ function SSOLoginContent() {
                 <div className={`w-full max-w-md relative z-10 transition-all duration-500 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
 
                     {/* Mobile Logo */}
-                    <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-                        <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm p-1.5">
-                            <Image src="/sigma_logo.png" alt="SIGMA" fill className="object-contain" priority />
-                        </div>
-                        <div>
-                            <span className="font-black text-2xl text-slate-900 tracking-tight">SIGMA</span>
-                            <span className="text-emerald-700 font-bold text-xs ml-2 uppercase font-mono">Ecosystem</span>
-                        </div>
+                    <div className="lg:hidden flex items-center justify-center mb-8">
+                        <Link href="/" className="flex items-center" aria-label="SIGMA Ecosystem">
+                            <SigmaLogo variant="primary" className="h-10 w-auto object-contain" priority />
+                        </Link>
                     </div>
 
                     {/* Header Card */}

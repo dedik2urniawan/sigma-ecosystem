@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -217,18 +218,10 @@ export default function SSOModulesHubPage() {
                     <div className="flex items-center justify-between h-20">
                         {/* Logo & Title */}
                         <div className="flex items-center gap-3">
-                            <Link href="/" className="flex items-center gap-3 group">
-                                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm p-1.5 group-hover:border-emerald-300 transition-colors">
-                                    <Image src="/sigma_logo.png" alt="SIGMA" fill className="object-contain" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-extrabold text-xl tracking-tight text-slate-900">SIGMA</span>
-                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md uppercase font-mono tracking-wider">
-                                            Ecosystem
-                                        </span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 font-medium">
+                            <Link href="/" className="flex items-center gap-3 group" aria-label="SIGMA Ecosystem">
+                                <SigmaLogo variant="primary" className="h-9 sm:h-10 w-auto object-contain" priority />
+                                <div className="hidden sm:block border-l border-slate-200 pl-3">
+                                    <p className="text-[11px] text-slate-500 font-medium leading-tight">
                                         Single Sign-On • Portal Layanan Terpadu
                                     </p>
                                 </div>

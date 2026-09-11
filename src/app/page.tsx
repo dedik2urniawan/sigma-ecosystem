@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import SystemArchitectureSection from "@/components/SystemArchitectureSection";
 import "./globals.css"; // Ensure global styles are imported if not already contextually available
 
@@ -546,24 +547,13 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-white/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-3">
-              <div className="relative w-11 h-11 shadow-lg shadow-indigo-100 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-slate-100 p-1 group cursor-pointer hover:shadow-indigo-200 transition-shadow">
-                <Image
-                  src="/sigma_logo.png"
-                  alt="SIGMA Logo"
-                  fill
-                  className="object-contain group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="flex flex-col justify-center">
-                <h1 className="font-extrabold text-xl tracking-tight text-slate-900 leading-none">
-                  SIGMA
-                </h1>
-                <p className="text-[10px] text-indigo-600 font-bold tracking-[0.2em] uppercase mt-0.5 font-mono">
-                  ECOSYSTEM
-                </p>
-              </div>
-            </div>
+            <Link href="/" className="flex items-center group" aria-label="SIGMA Ecosystem">
+              <SigmaLogo
+                variant="primary"
+                className="h-9 md:h-10 w-auto object-contain"
+                priority
+              />
+            </Link>
             <div className="hidden md:flex items-center gap-8">
               <a href="#framework" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Framework</a>
               <a href="#architecture" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Arsitektur</a>
@@ -902,16 +892,11 @@ export default function Home() {
       <footer className="bg-white border-t border-slate-200 pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col items-center">
 
-          <div className="flex items-center gap-3 mb-8">
-            <div className="relative w-11 h-11 rounded-xl bg-white border border-slate-100 shadow-lg flex items-center justify-center overflow-hidden p-1">
-              <Image
-                src="/sigma_logo.png"
-                fill
-                className="object-contain"
-                alt="SIGMA Logo"
-              />
-            </div>
-            <span className="font-extrabold text-xl text-slate-900">SIGMA</span>
+          <div className="mb-8">
+            <SigmaLogo
+              variant="primary"
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           <p className="text-slate-500 text-sm text-center max-w-md mb-12">

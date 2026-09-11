@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 import SSOAuthBanner from "@/components/SSOAuthBanner";
 import ModuleSwitcher from "@/components/ModuleSwitcher";
 
@@ -421,12 +422,9 @@ export default function RCSLandingPage() {
             <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white/90 backdrop-blur-xl shadow-sm border-b border-slate-100/50" : "bg-transparent"}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-100 shadow-md p-1">
-                                <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-extrabold text-lg tracking-tight text-slate-900 leading-none">SIGMA</span>
+                        <Link href="/" className="flex items-center gap-3 group" aria-label="SIGMA RCS Dashboard">
+                            <SigmaLogo variant="primary" className="h-9 w-auto object-contain" priority />
+                            <div className="border-l border-slate-200 pl-3 flex flex-col">
                                 <span className="text-[9px] text-emerald-600 font-bold tracking-[0.2em] uppercase font-mono">RCS Dashboard</span>
                             </div>
                         </Link>
@@ -754,13 +752,8 @@ export default function RCSLandingPage() {
             <footer className="bg-white border-t border-slate-200 py-12">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col items-center">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="relative w-10 h-10 rounded-xl bg-white border border-slate-100 shadow-md overflow-hidden p-1">
-                            <Image src="/sigma_logo.png" fill className="object-contain" alt="SIGMA Logo" />
-                        </div>
-                        <div>
-                            <span className="font-extrabold text-lg text-slate-900">SIGMA</span>
-                            <span className="text-emerald-600 font-bold text-sm ml-2">RCS</span>
-                        </div>
+                        <SigmaLogo variant="primary" className="h-9 w-auto object-contain" />
+                        <span className="text-emerald-600 font-bold text-sm border-l border-slate-200 pl-3">RCS</span>
                     </div>
 
                     <p className="text-slate-400 text-sm text-center max-w-md mb-8">

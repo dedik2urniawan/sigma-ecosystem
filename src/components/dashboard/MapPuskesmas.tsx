@@ -109,6 +109,20 @@ function MapZoomController({
         }
     }, [selectedPuskesmas, geojsonData, map, normalizeString]);
 
+    useEffect(() => {
+        const handleResize = () => {
+            map.invalidateSize();
+        };
+        window.addEventListener("resize", handleResize);
+        const timer = setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            clearTimeout(timer);
+        };
+    }, [map]);
+
     return null;
 }
 
@@ -209,17 +223,15 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
         [data, metric, normalizeString]
     );
 
-    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    // Safe cleanup on unmount for Leaflet container in React 19 / Fast Refresh
     useEffect(() => {
+        const container = containerRef.current;
         return () => {
-            if (mapRef.current) {
-                try {
-                    mapRef.current.remove();
-                } catch {
-                    // silent
-                }
-                mapRef.current = null;
+            if (container) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                delete (container as any)._leaflet_id;
             }
+            mapRef.current = null;
         };
     }, []);
 
@@ -235,14 +247,13 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
     }
 
     return (
-        <div className="relative">
+        <div className="relative w-full min-w-0">
             <div
                 ref={containerRef}
-                className="rounded-2xl overflow-hidden border border-slate-200"
+                className="rounded-2xl overflow-hidden border border-slate-200 w-full"
                 style={{ height: "500px" }}
             >
                 <MapContainer
-                    key={`map-pkm-${metric}-${selectedPuskesmas || 'all'}`}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}

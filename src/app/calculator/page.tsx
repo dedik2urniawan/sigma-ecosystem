@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import SigmaLogo from "@/components/SigmaLogo";
 import VisitorTracker from "./components/VisitorTracker";
 import SSOAuthBanner from "@/components/SSOAuthBanner";
 import ModuleSwitcher from "@/components/ModuleSwitcher";
@@ -119,15 +120,12 @@ export default function CalculatorPage() {
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
-                        <div className="flex items-center gap-3">
-                            <Link href="/" className="relative w-9 h-9 shadow-md rounded-xl overflow-hidden bg-white flex items-center justify-center border border-slate-100 p-1 hover:shadow-indigo-100 transition-shadow">
-                                <Image src="/sigma_logo.png" alt="SIGMA Logo" fill className="object-contain" />
-                            </Link>
-                            <div className="flex flex-col">
-                                <span className="font-extrabold text-base text-slate-900 leading-none">SIGMA</span>
+                        <Link href="/" className="flex items-center gap-3 group" aria-label="SIGMA Calculator">
+                            <SigmaLogo variant="primary" className="h-8 w-auto object-contain" priority />
+                            <div className="border-l border-slate-200 pl-3 flex flex-col">
                                 <span className="text-[9px] text-emerald-600 font-bold tracking-[0.2em] uppercase font-mono">Calculator</span>
                             </div>
-                        </div>
+                        </Link>
                         <Link
                             href="/"
                             className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors py-2 px-3 rounded-lg hover:bg-indigo-50"

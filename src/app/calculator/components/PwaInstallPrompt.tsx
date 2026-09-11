@@ -79,8 +79,8 @@ export default function PwaInstallPrompt() {
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm">
             <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-emerald-100 p-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
                 <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 border border-emerald-100">
-                        <img src="/sigma_logo.png" alt="SIGMA Logo" className="w-8 h-8 object-contain" />
+                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-200">
+                        <img src="/icons/icon-192x192.png" alt="SIGMA Icon" className="w-9 h-9 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-slate-900 text-sm">Install SIGMA Calculator</h4>

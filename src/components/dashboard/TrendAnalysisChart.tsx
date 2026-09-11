@@ -96,7 +96,7 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 w-full max-w-full min-w-0">
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
                     <span className="material-icons-round text-lg text-blue-500">show_chart</span>
@@ -107,7 +107,7 @@ export default function TrendAnalysisChart({ data, year }: TrendAnalysisProps) {
                 </div>
             </div>
 
-            <div className="h-[320px] w-full">
+            <div className="h-[320px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 15, right: 30, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

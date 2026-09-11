@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import SigmaLogo from "@/components/SigmaLogo";
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -23,25 +25,13 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-20 items-center">
                     {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200 overflow-hidden">
-                            <Image
-                                src="/sigma_logo.png"
-                                alt="SIGMA Logo"
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                            />
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="font-extrabold text-lg tracking-tight text-slate-900 leading-none">
-                                SIGMA
-                            </h1>
-                            <p className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mt-0.5">
-                                ECOSYSTEM
-                            </p>
-                        </div>
-                    </div>
+                    <Link href="/" className="flex items-center group py-1" aria-label="SIGMA Ecosystem">
+                        <SigmaLogo
+                            variant="primary"
+                            className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-[1.02]"
+                            priority
+                        />
+                    </Link>
 
                     {/* Desktop nav */}
                     <div className="hidden md:flex items-center gap-8">

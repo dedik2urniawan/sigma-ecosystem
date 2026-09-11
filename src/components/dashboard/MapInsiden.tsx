@@ -76,6 +76,7 @@ export default function MapInsiden({ data, label, selectedPuskesmas = null }: Ma
     const [geojsonData, setGeojsonData] = useState<any>(null);
     const mapRef = useRef<L.Map | null>(null);
     const geoJsonRef = useRef<L.GeoJSON | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         fetch("/puskesmas_fix.geojson")
@@ -167,17 +168,15 @@ export default function MapInsiden({ data, label, selectedPuskesmas = null }: Ma
         [data, label, normalizeString]
     );
 
-    // Cleanup leaflet map instance on unmount to prevent container reuse error
+    // Safe cleanup on unmount for Leaflet container in React 19 / Fast Refresh
     useEffect(() => {
+        const container = containerRef.current;
         return () => {
-            if (mapRef.current) {
-                try {
-                    mapRef.current.remove();
-                } catch {
-                    // silent
-                }
-                mapRef.current = null;
+            if (container) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                delete (container as any)._leaflet_id;
             }
+            mapRef.current = null;
         };
     }, []);
 
@@ -194,9 +193,8 @@ export default function MapInsiden({ data, label, selectedPuskesmas = null }: Ma
 
     return (
         <div className="relative">
-            <div className="rounded-2xl overflow-hidden border border-slate-200" style={{ height: "500px" }}>
+            <div ref={containerRef} className="rounded-2xl overflow-hidden border border-slate-200" style={{ height: "500px" }}>
                 <MapContainer
-                    key={`map-insiden-${label}-${selectedPuskesmas || 'all'}`}
                     center={DEFAULT_CENTER}
                     zoom={DEFAULT_ZOOM}
                     style={{ height: "100%", width: "100%", background: "#f1f5f9" }}

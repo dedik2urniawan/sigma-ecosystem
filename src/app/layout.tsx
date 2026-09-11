@@ -2,12 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#10b981",
+  themeColor: "#0062FF",
   width: "device-width",
   initialScale: 1,
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://sigma.malangkab.go.id"),
   title: "SIGMA Ecosystem - Aplikasi AI & Surveilans Kesehatan",
   description: "Aplikasi AI dan Sistem Informasi Kesehatan (SIGMA Ecosystem) untuk surveilans presisi, monitoring stunting, dan analisis big data kesehatan terintegrasi dengan Machine Learning.",
   keywords: [
@@ -35,10 +36,10 @@ export const metadata: Metadata = {
     siteName: "SIGMA Ecosystem",
     images: [
       {
-        url: "/sigma_logo.png",
-        width: 800,
-        height: 600,
-        alt: "SIGMA Ecosystem Logo",
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SIGMA Ecosystem - AI & Health Technology",
       },
     ],
   },
@@ -46,12 +47,18 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SIGMA Ecosystem - Aplikasi AI & Surveilans Kesehatan",
     description: "Inovasi pelaporan stunting terintegrasi berbasis AI.",
-    images: ["/sigma_logo.png"],
+    images: ["/twitter-image.png"],
   },
   icons: {
-    icon: '/sigma_logo.png',
-    shortcut: '/sigma_logo.png',
-    apple: '/sigma_logo.png',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   manifest: "/manifest.json",
   appleWebApp: {

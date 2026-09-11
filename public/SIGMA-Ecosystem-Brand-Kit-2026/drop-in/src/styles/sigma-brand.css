@@ -1,0 +1,26 @@
+:root {
+  --sigma-blue-700: #0051f1;
+  --sigma-blue-600: #0062ff;
+  --sigma-cyan-500: #0a9ffb;
+  --sigma-cyan-400: #17d2fb;
+  --sigma-navy-900: #17274d;
+  --sigma-ice-50: #eff9ff;
+  --sigma-white: #ffffff;
+  --sigma-brand-gradient: linear-gradient(
+    135deg,
+    var(--sigma-blue-700) 0%,
+    var(--sigma-cyan-500) 52%,
+    var(--sigma-cyan-400) 100%
+  );
+}
+
+[data-theme="dark"] {
+  --sigma-surface: var(--sigma-navy-900);
+  --sigma-on-surface: var(--sigma-white);
+}
+
+[data-theme="light"] {
+  --sigma-surface: var(--sigma-ice-50);
+  --sigma-on-surface: var(--sigma-navy-900);
+}
+
