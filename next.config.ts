@@ -13,8 +13,8 @@ const withPWA = withPWAInit({
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline';
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' blob: data: https://*.supabase.co https://*.google.com https://*.googleusercontent.com https://unpkg.com https://*.tile.openstreetmap.org;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+  img-src 'self' blob: data: https://*.supabase.co https://*.google.com https://*.googleusercontent.com https://unpkg.com https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com;
   font-src 'self' https://fonts.gstatic.com data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://openrouter.ai https://*.tile.openstreetmap.org https://unpkg.com;
   frame-ancestors 'self';
