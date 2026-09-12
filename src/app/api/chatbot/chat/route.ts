@@ -176,13 +176,81 @@ export async function fetchSigmaContext(puskesmasFilter?: string): Promise<strin
 
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
+        // 1. Content-Type validation
+        const contentType = req.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            return Response.json(
+                { error: 'Format permintaan tidak valid. Header Content-Type harus application/json.' },
+                { status: 415 }
+            );
+        }
 
-        // Fetch real SIGMA data for RAG
-        const sigmaContext = await fetchSigmaContext();
+        let body: any;
+        try {
+            body = await req.json();
+        } catch {
+            return Response.json({ error: 'Payload JSON tidak valid.' }, { status: 400 });
+        }
+
+        const { messages, threadId, puskesmasFilter } = body;
+
+        // 2. Strict Input Schema Validation
+        if (!Array.isArray(messages) || messages.length === 0) {
+            return Response.json(
+                { error: 'Daftar pesan (messages) harus berupa array yang tidak kosong.' },
+                { status: 422 }
+            );
+        }
+
+        // Limit maximum context window to prevent memory / cost exhaustion attacks
+        if (messages.length > 40) {
+            return Response.json(
+                { error: 'Batas riwayat konteks terlampaui (maksimal 40 pesan).' },
+                { status: 422 }
+            );
+        }
+
+        const validRoles = new Set(['user', 'assistant', 'system']);
+        const sanitizedMessages: { role: string; content: string }[] = [];
+
+        for (const msg of messages) {
+            if (!msg || typeof msg !== 'object') {
+                return Response.json({ error: 'Format objek pesan tidak valid.' }, { status: 422 });
+            }
+            if (!validRoles.has(msg.role)) {
+                return Response.json({ error: `Peran pesan '${msg.role}' tidak dikenali.` }, { status: 422 });
+            }
+            if (typeof msg.content !== 'string' || !msg.content.trim()) {
+                return Response.json({ error: 'Konten pesan harus berupa teks dan tidak boleh kosong.' }, { status: 422 });
+            }
+            // Max character limit per message to protect against prompt injection & buffer flood
+            if (msg.content.length > 4000) {
+                return Response.json(
+                    { error: 'Karakter pesan terlalu panjang (maksimal 4.000 karakter per pesan).' },
+                    { status: 422 }
+                );
+            }
+            sanitizedMessages.push({
+                role: msg.role,
+                content: msg.content.trim(),
+            });
+        }
+
+        // Validate optional threadId
+        if (threadId && (typeof threadId !== 'string' || threadId.length > 64)) {
+            return Response.json({ error: 'Thread ID tidak valid.' }, { status: 422 });
+        }
+
+        // Validate optional puskesmasFilter
+        const safePuskesmas = (typeof puskesmasFilter === 'string' && puskesmasFilter.length < 50) 
+            ? puskesmasFilter.replace(/[^a-zA-Z0-9\s_-]/g, '') 
+            : undefined;
+
+        // 3. Fetch real SIGMA data for RAG with optional filter
+        const sigmaContext = await fetchSigmaContext(safePuskesmas);
         const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${sigmaContext}`;
 
-        // Initialize Gemini API
+        // 4. Initialize Gemini API
         const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
         if (!apiKey) {
@@ -190,8 +258,8 @@ export async function POST(req: Request) {
             return Response.json({ content: "Konfigurasi API Key tidak lengkap." }, { status: 500 });
         }
 
-        // Build Vertex AI Gemini API request (gemini-2.0-flash)
-        const geminiMessages = messages.map((m: any) => ({
+        // Build Vertex AI Gemini API request (gemini-3.1-flash-lite)
+        const geminiMessages = sanitizedMessages.map((m) => ({
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content }]
         }));
@@ -221,10 +289,9 @@ export async function POST(req: Request) {
             const errMsg = responseData.error?.message || 'Unknown error';
             console.error("Vertex AI Error:", errMsg);
 
-            // Should rarely happen on Vertex compared to Free Tier
             if (response.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED')) {
                 return Response.json({
-                    content: "⏳ **SIGMA Advisor sedang sibuk.** Batas Vertex AI tercapai.",
+                    content: "⏳ **SIGMA Advisor sedang sibuk.** Batas kuota AI tercapai. Silakan coba kembali dalam beberapa saat.",
                 }, { status: 200 });
             }
 
