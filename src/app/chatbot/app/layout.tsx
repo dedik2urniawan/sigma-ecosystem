@@ -13,11 +13,38 @@ function ChatbotAppLayoutInner({ children }: { children: React.ReactNode }) {
     const activeThreadId = searchParams.get("thread_id");
 
     const [user, setUser] = useState<any>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
     const [threads, setThreads] = useState<any[]>([]);
     const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Screen size listener for responsive drawer
+    useEffect(() => {
+        const checkBreakpoint = () => {
+            const desktop = window.innerWidth >= 1024;
+            setIsDesktop(desktop);
+            return desktop;
+        };
+
+        const desktop = checkBreakpoint();
+        setIsSidebarOpen(desktop);
+
+        const handleResize = () => {
+            const d = window.innerWidth >= 1024;
+            setIsDesktop(d);
+        };
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const handleCloseMobileDrawer = () => {
+        if (!isDesktop) {
+            setIsSidebarOpen(false);
+        }
+    };
 
     const fetchThreads = useCallback(async (userId: string) => {
         try {
@@ -161,186 +188,205 @@ function ChatbotAppLayoutInner({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex h-screen bg-slate-50/50 font-display text-slate-800 overflow-hidden selection:bg-purple-100 selection:text-purple-900">
-            {/* Sidebar Left: Chat History Drawer */}
-            <aside className={`${isSidebarOpen ? 'w-72' : 'w-0'} flex-shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200/80 bg-white/95 backdrop-blur-md flex flex-col relative z-20`}>
-                {isSidebarOpen && (
-                    <div className="flex flex-col h-full opacity-100 transition-opacity duration-300 w-72">
-                        {/* Header Sidebar */}
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
-                                    <span className="material-icons-round text-lg">smart_toy</span>
-                                </div>
-                                <div>
-                                    <h2 className="font-black text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-                                        SIGMA Advisor
-                                    </h2>
-                                    <p className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">AI Assistant Dinkes</p>
-                                </div>
+        <div className="flex h-screen bg-slate-50/50 font-display text-slate-800 overflow-hidden selection:bg-purple-100 selection:text-purple-900 relative">
+            {/* Mobile Backdrop Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+                    onClick={() => setIsSidebarOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+
+            {/* Sidebar Left: Chat History Drawer (Overlay on Mobile, Static Side-by-Side on Desktop) */}
+            <aside 
+                className={`
+                    fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-white/95 backdrop-blur-md border-r border-slate-200/90 shadow-2xl flex flex-col transition-all duration-300 ease-in-out
+                    lg:static lg:shadow-none lg:z-20
+                    ${isSidebarOpen 
+                        ? 'translate-x-0 lg:w-72 lg:opacity-100' 
+                        : '-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden lg:border-none lg:opacity-0 pointer-events-none lg:pointer-events-auto'
+                    }
+                `}
+            >
+                <div className="flex flex-col h-full w-full select-none overflow-hidden">
+                    {/* Header Sidebar */}
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
+                                <span className="material-icons-round text-lg">smart_toy</span>
                             </div>
-                            <button
-                                onClick={() => setIsSidebarOpen(false)}
-                                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                                title="Tutup Menu Riwayat"
+                            <div>
+                                <h2 className="font-black text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
+                                    SIGMA Advisor
+                                </h2>
+                                <p className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider">AI Assistant Dinkes</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            title="Tutup Menu Riwayat"
+                        >
+                            <span className="material-icons-round text-lg hidden lg:block">view_sidebar</span>
+                            <span className="material-icons-round text-xl lg:hidden block">close</span>
+                        </button>
+                    </div>
+
+                    {/* New Chat Action */}
+                    <div className="p-3 shrink-0">
+                        <Link 
+                            href="/chatbot/app" 
+                            onClick={handleCloseMobileDrawer}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all group"
+                        >
+                            <span className="material-icons-round text-base group-hover:rotate-90 transition-transform duration-300">add</span>
+                            <span>Obrolan Baru</span>
+                        </Link>
+                    </div>
+
+                    {/* Search Filter if threads exist */}
+                    {threads.length > 5 && (
+                        <div className="px-3 pb-2 shrink-0">
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                                <span className="material-icons-round text-slate-400 text-sm">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Cari obrolan..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="bg-transparent text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none w-full"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Thread List */}
+                    <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 custom-scrollbar min-h-0">
+                        <div className="flex items-center justify-between px-2 pt-2 pb-1">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 font-mono tracking-wider">Riwayat Sesi</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{filteredThreads.length} Sesi</span>
+                        </div>
+
+                        {filteredThreads.length === 0 ? (
+                            <div className="p-6 text-center">
+                                <span className="material-icons-round text-3xl text-slate-300 mb-1">chat_bubble_outline</span>
+                                <p className="text-xs text-slate-400 font-medium">Belum ada obrolan</p>
+                            </div>
+                        ) : (
+                            filteredThreads.map((thread) => {
+                                const isActive = activeThreadId === thread.id;
+                                return (
+                                    <div 
+                                        key={thread.id} 
+                                        className={`group relative flex items-center justify-between rounded-xl transition-all ${
+                                            isActive 
+                                                ? 'bg-purple-50/80 border border-purple-200/90 text-purple-900 shadow-2xs font-semibold' 
+                                                : 'hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 border border-transparent'
+                                        }`}
+                                    >
+                                        <Link
+                                            href={`/chatbot/app?thread_id=${thread.id}`}
+                                            onClick={handleCloseMobileDrawer}
+                                            className="flex items-center gap-2.5 px-3 py-2 text-xs flex-1 min-w-0"
+                                        >
+                                            <span className={`material-icons-round text-[16px] shrink-0 ${isActive ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-500'}`}>
+                                                chat
+                                            </span>
+                                            {editingThreadId === thread.id ? (
+                                                <input
+                                                    autoFocus
+                                                    type="text"
+                                                    value={editingTitle}
+                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    onBlur={() => submitRename(thread.id)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') submitRename(thread.id);
+                                                        if (e.key === 'Escape') setEditingThreadId(null);
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-full text-xs font-medium text-slate-800 bg-white border border-purple-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-purple-200"
+                                                />
+                                            ) : (
+                                                <span className="truncate text-xs">{thread.title}</span>
+                                            )}
+                                        </Link>
+                                        <div className="opacity-0 group-hover:opacity-100 pr-1.5 flex items-center gap-0.5 transition-opacity">
+                                            <button
+                                                onClick={(e) => startRename(e, thread)}
+                                                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all"
+                                                title="Ganti Nama"
+                                            >
+                                                <span className="material-icons-round text-[13px]">edit</span>
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteThread(e, thread.id)}
+                                                className="p-1 text-slate-400 hover:text-red-500 hover:bg-white rounded-md transition-all"
+                                                title="Hapus Obrolan"
+                                            >
+                                                <span className="material-icons-round text-[13px]">delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {/* Profiling / User Card */}
+                    <div className="p-3 border-t border-slate-100 bg-white shrink-0">
+                        <div className="p-2 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                                {user.email?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">{user.email}</p>
+                                <p className="text-[10px] text-emerald-600 font-mono font-medium flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Terhubung SSO
+                                </p>
+                            </div>
+                            <button 
+                                onClick={handleLogout} 
+                                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" 
+                                title="Logout"
                             >
-                                <span className="material-icons-round text-lg">view_sidebar</span>
+                                <span className="material-icons-round text-base">logout</span>
                             </button>
                         </div>
-
-                        {/* New Chat Action */}
-                        <div className="p-3">
-                            <Link 
-                                href="/chatbot/app" 
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all group"
-                            >
-                                <span className="material-icons-round text-base group-hover:rotate-90 transition-transform duration-300">add</span>
-                                <span>Obrolan Baru</span>
-                            </Link>
-                        </div>
-
-                        {/* Search Filter if threads exist */}
-                        {threads.length > 5 && (
-                            <div className="px-3 pb-2">
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                                    <span className="material-icons-round text-slate-400 text-sm">search</span>
-                                    <input
-                                        type="text"
-                                        placeholder="Cari obrolan..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="bg-transparent text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none w-full"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Thread List */}
-                        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 custom-scrollbar">
-                            <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 font-mono tracking-wider">Riwayat Sesi</span>
-                                <span className="text-[10px] text-slate-400 font-mono">{filteredThreads.length} Sesi</span>
-                            </div>
-
-                            {filteredThreads.length === 0 ? (
-                                <div className="p-6 text-center">
-                                    <span className="material-icons-round text-3xl text-slate-300 mb-1">chat_bubble_outline</span>
-                                    <p className="text-xs text-slate-400 font-medium">Belum ada obrolan</p>
-                                </div>
-                            ) : (
-                                filteredThreads.map((thread) => {
-                                    const isActive = activeThreadId === thread.id;
-                                    return (
-                                        <div 
-                                            key={thread.id} 
-                                            className={`group relative flex items-center justify-between rounded-xl transition-all ${
-                                                isActive 
-                                                    ? 'bg-purple-50/80 border border-purple-200/90 text-purple-900 shadow-2xs font-semibold' 
-                                                    : 'hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 border border-transparent'
-                                            }`}
-                                        >
-                                            <Link
-                                                href={`/chatbot/app?thread_id=${thread.id}`}
-                                                className="flex items-center gap-2.5 px-3 py-2 text-xs flex-1 min-w-0"
-                                            >
-                                                <span className={`material-icons-round text-[16px] shrink-0 ${isActive ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-500'}`}>
-                                                    chat
-                                                </span>
-                                                {editingThreadId === thread.id ? (
-                                                    <input
-                                                        autoFocus
-                                                        type="text"
-                                                        value={editingTitle}
-                                                        onChange={(e) => setEditingTitle(e.target.value)}
-                                                        onBlur={() => submitRename(thread.id)}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') submitRename(thread.id);
-                                                            if (e.key === 'Escape') setEditingThreadId(null);
-                                                        }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="w-full text-xs font-medium text-slate-800 bg-white border border-purple-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-purple-200"
-                                                    />
-                                                ) : (
-                                                    <span className="truncate text-xs">{thread.title}</span>
-                                                )}
-                                            </Link>
-                                            <div className="opacity-0 group-hover:opacity-100 pr-1.5 flex items-center gap-0.5 transition-opacity">
-                                                <button
-                                                    onClick={(e) => startRename(e, thread)}
-                                                    className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all"
-                                                    title="Ganti Nama"
-                                                >
-                                                    <span className="material-icons-round text-[13px]">edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteThread(e, thread.id)}
-                                                    className="p-1 text-slate-400 hover:text-red-500 hover:bg-white rounded-md transition-all"
-                                                    title="Hapus Obrolan"
-                                                >
-                                                    <span className="material-icons-round text-[13px]">delete</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-
-                        {/* Profiling / User Card */}
-                        <div className="p-3 border-t border-slate-100 bg-white">
-                            <div className="p-2 rounded-2xl bg-slate-50 border border-slate-200/70 flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
-                                    {user.email?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-slate-800 truncate">{user.email}</p>
-                                    <p className="text-[10px] text-emerald-600 font-mono font-medium flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        Terhubung SSO
-                                    </p>
-                                </div>
-                                <button 
-                                    onClick={handleLogout} 
-                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" 
-                                    title="Logout"
-                                >
-                                    <span className="material-icons-round text-base">logout</span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
-                )}
+                </div>
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col relative bg-white overflow-hidden">
+            <main className="flex-1 flex flex-col relative bg-white overflow-hidden min-w-0">
                 {/* Header Navbar — High Z-Index to prevent clipping */}
-                <header className="h-16 border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 bg-white/95 backdrop-blur-md z-40 sticky top-0">
-                    <div className="flex items-center gap-3">
-                        {!isSidebarOpen && (
+                <header className="h-14 sm:h-16 border-b border-slate-100 flex items-center justify-between px-3 sm:px-6 bg-white/95 backdrop-blur-md z-30 sticky top-0">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        {(!isSidebarOpen || !isDesktop) && (
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                                className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0"
                                 title="Buka Riwayat Percakapan"
                             >
                                 <span className="material-icons-round text-xl">menu</span>
                             </button>
                         )}
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xs">
+                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
                                 <span className="material-icons-round text-sm">smart_toy</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="font-extrabold text-slate-900 text-sm tracking-tight">SIGMA Advisor</h1>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-purple-50 text-purple-700 border border-purple-200 hidden sm:inline-flex items-center gap-1">
+                            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                <h1 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">SIGMA Advisor</h1>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-purple-50 text-purple-700 border border-purple-200 hidden md:inline-flex items-center gap-1 shrink-0">
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                                    Gemini 3.1 Flash-Lite
+                                    Sigma Ai Model 2.0
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <SSOModuleDropdown align="right" />
                     </div>
                 </header>

@@ -89,12 +89,12 @@ export default function SSOModuleDropdown({
     const isDark = theme === "dark";
 
     const defaultBtnClass = isDark
-        ? `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all ${
+        ? `flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold font-mono transition-all ${
             dropdownOpen
                 ? "bg-white/20 text-white border border-white/30 shadow-md shadow-indigo-500/20"
                 : "bg-white/5 text-slate-200 border border-white/10 hover:bg-white/10 hover:text-white"
         }`
-        : `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all ${
+        : `flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold font-mono transition-all ${
             dropdownOpen
                 ? "bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 shadow-2xs"
@@ -109,7 +109,8 @@ export default function SSOModuleDropdown({
                 title="Pilih Layanan Modul SIGMA"
             >
                 <span className="material-icons-round text-base text-emerald-600">grid_view</span>
-                <span>Semua Modul</span>
+                <span className="hidden sm:inline">Semua Modul</span>
+                <span className="sm:hidden text-xs">Modul</span>
                 <span
                     className={`material-icons-round text-sm transition-transform duration-200 ${
                         dropdownOpen ? "rotate-180" : ""
@@ -124,7 +125,7 @@ export default function SSOModuleDropdown({
                 <div
                     className={`absolute ${
                         align === "right" ? "right-0" : "left-0"
-                    } mt-2.5 w-84 sm:w-96 bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[9999] text-left ring-1 ring-slate-900/5`}
+                    } mt-2.5 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[9999] text-left ring-1 ring-slate-900/5`}
                 >
                     {/* Header */}
                     <div className="px-5 py-3.5 bg-gradient-to-r from-slate-50 to-emerald-50/40 border-b border-slate-100 flex items-center justify-between">
