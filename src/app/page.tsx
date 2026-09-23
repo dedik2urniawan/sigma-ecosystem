@@ -592,7 +592,7 @@ export default function Home() {
               <h1 className="sr-only">Sigma Ecosystem - Satu Data Cegah Stunting</h1>
               <div className="relative w-full max-w-[520px] sm:max-w-[700px] md:max-w-[840px] lg:max-w-[940px] px-2">
                 <Image
-                  src="/qq.png"
+                  src="/images/branding/hero-sigma-wordmark.png"
                   alt="Sigma Ecosystem - Satu Data Cegah Stunting"
                   width={4601}
                   height={788}
