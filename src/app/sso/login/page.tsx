@@ -410,8 +410,16 @@ function SSOLoginContent() {
         setError("");
         setIsLoading(true);
 
+        const inputIdentifier = email.trim().toLowerCase();
+        const normalizedEmail = inputIdentifier.includes("@")
+            ? inputIdentifier
+            : `${inputIdentifier}@dinkes.go.id`;
+
         try {
-            const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email: normalizedEmail,
+                password,
+            });
 
             if (authError) {
                 if (authError.message.includes("Invalid login")) {
@@ -467,7 +475,7 @@ function SSOLoginContent() {
                 {/* ─── Top Left: Brand Header ─── */}
                 <div className="relative z-10 flex items-center justify-between">
                     <Link href="/" className="flex items-center group transition-transform hover:scale-[1.02]" aria-label="SIGMA Ecosystem">
-                        <SigmaLogo variant="white" className="h-10 w-auto object-contain drop-shadow-md" priority />
+                        <SigmaLogo variant="navbar" tone="white" className="h-10 w-auto object-contain drop-shadow-md" priority />
                     </Link>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-bold tracking-wide backdrop-blur-md">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -555,7 +563,7 @@ function SSOLoginContent() {
                     {/* Mobile Only Header Logo */}
                     <div className="lg:hidden flex flex-col items-center justify-center mb-8">
                         <Link href="/" className="flex items-center mb-3" aria-label="SIGMA Ecosystem">
-                            <SigmaLogo variant="primary" className="h-10 w-auto object-contain" priority />
+                            <SigmaLogo variant="navbar" tone="color" className="h-10 w-auto object-contain" priority />
                         </Link>
                         <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                             UNIFIED SSO GATEWAY
@@ -608,21 +616,21 @@ function SSOLoginContent() {
                             {/* Email Field */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 font-mono">
-                                    Alamat Email
+                                    Alamat Email / Username
                                 </label>
                                 <div className="relative group">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                         <span className="material-icons-round text-slate-400 text-lg group-focus-within:text-emerald-600 transition-colors">
-                                            mail
+                                            person
                                         </span>
                                     </div>
                                     <input
-                                        type="email"
+                                        type="text"
                                         value={email}
                                         onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                                        placeholder="nama@dinkes.go.id"
+                                        placeholder="nama@dinkes.go.id atau username"
                                         required
-                                        autoComplete="email"
+                                        autoComplete="username"
                                         className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all text-sm font-medium"
                                     />
                                 </div>

@@ -1,0 +1,13 @@
+SIGMA Ecosystem Brand Colors 2026
+
+Sigma Blue (Primary)     #0062FF
+Deep Blue                #0051F1
+Digital Cyan             #0A9FFB
+Health Cyan              #17D2FB
+Sigma Navy               #17274D
+Ice Surface              #EFF9FF
+White                    #FFFFFF
+
+Primary gradient:
+linear-gradient(135deg, #0051F1 0%, #0A9FFB 52%, #17D2FB 100%)
+

@@ -284,8 +284,14 @@ function ChatbotAppContent() {
                     <div className="my-auto py-6 sm:py-10 flex flex-col items-center text-center animate-in fade-in duration-300">
                         {/* Glowing Bot Avatar */}
                         <div className="relative mb-5 sm:mb-6">
-                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-teal-500 flex items-center justify-center text-white shadow-xl shadow-purple-500/25 ring-4 ring-purple-100/60">
-                                <span className="material-icons-round text-2xl sm:text-3xl">psychology</span>
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-white border border-teal-200/80 shadow-xl shadow-teal-500/15 p-2 flex items-center justify-center ring-4 ring-teal-100/60">
+                                <Image
+                                    src="/images/branding/avatar-ai-128.png"
+                                    alt="SIGMA Advisor AI"
+                                    width={72}
+                                    height={72}
+                                    className="w-full h-full object-contain"
+                                />
                             </div>
                             <span className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold" title="Online">
                                 ✓
@@ -338,8 +344,14 @@ function ChatbotAppContent() {
                                 >
                                     {/* Assistant Avatar */}
                                     {!isUser && (
-                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0 mt-1 ring-2 ring-purple-100">
-                                            <span className="material-icons-round text-sm sm:text-base">smart_toy</span>
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white border border-teal-200/80 shadow-xs shrink-0 mt-1 p-0.5 flex items-center justify-center ring-2 ring-teal-100/60">
+                                            <Image
+                                                src="/images/branding/avatar-ai-128.png"
+                                                alt="SIGMA Advisor AI"
+                                                width={32}
+                                                height={32}
+                                                className="w-full h-full object-contain rounded-lg"
+                                            />
                                         </div>
                                     )}
 
@@ -397,8 +409,14 @@ function ChatbotAppContent() {
                         {/* Loading Indicator Bubble */}
                         {isLoading && (
                             <div className="flex gap-2 sm:gap-3.5 justify-start">
-                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0 ring-2 ring-purple-100">
-                                    <span className="material-icons-round text-sm sm:text-base">smart_toy</span>
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white border border-teal-200/80 shadow-xs shrink-0 p-0.5 ring-2 ring-teal-100/60 flex items-center justify-center">
+                                    <Image
+                                        src="/images/branding/avatar-ai-128.png"
+                                        alt="SIGMA Advisor AI"
+                                        width={32}
+                                        height={32}
+                                        className="w-full h-full object-contain rounded-lg"
+                                    />
                                 </div>
                                 <div className="bg-white border border-slate-200/90 rounded-2xl rounded-tl-xs px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm flex items-center gap-2.5 sm:gap-3">
                                     <div className="flex gap-1.5 shrink-0">

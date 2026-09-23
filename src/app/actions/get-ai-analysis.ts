@@ -67,40 +67,27 @@ export async function generateHealthAnalysis(context: AnalysisContext) {
       Output in Bahasa Indonesia.
     `;
 
-        const aiModel = 'gemini-3.1-flash-lite';
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Asisten Analis Kebijakan Kesehatan." }] },
-                contents: [{ role: "user", parts: [{ text: fullSystemPrompt }] }],
+        const { generateGeminiContentWithFallback } = await import("@/lib/gemini");
+        const result = await generateGeminiContentWithFallback(
+            [{ role: "user", parts: [{ text: fullSystemPrompt }] }],
+            {
+                systemInstruction: "Anda adalah SIGMA Advisor, Asisten Analis Kebijakan Kesehatan.",
                 generationConfig: {
                     temperature: 0.3,
                     topP: 0.8,
-                    maxOutputTokens: 1024,
-                }
-            }),
-        });
-
-        const responseData = await response.json();
-
-        if (!response.ok || responseData.error) {
-            const errMsg = responseData.error?.message || 'Unknown error';
-            console.error("Vertex AI Error:", errMsg);
-
-            if (response.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED')) {
-                return { success: false, error: "⏳ **SIGMA Advisor sedang sibuk.** Batas Vertex AI tercapai." };
+                    maxOutputTokens: 3500,
+                },
             }
+        );
 
-            return { success: false, error: "Layanan Vertex AI tidak tersedia: " + errMsg };
+        if (!result.success || !result.text) {
+            return {
+                success: false,
+                error: result.error || "Layanan AI sedang padat. Silakan coba lagi.",
+            };
         }
 
-        const aiText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respons dari AI.";
-        return { success: true, data: aiText };
+        return { success: true, data: result.text, modelUsed: result.modelUsed };
 
     } catch (error: any) {
         console.error("=== API ANALYSIS ERROR ===", error.message);

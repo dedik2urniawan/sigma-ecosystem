@@ -2,26 +2,28 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#0062FF",
+  themeColor: "#0B737A",
   width: "device-width",
   initialScale: 1,
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://sigma.malangkab.go.id"),
-  title: "SIGMA Ecosystem - Aplikasi AI & Surveilans Kesehatan",
-  description: "Aplikasi AI dan Sistem Informasi Kesehatan (SIGMA Ecosystem) untuk surveilans presisi, monitoring stunting, dan analisis big data kesehatan terintegrasi dengan Machine Learning.",
+  title: "SIGMA Ecosystem — Satu Data Cegah Stunting",
+  description: "Aplikasi AI dan Sistem Informasi Kesehatan (SIGMA Ecosystem) Dinas Kesehatan Kabupaten Malang untuk surveilans gizi presisi, monitoring stunting, dan analisis data kesehatan terintegrasi.",
   keywords: [
-    "Aplikasi AI",
+    "SIGMA Ecosystem",
+    "Satu Data Cegah Stunting",
+    "Aplikasi AI Kesehatan",
     "Aplikasi Stunting",
-    "AI Kesehatan",
-    "Aplikasi Surveilans Kesehatan",
-    "Sistem Informasi Kesehatan",
+    "Surveilans Gizi",
+    "Dinas Kesehatan Kabupaten Malang",
     "Platform Analitik Gizi",
     "Machine Learning Stunting",
     "Dashboard Kesehatan Digital",
-    "Integrasi Data Kesehatan",
-    "Inovasi Pelayanan Kesehatan",
+    "SIGMA MBG",
+    "SIGMA RCS",
+    "SIGMA PKMK",
   ],
   authors: [{ name: "Dinas Kesehatan Kabupaten Malang" }],
   creator: "SIGMA Dev Team",
@@ -31,40 +33,42 @@ export const metadata: Metadata = {
     type: "website",
     locale: "id_ID",
     url: "https://sigma.malangkab.go.id",
-    title: "SIGMA Ecosystem - Aplikasi AI Surveilans Kesehatan & Stunting",
-    description: "Inovasi pelaporan stunting terintegrasi dan platform analitik big data kesehatan dengan Machine Learning.",
+    title: "SIGMA Ecosystem — Satu Data Cegah Stunting | Kabupaten Malang",
+    description: "Integrasi layanan gizi, analitik data, dan kecerdasan buatan untuk percepatan penurunan stunting Kabupaten Malang.",
     siteName: "SIGMA Ecosystem",
     images: [
       {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "SIGMA Ecosystem - AI & Health Technology",
+        alt: "SIGMA Ecosystem - Satu Data Cegah Stunting",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SIGMA Ecosystem - Aplikasi AI & Surveilans Kesehatan",
-    description: "Inovasi pelaporan stunting terintegrasi berbasis AI.",
+    title: "SIGMA Ecosystem — Satu Data Cegah Stunting | Kabupaten Malang",
+    description: "Integrasi layanan gizi, analitik data, dan kecerdasan buatan Dinas Kesehatan Kabupaten Malang.",
     images: ["/twitter-image.png"],
   },
   icons: {
     icon: [
+      { url: '/icons/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico' },
       { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
     ],
     shortcut: '/favicon.ico',
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SIGMA Calculator",
+    title: "SIGMA Ecosystem",
   },
 };
 
@@ -87,6 +91,11 @@ const jsonLd = {
     "Dashboard Kesehatan Digital"
   ]
 };
+
+import { AccessibilityProvider } from "@/context/AccessibilityContext";
+import SkipToContent from "@/components/accessibility/SkipToContent";
+import LiveAnnouncer from "@/components/accessibility/LiveAnnouncer";
+import AccessibilityToolbar from "@/components/accessibility/AccessibilityToolbar";
 
 export default function RootLayout({
   children,
@@ -121,7 +130,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen bg-[#f8fafc] text-slate-800">
-        {children}
+        <AccessibilityProvider>
+          <SkipToContent />
+          <LiveAnnouncer />
+          {children}
+          <AccessibilityToolbar />
+        </AccessibilityProvider>
       </body>
     </html>
   );

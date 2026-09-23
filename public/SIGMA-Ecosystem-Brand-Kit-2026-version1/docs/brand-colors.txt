@@ -1,0 +1,12 @@
+Nilai representatif dari logo bergradasi; bukan palet brand resmi terpisah. Token UI merupakan usulan.
+sampled_logo.teal = #21AFA9
+sampled_logo.deep_teal = #0B6268
+sampled_logo.cyan = #00A7C5
+sampled_logo.mint = #4BBBBD
+sampled_logo.purple = #876A96
+sampled_logo.wordmark_black = #000000
+suggested_ui.primary = #0B737A
+suggested_ui.surface = #F3FAF9
+suggested_ui.dark = #0F172A
+suggested_ui.text = #183B45
+suggested_ui.border = #C7E8E4

@@ -54,30 +54,20 @@ Di bagian paling bawah, tambahkan *disclaimer* berikut persis seperti ini:
 *"⚠️ **Disclaimer Medis:** Kalkulasi ini dihasilkan oleh AI berdasarkan pedoman standar. Keputusan medis, dosis final, dan tata laksana klinis **wajib** dikonsultasikan dengan Dokter Spesialis Anak atau Ahli Gizi Terdaftar yang memeriksa kondisi klinis pasien secara langsung."*
         `;
 
-        const aiModel = 'gemini-3.1-flash-lite';
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
+        const { generateGeminiContentWithFallback } = await import("@/lib/gemini");
+        const result = await generateGeminiContentWithFallback(
+            [{ role: "user", parts: [{ text: promptText }] }],
+            {
+                systemInstruction: "Anda adalah SIGMA Advisor, Clinical Pediatric Dietitian System.",
+                generationConfig: { temperature: 0.2, topP: 0.8, maxOutputTokens: 3000 }
+            }
+        );
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Clinical Pediatric Dietitian System." }] },
-                contents: [{ role: "user", parts: [{ text: promptText }] }],
-                generationConfig: { temperature: 0.2, topP: 0.8, maxOutputTokens: 1024 }
-            }),
-        });
-
-        const responseData = await response.json();
-
-        if (!response.ok || responseData.error) {
-            console.error("Vertex AI Error:", responseData.error);
-            return { success: false, error: "Gagal memproses resep dari Vertex AI." };
+        if (!result.success || !result.text) {
+            return { success: false, error: result.error || "Gagal memproses resep dari AI." };
         }
 
-        const aiText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
-        return { success: true, data: aiText };
+        return { success: true, data: result.text };
 
     } catch (error: any) {
         console.error("=== PKMK PRESCRIPTION ERROR ===", error.message);

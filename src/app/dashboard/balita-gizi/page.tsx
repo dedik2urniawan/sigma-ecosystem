@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { RefreshCw } from "lucide-react";
 import ComingSoon from "@/components/dashboard/ComingSoon";
 import DataQualityDashboard from "./components/DataQualityDashboard";
 
@@ -19,8 +20,12 @@ export default function BalitaGiziPage() {
 
     // Dynamic last updated from data_balita_gizi
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-    useEffect(() => {
-        async function fetchLastUpdated() {
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    const fetchLastUpdated = useCallback(async () => {
+        setLoading(true);
+        try {
             const { data } = await supabase
                 .from('data_balita_gizi')
                 .select('uploaded_at')
@@ -28,9 +33,17 @@ export default function BalitaGiziPage() {
                 .limit(1)
                 .single();
             if (data?.uploaded_at) setLastUpdated(data.uploaded_at);
+            setRefreshKey(prev => prev + 1);
+        } catch (err) {
+            console.error("Error fetching last updated for balita-gizi:", err);
+        } finally {
+            setLoading(false);
         }
-        fetchLastUpdated();
     }, []);
+
+    useEffect(() => {
+        fetchLastUpdated();
+    }, [fetchLastUpdated]);
 
     return (
         <div className="space-y-6">
@@ -54,14 +67,14 @@ export default function BalitaGiziPage() {
                                     Data terakhir diperbarui:{" "}
                                     <span className="font-semibold text-slate-600">
                                         {new Date(lastUpdated).toLocaleDateString("id-ID", {
-                                            day: "numeric",
-                                            month: "long",
-                                            year: "numeric",
+                                             day: "numeric",
+                                             month: "long",
+                                             year: "numeric",
                                         })}{" "}
                                         pukul{" "}
                                         {new Date(lastUpdated).toLocaleTimeString("id-ID", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
+                                             hour: "2-digit",
+                                             minute: "2-digit",
                                         })}
                                     </span>
                                 </span>
@@ -71,6 +84,15 @@ export default function BalitaGiziPage() {
                         </div>
                     </div>
                 </div>
+
+                <button
+                    onClick={fetchLastUpdated}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                    <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? "animate-spin" : ""}`} />
+                    <span>Muat Ulang</span>
+                </button>
             </div>
 
             {/* Main Tabs Selection */}
@@ -101,7 +123,7 @@ export default function BalitaGiziPage() {
 
             {/* Content Area */}
             {mainTab === "kualitas" ? (
-                <DataQualityDashboard />
+                <DataQualityDashboard key={`kualitas-${refreshKey}`} />
             ) : (
                 <div className="space-y-6">
                     {/* Sub Tabs for Indikator */}
@@ -128,15 +150,15 @@ export default function BalitaGiziPage() {
                     </div>
 
                     {indikatorSubTab === "pemantauan" ? (
-                        <GrowthAnalysisDashboard />
+                        <GrowthAnalysisDashboard key={`pemantauan-${refreshKey}`} />
                     ) : indikatorSubTab === "masalah_gizi" ? (
-                        <NutritionIssuesDashboard />
+                        <NutritionIssuesDashboard key={`masalah_gizi-${refreshKey}`} />
                     ) : indikatorSubTab === "asi" ? (
-                        <AsiMpasiDashboard />
+                        <AsiMpasiDashboard key={`asi-${refreshKey}`} />
                     ) : indikatorSubTab === "suplemen" ? (
-                        <SuplemenDashboard />
+                        <SuplemenDashboard key={`suplemen-${refreshKey}`} />
                     ) : (
-                        <TatalaksanaDashboard />
+                        <TatalaksanaDashboard key={`tatalaksana-${refreshKey}`} />
                     )}
                 </div>
             )}

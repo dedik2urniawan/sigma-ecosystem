@@ -189,7 +189,8 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
             "Prov", "kabupaten", "kec", "puskesmas", "kelurahan", "posyandu", "rt", "rw", "alamat",
             "usia_saatukur", "Tgl_ukur", "bb", "tinggi", "cara_ukur", "LiLA",
             "BBU", "ZS_BBU", "TBU", "ZS_TBU", "BBTB", "ZS_BBTB",
-            "Naik_Berat_Badan", "Jml_Vit_A", "KPSP", "KIA", "Detail"
+            "Naik_Berat_Badan", "Jml_Vit_A", "KPSP", "KIA", "Detail",
+            "Kelas_Ibu_Balita", "MBG"
         ],
         ready: true,
         hasManage: true,
@@ -212,9 +213,45 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
         gradient: "from-purple-500 to-purple-700",
         tableName: "data_ibu_hamil",
         fileName: "data_ibu_hamil",
-        description: "Data indikator ibu hamil",
-        columns: [],
-        ready: false,
+        description: "Data indikator ibu hamil sesuai format SIGIZI KESGA 2026",
+        columns: [
+            "Tahun",
+            "Kab/Kota",
+            "Kec",
+            "Puskesmas",
+            "Kelurahan",
+            "Bulan",
+            "Jumlah ibu hamil periksa Hb sampai bulan ini",
+            "Anemia ringan (10-10.9 g/dl)",
+            "Anemia sedang (7-9.9 g/dl)",
+            "Anemia berat (< 7 g/dl)",
+            "Jumlah ibu hamil anemia sampai bulan ini",
+            "Jumlah ibu hamil anemia ringan yang mendapat TTD oral sampai bulan ini",
+            "Jumlah ibu hamil anemia sedang dan berat yang mendapatkan tata laksana di tingkat lanjutan sampai bulan ini",
+            "Jumlah Sasaran Ibu Hamil",
+            "Jumlah ibu hamil mendapat minimal 180 tablet MMS sampai bulan ini",
+            "Jumlah ibu hamil mendapat minimal 180 tablet TTD sampai bulan ini",
+            "Jumlah ibu hamil mendapat suplementasi gizi (minimal 180 tablet TTD dan MMS) sampai bulan ini",
+            "Jumlah ibu hamil mengonsumsi minimal 180 tablet MMS sampai bulan ini",
+            "Jumlah ibu hamil mengonsumsi minimal 180 tablet TTD sampai bulan ini",
+            "Jumlah ibu hamil mengonsumsi suplementasi gizi (minimal 180 tablet TTD dan MMS) sampai bulan ini",
+            "Jumlah ibu hamil diukur LILA dan/atau IMT sampai bulan ini",
+            "Jumlah ibu hamil risiko KEK/KEK sampai bulan ini",
+            "Jumlah sasaran bumil KEK ditatalaksana sampai bulan ini",
+            "Jumlah ibu hamil KEK mendapat makanan tambahan sampai bulan ini",
+            "Jumlah ibu hamil sampai bulan ini",
+            "Jumlah ibu bersalin sampai bulan ini",
+            "Jumlah ibu hamil yang mendapat pelayanan antenatal pertama (K1 akses) sampai bulan ini",
+            "Jumlah ibu hamil yang mendapat pelayanan antenatal pertama di Trimester 1 (K1 murni) sampai bulan ini",
+            "Jumlah ibu hamil ANC Trimester 1 dengan Dokter sampai bulan ini",
+            "Jumlah ibu hamil ANC Trimester 1 dengan USG sampai bulan ini",
+            "Jumlah ibu hamil ANC Trimester 3 dengan Dokter sampai bulan ini",
+            "Jumlah ibu hamil ANC Trimester 3 dengan USG sampai bulan ini",
+            "Jumlah ibu bersalin K6 sampai bulan ini",
+            "Jumlah ibu bersalin yang mendapat pemeriksaan 12T selama kehamilan sampai bulan ini",
+        ],
+        ready: true,
+        hasManage: true,
     },
     {
         id: "remaja-putri",
@@ -223,9 +260,40 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
         gradient: "from-pink-500 to-pink-700",
         tableName: "data_remaja_putri",
         fileName: "data_remaja_putri",
-        description: "Data indikator kesehatan remaja putri",
-        columns: [],
-        ready: false,
+        description: "Data indikator kesehatan remaja putri sesuai format SIGIZI KESGA 2026",
+        columns: [
+            "Tahun",
+            "Kab/Kota",
+            "Kec",
+            "Puskesmas",
+            "Kelurahan",
+            "Bulan",
+            "Jumlah sasaran remaja putri",
+            "Jumlah remaja putri di satuan pendidikan (SMP/MTs/Pesantren/sederajat dan SMA/SMK/MAK/Pesantren/sederajat) mendapat TTD sesuai standar",
+            "Jumlah remaja putri di satuan pendidikan (SMP/MTs/Pesantren/sederajat dan SMA/SMK/MAK/Pesantren/sederajat) mengonsumsi TTD sesuai standar",
+            "Jumlah remaja putri mendapat TTD sampai bulan ini — < 26 tablet",
+            "Jumlah remaja putri mendapat TTD sampai bulan ini — >= 26 tablet",
+            "Jumlah remaja putri mengonsumsi TTD sampai bulan ini — < 26 tablet",
+            "Jumlah remaja putri mengonsumsi TTD sampai bulan ini — >= 26 tablet",
+            "Jumlah remaja putri kelas 7 di satuan pendidikan sampai bulan ini",
+            "Jumlah remaja putri kelas 7 yang skrining anemia sampai bulan ini",
+            "Jumlah remaja putri kelas 10 di satuan pendidikan sampai bulan ini",
+            "Jumlah remaja putri kelas 10 yang skrining anemia sampai bulan ini",
+            "Jumlah remaja putri kelas 7 dan 10 di satuan pendidikan sampai bulan ini",
+            "Jumlah remaja putri kelas 7 dan 10 yang skrining anemia sampai bulan ini",
+            "Remaja putri kelas 7 teridentifikasi anemia — Anemia ringan (11–11.9 g/dl)",
+            "Remaja putri kelas 7 teridentifikasi anemia — Anemia sedang (8–10.9 g/dl)",
+            "Remaja putri kelas 7 teridentifikasi anemia — Anemia berat (<8 g/dl)",
+            "Jumlah remaja putri kelas 7 teridentifikasi anemia — Total",
+            "Remaja putri kelas 10 teridentifikasi anemia — Anemia ringan (11–11.9 g/dl)",
+            "Remaja putri kelas 10 teridentifikasi anemia — Anemia sedang (8–10.9 g/dl)",
+            "Remaja putri kelas 10 teridentifikasi anemia — Anemia berat (<8 g/dl)",
+            "Jumlah remaja putri kelas 10 teridentifikasi anemia — Total",
+            "Jumlah remaja putri kelas 7 dan 10 yang teridentifikasi anemia sampai bulan ini",
+            "Jumlah Rematri kelas 7 dan 10 mendapatkan tatalaksana anemia sampai bulan ini",
+        ],
+        ready: true,
+        hasManage: true,
     },
 ];
 
@@ -383,6 +451,186 @@ const COLUMN_MAP: Record<string, string> = {
     "kpsp": "kpsp",
     "kia": "kia",
     "detail": "detail",
+    "mbg": "MBG",
+    "program_mbg": "MBG",
+    "kelas_ibu_balita": "Kelas_Ibu_Balita",
+    "kelas_ibu": "Kelas_Ibu_Balita",
+
+    // ── Data Ibu Hamil Mappings (SIGIZI KESGA 2026) ──
+    "kab/kota": "kab_kota",
+    "kab_kota": "kab_kota",
+    "kab": "kab_kota",
+    "kecamatan": "kecamatan",
+    "desa": "kelurahan",
+    "desa/kelurahan": "kelurahan",
+
+    // Hb & Anemia
+    "jumlah_ibu_hamil_periksa_hb_sampai_bulan_ini": "hb_checked",
+    "hb_checked": "hb_checked",
+    "anemia_ringan_(10-10.9_g/dl)": "anemia_mild",
+    "anemia_ringan_(10-10,9_g/dl)": "anemia_mild",
+    "anemia_ringan": "anemia_mild",
+    "anemia_mild": "anemia_mild",
+    "anemia_sedang_(7-9.9_g/dl)": "anemia_moderate",
+    "anemia_sedang_(7-9,9_g/dl)": "anemia_moderate",
+    "anemia_sedang": "anemia_moderate",
+    "anemia_moderate": "anemia_moderate",
+    "anemia_berat_(<_7_g/dl)": "anemia_severe",
+    "anemia_berat_(<7_g/dl)": "anemia_severe",
+    "anemia_berat": "anemia_severe",
+    "anemia_severe": "anemia_severe",
+    "jumlah_ibu_hamil_anemia_sampai_bulan_ini": "anemia_total_uploaded",
+    "anemia_total_uploaded": "anemia_total_uploaded",
+    "jumlah_ibu_hamil_anemia_ringan_yang_mendapat_ttd_oral_sampai_bulan_ini": "anemia_mild_ttd",
+    "anemia_ringan_mendapat_ttd_oral": "anemia_mild_ttd",
+    "anemia_mild_ttd": "anemia_mild_ttd",
+    "jumlah_ibu_hamil_anemia_sedang_dan_berat_yang_mendapatkan_tata_laksana_di_tingkat_lanjutan_sampai_bulan_ini": "anemia_modsev_advanced",
+    "anemia_sedang_dan_berat_yang_mendapatkan_tata_laksana_di_tingkat_lanjutan_sampai_bulan_ini": "anemia_modsev_advanced",
+    "anemia_sedang/berat_mendapat_tata_laksana_tingkat_lanjutan": "anemia_modsev_advanced",
+    "anemia_modsev_advanced": "anemia_modsev_advanced",
+
+    // Sasaran Ibu Hamil
+    "jumlah_sasaran_ibu_hamil": "target_pregnant",
+    "target_pregnant": "target_pregnant",
+
+    // Suplementasi Gizi
+    "jumlah_ibu_hamil_mendapat_minimal_180_tablet_mms_sampai_bulan_ini": "received_mms_180",
+    "received_mms_180": "received_mms_180",
+    "jumlah_ibu_hamil_mendapat_minimal_180_tablet_ttd_sampai_bulan_ini": "received_ttd_180",
+    "received_ttd_180": "received_ttd_180",
+    "jumlah_ibu_hamil_mendapat_suplementasi_gizi_(minimal_180_tablet_ttd_dan_mms)_sampai_bulan_ini": "received_supplement_total_uploaded",
+    "received_supplement_total_uploaded": "received_supplement_total_uploaded",
+    "jumlah_ibu_hamil_mengonsumsi_minimal_180_tablet_mms_sampai_bulan_ini": "consumed_mms_180",
+    "consumed_mms_180": "consumed_mms_180",
+    "jumlah_ibu_hamil_mengonsumsi_minimal_180_tablet_ttd_sampai_bulan_ini": "consumed_ttd_180",
+    "consumed_ttd_180": "consumed_ttd_180",
+    "jumlah_ibu_hamil_mengonsumsi_suplementasi_gizi_(minimal_180_tablet_ttd_dan_mms)_sampai_bulan_ini": "consumed_supplement_total_uploaded",
+    "consumed_supplement_total_uploaded": "consumed_supplement_total_uploaded",
+
+    // KEK & PMT
+    "jumlah_ibu_hamil_diukur_lila_dan/atau_imt_sampai_bulan_ini": "lila_imt_measured",
+    "lila_imt_measured": "lila_imt_measured",
+    "jumlah_ibu_hamil_risiko_kek/kek_sampai_bulan_ini": "kek_risk",
+    "kek_risk": "kek_risk",
+    "jumlah_sasaran_bumil_kek_ditatalaksana_sampai_bulan_ini": "kek_management_target",
+    "kek_management_target": "kek_management_target",
+    "jumlah_ibu_hamil_kek_mendapat_makanan_tambahan_sampai_bulan_ini": "kek_received_pmt",
+    "kek_received_pmt": "kek_received_pmt",
+
+    // Pemeriksaan Kehamilan / ANC
+    "jumlah_ibu_hamil_sampai_bulan_ini": "pregnant_total",
+    "pregnant_total": "pregnant_total",
+    "jumlah_ibu_bersalin_sampai_bulan_ini": "delivery_total",
+    "delivery_total": "delivery_total",
+    "jumlah_ibu_hamil_yang_mendapat_pelayanan_antenatal_pertama_(k1_akses)_sampai_bulan_ini": "k1_access",
+    "k1_access": "k1_access",
+    "jumlah_ibu_hamil_yang_mendapat_pelayanan_antenatal_pertama_di_trimester_1_(k1_murni)_sampai_bulan_ini": "k1_pure",
+    "k1_pure": "k1_pure",
+    "jumlah_ibu_hamil_anc_trimester_1_dengan_dokter_sampai_bulan_ini": "anc_t1_doctor",
+    "anc_t1_doctor": "anc_t1_doctor",
+    "jumlah_ibu_hamil_anc_trimester_1_dengan_usg_sampai_bulan_ini": "anc_t1_usg",
+    "anc_t1_usg": "anc_t1_usg",
+    "jumlah_ibu_hamil_anc_trimester_3_dengan_dokter_sampai_bulan_ini": "anc_t3_doctor",
+    "anc_t3_doctor": "anc_t3_doctor",
+    "jumlah_ibu_hamil_anc_trimester_3_dengan_usg_sampai_bulan_ini": "anc_t3_usg",
+    "anc_t3_usg": "anc_t3_usg",
+    "jumlah_ibu_bersalin_k6_sampai_bulan_ini": "k6_delivery",
+    "k6_delivery": "k6_delivery",
+    "jumlah_ibu_bersalin_yang_mendapat_pemeriksaan_12t_selama_kehamilan_sampai_bulan_ini": "anc_12t_delivery",
+    "anc_12t_delivery": "anc_12t_delivery",
+
+    // ── Data Remaja Putri Mappings (SIGIZI KESGA 2026) ──
+    "jumlah_sasaran_remaja_putri": "target_rematri",
+    "sasaran_remaja_putri": "target_rematri",
+    "target_rematri": "target_rematri",
+
+    // TTD
+    "jumlah_remaja_putri_di_satuan_pendidikan_(smp/mts/pesantren/sederajat_dan_sma/smk/mak/pesantren/sederajat)_mendapat_ttd_sesuai_standar": "ttd_received_standard",
+    "jumlah_remaja_putri_di_satuan_pendidikan_mendapat_ttd_sesuai_standar": "ttd_received_standard",
+    "rematri_mendapat_ttd_sesuai_standar": "ttd_received_standard",
+    "ttd_received_standard": "ttd_received_standard",
+    "jumlah_remaja_putri_di_satuan_pendidikan_(smp/mts/pesantren/sederajat_dan_sma/smk/mak/pesantren/sederajat)_mengonsumsi_ttd_sesuai_standar": "ttd_consumed_standard",
+    "jumlah_remaja_putri_di_satuan_pendidikan_mengonsumsi_ttd_sesuai_standar": "ttd_consumed_standard",
+    "rematri_mengonsumsi_ttd_sesuai_standar": "ttd_consumed_standard",
+    "ttd_consumed_standard": "ttd_consumed_standard",
+    "jumlah_remaja_putri_mendapat_ttd_sampai_bulan_ini_—_<_26_tablet": "ttd_received_lt26",
+    "jumlah_remaja_putri_mendapat_ttd_sampai_bulan_ini_-_<_26_tablet": "ttd_received_lt26",
+    "mendapat_ttd_<26_tablet": "ttd_received_lt26",
+    "mendapat_ttd_<_26_tablet": "ttd_received_lt26",
+    "ttd_received_lt26": "ttd_received_lt26",
+    "jumlah_remaja_putri_mendapat_ttd_sampai_bulan_ini_—_>=_26_tablet": "ttd_received_ge26",
+    "jumlah_remaja_putri_mendapat_ttd_sampai_bulan_ini_-_>=_26_tablet": "ttd_received_ge26",
+    "mendapat_ttd_>=26_tablet": "ttd_received_ge26",
+    "mendapat_ttd_>=_26_tablet": "ttd_received_ge26",
+    "ttd_received_ge26": "ttd_received_ge26",
+    "jumlah_remaja_putri_mengonsumsi_ttd_sampai_bulan_ini_—_<_26_tablet": "ttd_consumed_lt26",
+    "jumlah_remaja_putri_mengonsumsi_ttd_sampai_bulan_ini_-_<_26_tablet": "ttd_consumed_lt26",
+    "mengonsumsi_ttd_<26_tablet": "ttd_consumed_lt26",
+    "mengonsumsi_ttd_<_26_tablet": "ttd_consumed_lt26",
+    "ttd_consumed_lt26": "ttd_consumed_lt26",
+    "jumlah_remaja_putri_mengonsumsi_ttd_sampai_bulan_ini_—_>=_26_tablet": "ttd_consumed_ge26",
+    "jumlah_remaja_putri_mengonsumsi_ttd_sampai_bulan_ini_-_>=_26_tablet": "ttd_consumed_ge26",
+    "mengonsumsi_ttd_>=26_tablet": "ttd_consumed_ge26",
+    "mengonsumsi_ttd_>=_26_tablet": "ttd_consumed_ge26",
+    "ttd_consumed_ge26": "ttd_consumed_ge26",
+
+    // Skrining Anemia
+    "jumlah_remaja_putri_kelas_7_di_satuan_pendidikan_sampai_bulan_ini": "target_grade7",
+    "sasaran_kelas_7": "target_grade7",
+    "target_grade7": "target_grade7",
+    "jumlah_remaja_putri_kelas_7_yang_skrining_anemia_sampai_bulan_ini": "screened_grade7",
+    "kelas_7_skrining_anemia": "screened_grade7",
+    "screened_grade7": "screened_grade7",
+    "jumlah_remaja_putri_kelas_10_di_satuan_pendidikan_sampai_bulan_ini": "target_grade10",
+    "sasaran_kelas_10": "target_grade10",
+    "target_grade10": "target_grade10",
+    "jumlah_remaja_putri_kelas_10_yang_skrining_anemia_sampai_bulan_ini": "screened_grade10",
+    "kelas_10_skrining_anemia": "screened_grade10",
+    "screened_grade10": "screened_grade10",
+    "jumlah_remaja_putri_kelas_7_dan_10_di_satuan_pendidikan_sampai_bulan_ini": "target_grade7_10_uploaded",
+    "sasaran_kelas_7+10": "target_grade7_10_uploaded",
+    "sasaran_kelas_7_dan_10": "target_grade7_10_uploaded",
+    "target_grade7_10_uploaded": "target_grade7_10_uploaded",
+    "jumlah_remaja_putri_kelas_7_dan_10_yang_skrining_anemia_sampai_bulan_ini": "screened_grade7_10_uploaded",
+    "kelas_7+10_skrining_anemia": "screened_grade7_10_uploaded",
+    "screened_grade7_10_uploaded": "screened_grade7_10_uploaded",
+
+    // Anemia Severity Kelas 7
+    "remaja_putri_kelas_7_teridentifikasi_anemia_—_anemia_ringan_(11–11.9_g/dl)": "anemia_grade7_mild",
+    "remaja_putri_kelas_7_teridentifikasi_anemia_-_anemia_ringan_(11-11.9_g/dl)": "anemia_grade7_mild",
+    "anemia_grade7_mild": "anemia_grade7_mild",
+    "remaja_putri_kelas_7_teridentifikasi_anemia_—_anemia_sedang_(8–10.9_g/dl)": "anemia_grade7_moderate",
+    "remaja_putri_kelas_7_teridentifikasi_anemia_-_anemia_sedang_(8-10.9_g/dl)": "anemia_grade7_moderate",
+    "anemia_grade7_moderate": "anemia_grade7_moderate",
+    "remaja_putri_kelas_7_teridentifikasi_anemia_—_anemia_berat_(<8_g/dl)": "anemia_grade7_severe",
+    "remaja_putri_kelas_7_teridentifikasi_anemia_-_anemia_berat_(<8_g/dl)": "anemia_grade7_severe",
+    "anemia_grade7_severe": "anemia_grade7_severe",
+    "jumlah_remaja_putri_kelas_7_teridentifikasi_anemia_—_total": "anemia_grade7_total_uploaded",
+    "jumlah_remaja_putri_kelas_7_teridentifikasi_anemia_-_total": "anemia_grade7_total_uploaded",
+    "total_anemia_kelas_7": "anemia_grade7_total_uploaded",
+    "anemia_grade7_total_uploaded": "anemia_grade7_total_uploaded",
+
+    // Anemia Severity Kelas 10
+    "remaja_putri_kelas_10_teridentifikasi_anemia_—_anemia_ringan_(11–11.9_g/dl)": "anemia_grade10_mild",
+    "remaja_putri_kelas_10_teridentifikasi_anemia_-_anemia_ringan_(11-11.9_g/dl)": "anemia_grade10_mild",
+    "anemia_grade10_mild": "anemia_grade10_mild",
+    "remaja_putri_kelas_10_teridentifikasi_anemia_—_anemia_sedang_(8–10.9_g/dl)": "anemia_grade10_moderate",
+    "remaja_putri_kelas_10_teridentifikasi_anemia_-_anemia_sedang_(8-10.9_g/dl)": "anemia_grade10_moderate",
+    "anemia_grade10_moderate": "anemia_grade10_moderate",
+    "remaja_putri_kelas_10_teridentifikasi_anemia_—_anemia_berat_(<8_g/dl)": "anemia_grade10_severe",
+    "remaja_putri_kelas_10_teridentifikasi_anemia_-_anemia_berat_(<8_g/dl)": "anemia_grade10_severe",
+    "anemia_grade10_severe": "anemia_grade10_severe",
+    "jumlah_remaja_putri_kelas_10_teridentifikasi_anemia_—_total": "anemia_grade10_total_uploaded",
+    "jumlah_remaja_putri_kelas_10_teridentifikasi_anemia_-_total": "anemia_grade10_total_uploaded",
+    "total_anemia_kelas_10": "anemia_grade10_total_uploaded",
+    "anemia_grade10_total_uploaded": "anemia_grade10_total_uploaded",
+
+    // Total Anemia & Tatalaksana
+    "jumlah_remaja_putri_kelas_7_dan_10_yang_teridentifikasi_anemia_sampai_bulan_ini": "anemia_total_uploaded",
+    "total_anemia_kelas_7+10": "anemia_total_uploaded",
+    "jumlah_rematri_kelas_7_dan_10_mendapatkan_tatalaksana_anemia_sampai_bulan_ini": "anemia_treated",
+    "rematri_anemia_mendapat_tatalaksana": "anemia_treated",
+    "anemia_treated": "anemia_treated",
 };
 
 export default function UploadPage() {
@@ -541,15 +789,91 @@ export default function UploadPage() {
 
                 const stringColumns = [
                     "periode", "nik", "nama_balita", "jk", "nama_ortu", "prov", "kabupaten",
-                    "kec", "puskesmas", "kelurahan", "posyandu", "rt", "rw", "alamat",
+                    "kab_kota", "kec", "kecamatan", "puskesmas", "kelurahan", "posyandu", "rt", "rw", "alamat",
                     "cara_ukur", "bbu", "tbu", "bbtb", "naik_berat_badan", "jml_vit_a",
                     "kpsp", "kia", "detail"
                 ];
                 const dateColumns = ["tgl_lahir", "tgl_ukur"];
 
+                const IBU_HAMIL_VALID_COLUMNS = new Set([
+                    "id", "tahun", "bulan", "kab_kota", "kecamatan", "puskesmas", "kelurahan",
+                    "hb_checked", "anemia_mild", "anemia_moderate", "anemia_severe", "anemia_total_uploaded",
+                    "anemia_mild_ttd", "anemia_modsev_advanced", "target_pregnant",
+                    "received_mms_180", "received_ttd_180", "received_supplement_total_uploaded",
+                    "consumed_mms_180", "consumed_ttd_180", "consumed_supplement_total_uploaded",
+                    "lila_imt_measured", "kek_risk", "kek_management_target", "kek_received_pmt",
+                    "pregnant_total", "delivery_total", "k1_access", "k1_pure",
+                    "anc_t1_doctor", "anc_t1_usg", "anc_t3_doctor", "anc_t3_usg",
+                    "k6_delivery", "anc_12t_delivery",
+                    "waktu_input", "uploaded_at", "uploaded_by"
+                ]);
+
+                const REMAJA_PUTRI_VALID_COLUMNS = new Set([
+                    "id", "tahun", "bulan", "kab_kota", "kecamatan", "puskesmas", "kelurahan",
+                    "academic_year", "academic_year_start", "academic_year_end", "academic_month_index",
+                    "target_rematri", "ttd_received_standard", "ttd_consumed_standard",
+                    "ttd_received_lt26", "ttd_received_ge26", "ttd_consumed_lt26", "ttd_consumed_ge26",
+                    "target_grade7", "screened_grade7", "target_grade10", "screened_grade10",
+                    "target_grade7_10_uploaded", "screened_grade7_10_uploaded",
+                    "anemia_grade7_mild", "anemia_grade7_moderate", "anemia_grade7_severe", "anemia_grade7_total_uploaded",
+                    "anemia_grade10_mild", "anemia_grade10_moderate", "anemia_grade10_severe", "anemia_grade10_total_uploaded",
+                    "anemia_total_uploaded", "anemia_treated",
+                    "waktu_input", "uploaded_at", "uploaded_by"
+                ]);
+
                 Object.entries(row).forEach(([key, value]) => {
                     const normalizedKey = key.toLowerCase().trim().replace(/\s+/g, "_");
-                    const dbCol = COLUMN_MAP[normalizedKey];
+                    let dbCol = COLUMN_MAP[normalizedKey];
+
+                    // Strict contextual mapping and filtering for data_ibu_hamil
+                    if (selectedConfig.tableName === "data_ibu_hamil") {
+                        if (normalizedKey === "kec" || normalizedKey === "kecamatan") {
+                            dbCol = "kecamatan";
+                        } else if (
+                            normalizedKey === "kab" ||
+                            normalizedKey === "kabupaten" ||
+                            normalizedKey === "kab_kota" ||
+                            normalizedKey === "kab/kota"
+                        ) {
+                            dbCol = "kab_kota";
+                        } else if (
+                            normalizedKey === "desa" ||
+                            normalizedKey === "kelurahan" ||
+                            normalizedKey === "desa/kelurahan"
+                        ) {
+                            dbCol = "kelurahan";
+                        }
+
+                        // Ensure only valid table columns are mapped
+                        if (dbCol && !IBU_HAMIL_VALID_COLUMNS.has(dbCol)) {
+                            return;
+                        }
+                    }
+
+                    // Strict contextual mapping and filtering for data_remaja_putri
+                    if (selectedConfig.tableName === "data_remaja_putri") {
+                        if (normalizedKey === "kec" || normalizedKey === "kecamatan") {
+                            dbCol = "kecamatan";
+                        } else if (
+                            normalizedKey === "kab" ||
+                            normalizedKey === "kabupaten" ||
+                            normalizedKey === "kab_kota" ||
+                            normalizedKey === "kab/kota"
+                        ) {
+                            dbCol = "kab_kota";
+                        } else if (
+                            normalizedKey === "desa" ||
+                            normalizedKey === "kelurahan" ||
+                            normalizedKey === "desa/kelurahan"
+                        ) {
+                            dbCol = "kelurahan";
+                        }
+
+                        // Ensure only valid table columns are mapped
+                        if (dbCol && !REMAJA_PUTRI_VALID_COLUMNS.has(dbCol)) {
+                            return;
+                        }
+                    }
 
                     if (dbCol) {
                         if (stringColumns.includes(dbCol)) {
@@ -573,8 +897,21 @@ export default function UploadPage() {
                             } else {
                                 mapped[dbCol] = null;
                             }
-                        } else if (dbCol === "tahun" || dbCol === "bulan") {
-                            mapped[dbCol] = Number(value);
+                        } else if (dbCol === "tahun") {
+                            mapped[dbCol] = Number(value) || 2026;
+                        } else if (dbCol === "bulan") {
+                            if (typeof value === "string") {
+                                const mNames: Record<string, number> = {
+                                    januari: 1, jan: 1, februari: 2, feb: 2, maret: 3, mar: 3,
+                                    april: 4, apr: 4, mei: 5, may: 5, juni: 6, jun: 6,
+                                    juli: 7, jul: 7, agustus: 8, ags: 8, agu: 8, september: 9, sep: 9,
+                                    oktober: 10, okt: 10, november: 11, nov: 11, desember: 12, des: 12
+                                };
+                                const clean = value.toLowerCase().trim();
+                                mapped[dbCol] = mNames[clean] || Number(value) || 1;
+                            } else {
+                                mapped[dbCol] = Number(value) || 1;
+                            }
                         } else if (dbCol === "usia_saatukur") {
                             // Fallback string parsing if dates are missing Date mapping
                             if (typeof value === 'string') {
@@ -602,6 +939,28 @@ export default function UploadPage() {
                     }
                 });
 
+                // Auto-fill default tahun for ibu hamil / remaja putri if missing
+                if ((selectedConfig.tableName === "data_ibu_hamil" || selectedConfig.tableName === "data_remaja_putri") && !mapped["tahun"]) {
+                    mapped["tahun"] = new Date().getFullYear();
+                }
+
+                // Canonical period derivation for Remaja Putri (Academic Year)
+                if (selectedConfig.tableName === "data_remaja_putri") {
+                    const t = Number(mapped["tahun"]) || 2026;
+                    const m = Number(mapped["bulan"]) || 1;
+                    if (m >= 7) {
+                        mapped["academic_year"] = `${t}/${t + 1}`;
+                        mapped["academic_year_start"] = t;
+                        mapped["academic_year_end"] = t + 1;
+                        mapped["academic_month_index"] = m - 6;
+                    } else {
+                        mapped["academic_year"] = `${t - 1}/${t}`;
+                        mapped["academic_year_start"] = t - 1;
+                        mapped["academic_year_end"] = t;
+                        mapped["academic_month_index"] = m + 6;
+                    }
+                }
+
                 mapped["uploaded_by"] = user.id;
                 mapped["uploaded_at"] = new Date().toISOString();
 
@@ -619,7 +978,7 @@ export default function UploadPage() {
             });
 
             // Filter out rows that don't have required fields
-            const isDesa = selectedConfig.tableName === "data_bultim_desa" || selectedConfig.tableName === "data_balita_gizi";
+            const isDesa = selectedConfig.tableName === "data_bultim_desa" || selectedConfig.tableName === "data_balita_gizi" || selectedConfig.tableName === "data_ibu_hamil" || selectedConfig.tableName === "data_remaja_putri";
             const isEPPGBM = selectedConfig.tableName === "data_eppgbm";
 
             const validRows = rows.filter((r) => {

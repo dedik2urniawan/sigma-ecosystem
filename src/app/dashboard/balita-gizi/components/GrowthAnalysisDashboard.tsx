@@ -62,7 +62,7 @@ export default function GrowthAnalysisDashboard() {
 
     // Standard Filters
     const [jenisLaporan, setJenisLaporan] = useState<"bulanan" | "tahunan">("bulanan");
-    const [bulanVal, setBulanVal] = useState<string>("2");
+    const [bulanVal, setBulanVal] = useState<string>((new Date().getMonth() + 1).toString());
     const [year, setYear] = useState(new Date().getFullYear().toString());
     const [selectedPuskesmas, setSelectedPuskesmas] = useState<string>("ALL");
     const [selectedKelurahan, setSelectedKelurahan] = useState<string>("ALL");
@@ -307,7 +307,7 @@ export default function GrowthAnalysisDashboard() {
                             value={jenisLaporan}
                             onChange={(e) => {
                                 setJenisLaporan(e.target.value as "bulanan" | "tahunan");
-                                setBulanVal(e.target.value === "bulanan" ? "2" : "1");
+                                setBulanVal(e.target.value === "bulanan" ? (new Date().getMonth() + 1).toString() : Math.ceil((new Date().getMonth() + 1) / 3).toString());
                             }}
                             className="w-1/3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block p-2.5 outline-none transition-all"
                         >

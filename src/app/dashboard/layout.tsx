@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import UnifiedSessionTimeout from "@/components/UnifiedSessionTimeout";
 import SSOModuleDropdown from "@/components/SSOModuleDropdown";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 // ─── Auth Context ───────────────────────────────────────────────────────────
 interface UserData {
@@ -53,14 +54,14 @@ const menuItems = [
         label: "Ibu Hamil",
         icon: "pregnant_woman",
         href: "/dashboard/ibu-hamil",
-        ready: false,
+        ready: true,
     },
     {
         id: "remaja-putri",
         label: "Remaja Putri",
         icon: "girl",
         href: "/dashboard/remaja-putri",
-        ready: false,
+        ready: true,
     },
     {
         id: "analisis-pertumbuhan",
@@ -75,6 +76,41 @@ const menuItems = [
         icon: "auto_awesome",
         href: "/dashboard/ai-analytics",
         ready: true,
+    },
+    {
+        id: "program-mbg",
+        label: "Program MBG",
+        icon: "restaurant_menu",
+        href: "/dashboard/program-mbg",
+        ready: true,
+    },
+    {
+        id: "intervensi-pkmk",
+        label: "Intervensi PKMK",
+        icon: "healing",
+        href: "/dashboard/intervensi-pkmk",
+        ready: true,
+    },
+    {
+        id: "analisis-mpdn",
+        label: "Analisis MPDN",
+        icon: "monitor_heart",
+        href: "/dashboard/analisis-mpdn",
+        ready: false,
+    },
+    {
+        id: "analisis-pmt-lokal",
+        label: "Analisis PMT Lokal",
+        icon: "soup_kitchen",
+        href: "/dashboard/analisis-pmt-lokal",
+        ready: false,
+    },
+    {
+        id: "obat-gizi",
+        label: "Obat Gizi",
+        icon: "medication",
+        href: "/dashboard/obat-gizi",
+        ready: false,
     },
 ];
 
@@ -99,6 +135,7 @@ export default function DashboardLayout({
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const { toggleToolbar } = useAccessibility();
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -197,7 +234,7 @@ export default function DashboardLayout({
                                 <SigmaLogo variant="mark" className="w-8 h-8 object-contain" priority />
                             ) : (
                                 <>
-                                    <SigmaLogo variant="primary" className="h-7 w-auto object-contain" priority />
+                                    <SigmaLogo variant="navbar" tone="color" className="h-7 w-auto object-contain" priority />
                                     <span className="text-[9px] text-emerald-600 font-bold tracking-[0.15em] uppercase font-mono border-l border-slate-200 pl-2">
                                         RCS
                                     </span>
@@ -411,9 +448,11 @@ export default function DashboardLayout({
                                     <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
                                         {user?.role === "superadmin"
                                             ? "Super Admin"
-                                            : user?.role === "stakeholder"
-                                                ? "Stakeholder Dinkes"
-                                                : "Admin PKM"}
+                                            : (user?.email?.includes("opd") || user?.nama_lengkap?.toLowerCase().includes("opd"))
+                                                ? "OPD Kab Malang"
+                                                : user?.role === "stakeholder"
+                                                    ? "Stakeholder Dinkes"
+                                                    : "Admin PKM"}
                                     </p>
                                 </div>
                                 <button
@@ -454,7 +493,20 @@ export default function DashboardLayout({
                         </div>
 
                         {/* Right side */}
-                        <div className="ml-auto flex items-center gap-3">
+                        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                            {/* Accessibility Shortcut Button */}
+                            <button
+                                onClick={toggleToolbar}
+                                aria-label="Buka Menu Aksesibilitas Web"
+                                title="Aksesibilitas Web (WCAG 2.1 Level AA)"
+                                className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-[#09666B] transition-colors flex items-center gap-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#09666B] cursor-pointer"
+                            >
+                                <span className="material-icons-round text-xl text-[#09666B]">
+                                    accessibility_new
+                                </span>
+                                <span className="hidden md:inline text-slate-700">Aksesibilitas</span>
+                            </button>
+
                             <SSOModuleDropdown align="right" />
 
                             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
@@ -470,7 +522,7 @@ export default function DashboardLayout({
                     </header>
 
                     {/* Page Content */}
-                    <main className="flex-1 p-4 lg:p-8 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
+                    <main id="main-content" className="flex-1 p-4 lg:p-8 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
 
                     {/* Footer */}
                     <footer className="border-t border-slate-200 bg-white px-4 lg:px-8 py-4 flex items-center justify-between text-xs text-slate-400">

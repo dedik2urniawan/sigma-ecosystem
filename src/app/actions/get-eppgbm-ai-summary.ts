@@ -122,47 +122,27 @@ Aturan Formatting:
 Gunakan bahasa Indonesia yang profesional. Gunakan formatting Markdown (bold untuk penekanan metrik penting). Jangan gunakan heading (seperti ### atau **Ringkasan:**). Langsung berikan 3 paragraf yang mengalir elegan.
         `;
 
-        // Call Gemini API using the API Key
-        const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-        const aiModel = 'gemini-3.1-flash-lite';
-        
-        if (!apiKey) {
-            return {
-                summary: "Gagal menghubungkan AI: Konfigurasi API Key belum diatur.",
-                stats: { total, stunting, wasting, underweight }
-            };
-        }
-
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                systemInstruction: { parts: [{ text: "Anda adalah SIGMA Advisor, Ahli Gizi dan Epidemiolog." }] },
-                contents: [{ role: "user", parts: [{ text: promptText }] }],
+        const { generateGeminiContentWithFallback } = await import("@/lib/gemini");
+        const result = await generateGeminiContentWithFallback(
+            [{ role: "user", parts: [{ text: promptText }] }],
+            {
+                systemInstruction: "Anda adalah SIGMA Advisor, Ahli Gizi dan Epidemiolog.",
                 generationConfig: {
                     temperature: 0.3,
                     topP: 0.8,
-                    maxOutputTokens: 1024,
-                }
-            }),
-        });
+                    maxOutputTokens: 3000,
+                },
+            }
+        );
 
-        const responseData = await response.json();
-
-        if (!response.ok || responseData.error) {
-            const errMsg = responseData.error?.message || 'Unknown error';
-            console.error("Vertex AI Error:", errMsg);
+        if (!result.success || !result.text) {
             return {
-                summary: "Layanan Vertex AI sedang tidak dapat memproses ringkasan.",
+                summary: "Layanan AI sedang padat. Silakan coba beberapa saat lagi.",
                 stats: { total, stunting, wasting, underweight }
             };
         }
 
-        const aiText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, AI gagal men-generate teks ringkasan.";
+        const aiText = result.text;
         
         return {
             summary: aiText,

@@ -156,9 +156,14 @@ export default function MbgLoginPage() {
         setIsLoading(true);
 
         try {
+            const inputIdentifier = email.trim().toLowerCase();
+            const normalizedEmail = inputIdentifier.includes("@")
+                ? inputIdentifier
+                : `${inputIdentifier}@dinkes.go.id`;
+
             // ── Step 1: Real Supabase Auth ───────────────────────────────────
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                email: email.trim().toLowerCase(),
+                email: normalizedEmail,
                 password,
             });
 
@@ -325,20 +330,20 @@ export default function MbgLoginPage() {
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div>
                             <label htmlFor="email" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
-                                Email Instansi
+                                Email / Username
                             </label>
                             <div className="relative group">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                    <span className="material-icons-round text-slate-400 text-lg group-focus-within:text-amber-500 transition-colors">mail</span>
+                                    <span className="material-icons-round text-slate-400 text-lg group-focus-within:text-amber-500 transition-colors">person</span>
                                 </div>
                                 <input
                                     id="email"
-                                    type="email"
+                                    type="text"
                                     value={email}
                                     onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                                    placeholder="admin@dinkes.go.id"
+                                    placeholder="admin@dinkes.go.id atau username"
                                     required
-                                    autoComplete="email"
+                                    autoComplete="username"
                                     className="w-full pl-12 pr-4 py-4 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all text-sm shadow-sm"
                                 />
                             </div>

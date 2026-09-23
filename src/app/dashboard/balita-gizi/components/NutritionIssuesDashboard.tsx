@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { supabase } from "@/lib/supabase";
-import { calculateGrowthMetrics, GrowthMetricsResult } from "@/lib/balitaGiziHelper";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell, LabelList } from "recharts";
+import { calculateGrowthMetrics, calculateTrendMetrics, GrowthMetricsResult, TrendDataPoint } from "@/lib/balitaGiziHelper";
+import { BarChart, Bar, LineChart, Line, Legend, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell, LabelList } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
 import { Info, ChevronDown, Activity, AlertTriangle, CheckCircle2, Map as MapIcon, TrendingUp, TrendingDown } from "lucide-react";
 
@@ -25,7 +25,7 @@ export default function NutritionIssuesDashboard() {
 
     // Standard Filters
     const [jenisLaporan, setJenisLaporan] = useState<"bulanan" | "tahunan">("bulanan");
-    const [bulanVal, setBulanVal] = useState<string>("2");
+    const [bulanVal, setBulanVal] = useState<string>((new Date().getMonth() + 1).toString());
     const [year, setYear] = useState(new Date().getFullYear().toString());
     const [selectedPuskesmas, setSelectedPuskesmas] = useState<string>("ALL");
     const [selectedKelurahan, setSelectedKelurahan] = useState<string>("ALL");
@@ -36,6 +36,8 @@ export default function NutritionIssuesDashboard() {
 
     // Data State
     const [metricsResult, setMetricsResult] = useState<GrowthMetricsResult | null>(null);
+    const [trendResult, setTrendResult] = useState<TrendDataPoint[]>([]);
+    const [hiddenTrend, setHiddenTrend] = useState<string[]>([]);
 
     // Expandable definitions
     const [showDefinitions, setShowDefinitions] = useState(false);
@@ -43,6 +45,11 @@ export default function NutritionIssuesDashboard() {
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
+
+    const toggleTrend = (e: any) => {
+        const { dataKey } = e;
+        setHiddenTrend(prev => prev.includes(dataKey) ? prev.filter(k => k !== dataKey) : [...prev, dataKey]);
+    };
 
     // Map State
     const [selectedMapMetric, setSelectedMapMetric] = useState<"stunting" | "wasting" | "underweight" | "obesitas">("stunting");
@@ -138,11 +145,16 @@ export default function NutritionIssuesDashboard() {
                     .in("bulan", previousFilterMonths)
                     .not("puskesmas", "ilike", "%dinkes%");
 
+                let fullYearQuery = supabase.from("data_balita_gizi").select("*")
+                    .eq("tahun", year)
+                    .not("puskesmas", "ilike", "%dinkes%");
+
                 if (selectedPuskesmas !== "ALL") {
                     const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
                     if (pName) {
                         currentQuery = currentQuery.eq("puskesmas", pName);
                         prevQuery = prevQuery.eq("puskesmas", pName);
+                        fullYearQuery = fullYearQuery.eq("puskesmas", pName);
                     }
                 }
                 if (selectedKelurahan !== "ALL") {
@@ -150,6 +162,7 @@ export default function NutritionIssuesDashboard() {
                     if (kName) {
                         currentQuery = currentQuery.eq("kelurahan", kName);
                         prevQuery = prevQuery.eq("kelurahan", kName);
+                        fullYearQuery = fullYearQuery.eq("kelurahan", kName);
                     }
                 }
 
@@ -168,14 +181,17 @@ export default function NutritionIssuesDashboard() {
                     return allData;
                 };
 
-                const [filteredCurrentData, filteredPrevData] = await Promise.all([
+                const [filteredCurrentData, filteredPrevData, filteredYearData] = await Promise.all([
                     fetchAll(currentQuery),
-                    fetchAll(prevQuery)
+                    fetchAll(prevQuery),
+                    fetchAll(fullYearQuery)
                 ]);
 
                 const groupingRole = (effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
                 const metrics = calculateGrowthMetrics(filteredCurrentData, filteredPrevData, groupingRole, currentMonthsCount, previousMonthsCount);
+                const trends = calculateTrendMetrics(filteredYearData);
                 setMetricsResult(metrics);
+                setTrendResult(trends);
 
             } catch (error) {
                 console.error("Failed to fetch nutrition issues data", error);
@@ -249,7 +265,7 @@ export default function NutritionIssuesDashboard() {
                             value={jenisLaporan}
                             onChange={(e) => {
                                 setJenisLaporan(e.target.value as "bulanan" | "tahunan");
-                                setBulanVal(e.target.value === "bulanan" ? "2" : "1");
+                                setBulanVal(e.target.value === "bulanan" ? (new Date().getMonth() + 1).toString() : Math.ceil((new Date().getMonth() + 1) / 3).toString());
                             }}
                             className="w-1/3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block p-2.5 outline-none transition-all"
                         >
@@ -712,6 +728,40 @@ export default function NutritionIssuesDashboard() {
                         );
                     })()}
 
+                    {/* ── Tren Temporal Masalah Gizi ── */}
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px] mt-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Activity className="w-5 h-5 text-rose-600" />
+                            <div>
+                                <h3 className="font-bold text-slate-800">Tren Temporal Prevalensi Masalah Gizi ({year})</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Pola prevalensi bulanan Januari – Desember (Klik label legenda untuk menyembunyikan/menampilkan grafik)</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 w-full relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={trendResult} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                    <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
+                                    <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
+                                    <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
+                                    <Line type="monotone" hide={hiddenTrend.includes("Prevalensi Stunting")} dataKey="Prevalensi Stunting" name="Prevalensi Stunting" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3 }}>
+                                        <LabelList dataKey="Prevalensi Stunting" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#ef4444' }} />
+                                    </Line>
+                                    <Line type="monotone" hide={hiddenTrend.includes("Prevalensi Wasting")} dataKey="Prevalensi Wasting" name="Prevalensi Wasting" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }}>
+                                        <LabelList dataKey="Prevalensi Wasting" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#f59e0b' }} />
+                                    </Line>
+                                    <Line type="monotone" hide={hiddenTrend.includes("Prevalensi Underweight")} dataKey="Prevalensi Underweight" name="Prevalensi Underweight" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }}>
+                                        <LabelList dataKey="Prevalensi Underweight" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
+                                    </Line>
+                                    <Line type="monotone" hide={hiddenTrend.includes("Prevalensi Overweight")} dataKey="Prevalensi Overweight" name="Prevalensi Overweight" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 3 }}>
+                                        <LabelList dataKey="Prevalensi Overweight" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
+                                    </Line>
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
                     {/* Summary Table */}
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
                         <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -720,7 +770,7 @@ export default function NutritionIssuesDashboard() {
                         <div className="p-4 bg-sky-50 border-b border-sky-100 flex gap-2">
                             <Info size={16} className="text-sky-600 shrink-0 mt-0.5" />
                             <p className="text-xs text-slate-700">
-                                <strong>Catatan Penting:</strong> Nilai outlier yang melebihi target di-highlight dengan warna <span className="text-rose-600 font-bold">merah</span>. Untuk analisis lebih lanjut dan koreksi data, mohon dilakukan pemeriksaan pada Menu Daftar Entry di masing-masing Indikator Balita Gizi.
+                                <strong>Catatan Penting:</strong> Angka di bawah persentase menunjukkan perbandingan <strong>(Numerator / Denominator)</strong>. Nilai outlier yang melebihi target di-highlight dengan warna <span className="text-rose-600 font-bold">merah</span>. Untuk analisis lebih lanjut dan koreksi data, mohon dilakukan pemeriksaan pada Menu Daftar Entry di masing-masing Indikator Balita Gizi.
                             </p>
                         </div>
                         <div className="overflow-x-auto">
@@ -738,17 +788,37 @@ export default function NutritionIssuesDashboard() {
                                     {metricsResult.summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
                                         <tr key={row.name} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-3 font-semibold text-slate-800">{row.name}</td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.stunting > TARGETS.Stunting.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
-                                                {row.stunting.toFixed(2)}%{row.stunting > TARGETS.Stunting.val && <span className="ml-1 text-[10px]">▲</span>}
+                                            <td className={`px-6 py-3 text-center ${row.stunting > TARGETS.Stunting.val ? 'bg-red-50' : ''}`}>
+                                                <div className={`font-semibold ${row.stunting > TARGETS.Stunting.val ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                    {row.stunting.toFixed(2)}%{row.stunting > TARGETS.Stunting.val && <span className="ml-1 text-[10px]">▲</span>}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                    {Math.round(row.num_stunting || 0).toLocaleString('id-ID')} / {Math.round(row.den_stunting || 0).toLocaleString('id-ID')}
+                                                </div>
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.wasting > TARGETS.Wasting.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
-                                                {row.wasting.toFixed(2)}%{row.wasting > TARGETS.Wasting.val && <span className="ml-1 text-[10px]">▲</span>}
+                                            <td className={`px-6 py-3 text-center ${row.wasting > TARGETS.Wasting.val ? 'bg-red-50' : ''}`}>
+                                                <div className={`font-semibold ${row.wasting > TARGETS.Wasting.val ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                    {row.wasting.toFixed(2)}%{row.wasting > TARGETS.Wasting.val && <span className="ml-1 text-[10px]">▲</span>}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                    {Math.round(row.num_wasting || 0).toLocaleString('id-ID')} / {Math.round(row.den_wasting || 0).toLocaleString('id-ID')}
+                                                </div>
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.underweight > TARGETS.Underweight.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
-                                                {row.underweight.toFixed(2)}%{row.underweight > TARGETS.Underweight.val && <span className="ml-1 text-[10px]">▲</span>}
+                                            <td className={`px-6 py-3 text-center ${row.underweight > TARGETS.Underweight.val ? 'bg-red-50' : ''}`}>
+                                                <div className={`font-semibold ${row.underweight > TARGETS.Underweight.val ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                    {row.underweight.toFixed(2)}%{row.underweight > TARGETS.Underweight.val && <span className="ml-1 text-[10px]">▲</span>}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                    {Math.round(row.num_underweight || 0).toLocaleString('id-ID')} / {Math.round(row.den_underweight || 0).toLocaleString('id-ID')}
+                                                </div>
                                             </td>
-                                            <td className={`px-6 py-3 text-center font-medium ${row.obesitas > TARGETS.Overweight.val ? 'bg-red-50 text-red-600 font-bold' : 'text-slate-600'}`}>
-                                                {row.obesitas.toFixed(2)}%{row.obesitas > TARGETS.Overweight.val && <span className="ml-1 text-[10px]">▲</span>}
+                                            <td className={`px-6 py-3 text-center ${row.obesitas > TARGETS.Overweight.val ? 'bg-red-50' : ''}`}>
+                                                <div className={`font-semibold ${row.obesitas > TARGETS.Overweight.val ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                    {row.obesitas.toFixed(2)}%{row.obesitas > TARGETS.Overweight.val && <span className="ml-1 text-[10px]">▲</span>}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                    {Math.round(row.num_obesitas || 0).toLocaleString('id-ID')} / {Math.round(row.den_obesitas || 0).toLocaleString('id-ID')}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

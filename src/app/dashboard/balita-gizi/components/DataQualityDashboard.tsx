@@ -30,7 +30,7 @@ export default function DataQualityDashboard() {
     // Filters
     const [jenisLaporan, setJenisLaporan] = useState<"bulanan" | "tahunan">("bulanan");
     const [selectedBulan, setSelectedBulan] = useState<number>(new Date().getMonth() + 1);
-    const [selectedTW, setSelectedTW] = useState<number>(1);
+    const [selectedTW, setSelectedTW] = useState<number>(Math.ceil((new Date().getMonth() + 1) / 3));
     const [selectedTahun, setSelectedTahun] = useState<number>(new Date().getFullYear());
     const [selectedPuskesmas, setSelectedPuskesmas] = useState<string>("ALL");
     const [selectedKelurahan, setSelectedKelurahan] = useState<string>("ALL");

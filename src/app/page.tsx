@@ -487,10 +487,10 @@ export default function Home() {
       cta: "Launch App",
       link: "/rcs",
       classes: {
-        badge: "bg-emerald-50 text-emerald-600 border-emerald-100",
+        badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
         dot: "bg-emerald-500",
-        iconBg: "bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-emerald-200",
-        button: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200"
+        iconBg: "bg-gradient-to-br from-emerald-500 to-teal-700 shadow-lg shadow-emerald-500/25",
+        button: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
       }
     },
     {
@@ -502,10 +502,10 @@ export default function Home() {
       cta: "Open Tool",
       link: "/calculator",
       classes: {
-        badge: "bg-blue-50 text-blue-600 border-blue-100",
+        badge: "bg-blue-50 text-blue-700 border-blue-200",
         dot: "bg-blue-500",
-        iconBg: "bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-200",
-        button: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+        iconBg: "bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/25",
+        button: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
       }
     },
     {
@@ -517,10 +517,10 @@ export default function Home() {
       cta: "Access Dashboard",
       link: "https://pkmk-malangkab.app/landing-page.html",
       classes: {
-        badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        badge: "bg-indigo-50 text-indigo-700 border-indigo-200",
         dot: "bg-indigo-500",
-        iconBg: "bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-indigo-200",
-        button: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
+        iconBg: "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25",
+        button: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
       }
     },
     {
@@ -532,10 +532,10 @@ export default function Home() {
       cta: "Launch Portal",
       link: "/mbg",
       classes: {
-        badge: "bg-amber-50 text-amber-600 border-amber-100",
+        badge: "bg-amber-50 text-amber-700 border-amber-200",
         dot: "bg-amber-500",
-        iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-200",
-        button: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
+        iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25",
+        button: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
       }
     }
   ];
@@ -549,22 +549,22 @@ export default function Home() {
           <div className="flex justify-between h-20 items-center">
             <Link href="/" className="flex items-center group" aria-label="SIGMA Ecosystem">
               <SigmaLogo
-                variant="primary"
+                variant="navbar"
                 className="h-9 md:h-10 w-auto object-contain"
                 priority
               />
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              <a href="#framework" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Framework</a>
-              <a href="#architecture" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Arsitektur</a>
-              <a href="#applications" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Aplikasi</a>
-              <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wide text-[11px]">Tentang</a>
+              <a href="#framework" className="text-sm font-semibold text-slate-500 hover:text-[#09666B] transition-colors uppercase tracking-wide text-[11px]">Framework</a>
+              <a href="#architecture" className="text-sm font-semibold text-slate-500 hover:text-[#09666B] transition-colors uppercase tracking-wide text-[11px]">Arsitektur</a>
+              <a href="#applications" className="text-sm font-semibold text-slate-500 hover:text-[#09666B] transition-colors uppercase tracking-wide text-[11px]">Aplikasi</a>
+              <a href="#about" className="text-sm font-semibold text-slate-500 hover:text-[#09666B] transition-colors uppercase tracking-wide text-[11px]">Tentang</a>
               <a
                 href="/sso/login"
-                className="px-6 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 hover:shadow-indigo-200 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-teal-600/25 hover:shadow-lg hover:shadow-teal-600/35 transform hover:-translate-y-0.5 uppercase tracking-wider flex items-center gap-2"
               >
                 <span className="material-icons-round text-sm">login</span>
-                login System
+                Login System
               </a>
             </div>
             <button className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
@@ -588,31 +588,24 @@ export default function Home() {
 
           <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center flex flex-col items-center">
 
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/40 backdrop-blur-sm border border-slate-200/60 shadow-sm mb-8 animate-fade-in-up hover:bg-white/60 transition-colors cursor-default">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-slate-600 uppercase font-mono">
-                Sistem Informasi Gizi Integrasi AI
-              </span>
+            <div className="w-full flex flex-col items-center justify-center mb-10 pt-2">
+              <h1 className="sr-only">Sigma Ecosystem - Satu Data Cegah Stunting</h1>
+              <div className="relative w-full max-w-[520px] sm:max-w-[700px] md:max-w-[840px] lg:max-w-[940px] px-2">
+                <Image
+                  src="/qq.png"
+                  alt="Sigma Ecosystem - Satu Data Cegah Stunting"
+                  width={4601}
+                  height={788}
+                  priority
+                  className="w-full h-auto object-contain select-none drop-shadow-sm transition-transform duration-500 hover:scale-[1.01]"
+                />
+              </div>
             </div>
-
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-slate-900 mb-6 tracking-tighter leading-none relative drop-shadow-sm select-none">
-              SIGMA
-              <span className="absolute overflow-hidden inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent opacity-10 animate-pulse-slow blur-sm">
-                SIGMA
-              </span>
-            </h1>
-
-            <p className="text-xl sm:text-2xl md:text-3xl font-light text-slate-400 tracking-[0.5em] uppercase mb-10 font-mono">
-              Ecosystem
-            </p>
 
             <div className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12 font-medium">
               <h2 className="text-slate-800 font-extrabold block mb-3 text-2xl tracking-tight">Inovasi Pelaporan Stunting Terintegrasi & Surveilans Presisi</h2>
               <p>
-                Sebuah <strong>Aplikasi Surveilans Kesehatan</strong> dan <strong>Aplikasi AI Kesehatan</strong> yang mentransformasi data berskala besar menjadi wawasan analitik yang <i>actionable</i>. Kami memadukan arsitektur <i>big data</i> dan algoritma <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shadow-sm">Machine Learning</span> sebagai <strong>Aplikasi Stunting</strong> terpadu untuk mempercepat penanganan gizi buruk, memantau intervensi, dan mendukung perumusan kebijakan berbasis bukti.
+                Sebuah <strong>Aplikasi Surveilans Kesehatan</strong> dan <strong>Aplikasi AI Kesehatan</strong> yang mentransformasi data berskala besar menjadi wawasan analitik yang <i>actionable</i>. Kami memadukan arsitektur <i>big data</i> dan algoritma <span className="font-bold text-[#09666B] bg-[#A0D6B4]/20 px-2 py-0.5 rounded border border-[#A0D6B4]/50 shadow-sm">Machine Learning</span> sebagai <strong>Aplikasi Stunting</strong> terpadu untuk mempercepat penanganan gizi buruk, memantau intervensi, dan mendukung perumusan kebijakan berbasis bukti.
               </p>
             </div>
 
@@ -620,7 +613,7 @@ export default function Home() {
               {[
                 { val: "6", label: "Modul Aplikasi", icon: "widgets" },
                 { val: "39", label: "Puskesmas", icon: "apartment" },
-                { val: "AI", label: "Powered Analytics", icon: "auto_awesome", color: "text-indigo-600" }
+                { val: "AI", label: "Powered Analytics", icon: "auto_awesome", color: "text-[#09666B]" }
               ].map((stat, i) => (
                 <div key={i} className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 flex flex-col items-center hover:-translate-y-1 transition-transform duration-300 relative group overflow-hidden">
                   <CornerAccent /> {/* Tech Corner Accent */}
@@ -635,7 +628,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md">
               <a
                 href="#applications"
-                className="flex-1 px-8 py-4 rounded-xl bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1 flex items-center justify-center gap-2 group"
+                className="flex-1 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-widest transition-all shadow-xl shadow-teal-600/25 hover:shadow-teal-600/35 hover:-translate-y-1 flex items-center justify-center gap-2 group"
               >
                 Jelajahi Aplikasi
                 <span className="material-icons-round text-lg group-hover:translate-y-1 transition-transform">keyboard_arrow_down</span>
@@ -662,7 +655,7 @@ export default function Home() {
         <section id="applications" className="py-24 bg-white relative z-10 border-t border-slate-100/50">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
-              <span className="text-indigo-600 font-bold tracking-[0.2em] text-xs uppercase mb-3 block font-mono">
+              <span className="text-[#09666B] font-bold tracking-[0.2em] text-xs uppercase mb-3 block font-mono">
                 // Integrated Platform
               </span>
               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
@@ -676,7 +669,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Active Applications - Explicit Map */}
               {activeApps.map((app) => (
-                <div key={app.id} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_24px_60px_rgba(0,0,0,0.08)] transition-all duration-500 group flex flex-col h-full relative overflow-hidden hover:border-indigo-100">
+                <div key={app.id} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_24px_60px_rgba(0,0,0,0.08)] transition-all duration-500 group flex flex-col h-full relative overflow-hidden hover:border-[#A0D6B4]/60">
                   <CornerAccent />
                   <div className="absolute top-0 right-0 p-8 z-20">
                     <span className={`text-[10px] uppercase font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 tracking-wider border font-mono ${app.classes.badge}`}>
@@ -689,7 +682,7 @@ export default function Home() {
                     <span className="material-icons-round text-3xl">{app.icon}</span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors">{app.title}</h3>
+                  <h3 className="text-xl font-extrabold text-teal-800 mb-3 group-hover:text-teal-600 transition-colors">{app.title}</h3>
                   <p className="text-slate-500 text-sm leading-relaxed mb-8 flex-grow font-medium">
                     {app.desc}
                   </p>
@@ -704,25 +697,25 @@ export default function Home() {
               ))}
 
               {/* API Gateway — LIVE, links directly to portal */}
-              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-indigo-200/60 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100 group">
+              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-slate-100 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/10 group">
                 <CornerAccent />
                 <div className="absolute top-0 right-0 p-8">
-                  <span className="bg-indigo-50 text-indigo-600 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-indigo-100 tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                  <span className="bg-purple-50 text-purple-700 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-purple-200 tracking-wider font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
                     Live
                   </span>
                 </div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-indigo-200">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-500/25">
                   <span className="material-icons-round text-3xl">hub</span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-700 mb-3 group-hover:text-indigo-600 transition-colors">API Gateway</h3>
+                <h3 className="text-xl font-extrabold text-teal-800 mb-3 group-hover:text-teal-600 transition-colors">API Gateway</h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">
                   Portal data sharing standar, aman, dan cepat antara SIGMA dengan mitra pihak ketiga.
                 </p>
                 <div className="mt-auto">
                   <a
                     href="/api-gateway"
-                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-200"
+                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
                   >
                     <span className="material-icons-round text-sm">api</span>
                     Access API Gateway
@@ -731,25 +724,25 @@ export default function Home() {
               </div>
 
               {/* Chatbot AI — LIVE, links directly to chatbot */}
-              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-purple-200/60 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100 group">
+              <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-slate-100 flex flex-col h-full relative overflow-hidden transition-all hover:bg-white hover:border-teal-200 hover:shadow-lg hover:shadow-teal-500/10 group">
                 <CornerAccent />
                 <div className="absolute top-0 right-0 p-8">
-                  <span className="bg-purple-50 text-purple-600 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-purple-100 tracking-wider font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+                  <span className="bg-teal-50 text-teal-700 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border border-teal-200 tracking-wider font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
                     Live
                   </span>
                 </div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-200">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-cyan-500/25">
                   <span className="material-icons-round text-3xl">smart_toy</span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-700 mb-3 group-hover:text-purple-600 transition-colors">Chatbot AI</h3>
+                <h3 className="text-xl font-extrabold text-teal-800 mb-3 group-hover:text-teal-600 transition-colors">Chatbot AI</h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-8 flex-grow group-hover:text-slate-500 transition-colors">
                   AI-powered nutrition assistant for instant queries and data analysis.
                 </p>
                 <div className="mt-auto">
                   <a
                     href="/chatbot"
-                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-200"
+                    className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
                   >
                     <span className="material-icons-round text-sm">rocket_launch</span>
                     Access Chatbot
@@ -788,64 +781,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features - Grid */}
-        <section className="relative w-full py-24 bg-slate-50 overflow-hidden border-t border-slate-100/50" id="about">
-          {/* Noise Texture Overlay */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
-
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-6 border border-indigo-100 font-mono shadow-sm">
-                Why Choose SIGMA?
-              </div>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-                Penguatan Kebijakan Berbasis Data
-              </h2>
-              <p className="text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                SIGMA dirancang untuk meningkatkan efisiensi, ketepatan, dan presisi dalam upaya penurunan stunting.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                {
-                  title: "Data Terpusat", icon: "database", color: "blue", desc: "Single source of truth data gizi terintegrasi.",
-                  classes: { bg: "bg-blue-50 text-blue-600 border-blue-100", hover: "group-hover:shadow-blue-200/50 group-hover:border-blue-200" }
-                },
-                {
-                  title: "AI Insights", icon: "psychology", color: "purple", desc: "Machine learning untuk prediksi stunting.",
-                  classes: { bg: "bg-purple-50 text-purple-600 border-purple-100", hover: "group-hover:shadow-purple-200/50 group-hover:border-purple-200" }
-                },
-                {
-                  title: "Real-Time", icon: "bolt", color: "amber", desc: "Pemantauan langsung dari lapangan.",
-                  classes: { bg: "bg-amber-50 text-amber-600 border-amber-100", hover: "group-hover:shadow-amber-200/50 group-hover:border-amber-200" }
-                },
-                {
-                  title: "Keamanan", icon: "verified_user", color: "emerald", desc: "Enkripsi standar industri kesehatan.",
-                  classes: { bg: "bg-emerald-50 text-emerald-600 border-emerald-100", hover: "group-hover:shadow-emerald-200/50 group-hover:border-emerald-200" }
-                }
-              ].map((feat, i) => (
-                <div key={i} className={`bg-white p-8 rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-xl transition-all duration-500 group relative overflow-hidden ${feat.classes.hover}`}>
-                  <div className={`absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500`}>
-                    <span className="material-icons-round text-9xl -mr-8 -mt-8 rotate-12">{feat.icon}</span>
-                  </div>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 ${feat.classes.bg}`}>
-                    <span className="material-icons-round text-2xl">{feat.icon}</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2 relative z-10">{feat.title}</h3>
-                  <p className="text-sm text-slate-500 font-medium leading-relaxed relative z-10">{feat.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Architecture - Enhanced */}
-        <section className="py-24 bg-slate-50/80 border-t border-slate-100 relative">
+        <section id="architecture" className="py-24 bg-slate-50/80 border-t border-slate-100 relative">
           <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]"></div>
           <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
             <div className="flex flex-col lg:flex-row gap-20 items-center">
               <div className="lg:w-1/2">
-                <span className="text-indigo-600 font-bold tracking-[0.2em] text-xs uppercase mb-4 block font-mono">System Architecture</span>
+                <span className="text-[#09666B] font-bold tracking-[0.2em] text-xs uppercase mb-4 block font-mono">System Architecture</span>
                 <h2 className="text-4xl font-extrabold text-slate-900 mb-6">Interoperabilitas <br className="hidden lg:block" /> Terpadu</h2>
                 <p className="text-lg text-slate-600 mb-8 leading-relaxed">
                   Arsitektur modular yang menghubungkan input lapangan dengan analisis strategis tingkat kabupaten.
@@ -865,7 +807,7 @@ export default function Home() {
                     { step: "Processing Core", desc: "Validasi & Normalisasi Data", color: "indigo", icon: "memory", bg: "bg-indigo-50 text-indigo-600", border: "bg-indigo-500" },
                     { step: "Intelligence Layer", desc: "AI Analysis & Visualization", color: "purple", icon: "analytics", bg: "bg-purple-50 text-purple-600", border: "bg-purple-500" }
                   ].map((s, i) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-6 relative group overflow-hidden hover:border-indigo-100 transition-colors">
+                    <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-6 relative group overflow-hidden hover:border-[#09666B]/30 transition-colors">
                       <div className={`absolute left-0 top-0 w-1 h-full ${s.border} group-hover:w-1.5 transition-all`}></div>
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
                         <span className="material-icons-round text-2xl">{s.icon}</span>
@@ -886,6 +828,90 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Features & Strategic Policy - Elegant Emerald/Teal Gradient Section (SS1 Theme) */}
+        <section className="relative w-full py-24 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 overflow-hidden text-white" id="about">
+          {/* Background Ambient Blurs & Texture */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-[0.05] pointer-events-none"></div>
+          <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[100px] pointer-events-none"></div>
+          <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-300/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/20 backdrop-blur-md mb-6 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CAD53D]"></span>
+                </span>
+                <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase font-mono">Why Choose SIGMA?</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight drop-shadow-sm">
+                Penguatan Kebijakan Berbasis Data
+              </h2>
+              <p className="text-lg text-white/90 max-w-3xl mx-auto leading-relaxed font-medium">
+                SIGMA dirancang untuk meningkatkan efisiensi, ketepatan, dan presisi dalam upaya percepatan penurunan stunting di Kabupaten Malang.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                {
+                  title: "Data Terpusat",
+                  icon: "database",
+                  desc: "Single source of truth data gizi terintegrasi.",
+                },
+                {
+                  title: "AI Insights",
+                  icon: "psychology",
+                  desc: "Machine learning untuk prediksi stunting.",
+                },
+                {
+                  title: "Real-Time",
+                  icon: "bolt",
+                  desc: "Pemantauan langsung dari lapangan.",
+                },
+                {
+                  title: "Keamanan",
+                  icon: "verified_user",
+                  desc: "Enkripsi standar industri kesehatan.",
+                }
+              ].map((feat, i) => (
+                <div
+                  key={i}
+                  className="bg-white/10 backdrop-blur-xl p-8 rounded-[2rem] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/15 hover:border-white/35 hover:-translate-y-1.5 transition-all duration-500 group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-15 transition-opacity duration-500 text-white pointer-events-none">
+                    <span className="material-icons-round text-9xl -mr-8 -mt-8 rotate-12">{feat.icon}</span>
+                  </div>
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/20 text-white border border-white/30 backdrop-blur-md group-hover:scale-110 group-hover:bg-white group-hover:text-emerald-700 transition-all duration-500 shadow-md">
+                    <span className="material-icons-round text-2xl">{feat.icon}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2 relative z-10">{feat.title}</h3>
+                  <p className="text-sm text-white/80 font-medium leading-relaxed relative z-10">{feat.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Integrated Action Buttons */}
+            <div className="mt-16 flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <a
+                href="/sso/login"
+                className="px-10 py-5 rounded-xl bg-white text-emerald-800 font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 transition-all shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-3 group"
+              >
+                <span className="material-icons-round text-xl">login</span>
+                Akses Portal SSO
+                <span className="material-icons-round text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              </a>
+              <a
+                href="#applications"
+                className="px-10 py-5 rounded-xl bg-white/10 text-white font-bold text-xs uppercase tracking-widest border border-white/25 hover:bg-white/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 backdrop-blur-sm"
+              >
+                <span className="material-icons-round text-lg">apps</span>
+                Jelajahi Ekosistem
+              </a>
+            </div>
+          </div>
+        </section>
+
       </main>
 
       {/* Footer */}
@@ -894,8 +920,8 @@ export default function Home() {
 
           <div className="mb-8">
             <SigmaLogo
-              variant="primary"
-              className="h-10 w-auto object-contain"
+              variant="tagline"
+              className="h-12 md:h-14 w-auto object-contain"
             />
           </div>
 

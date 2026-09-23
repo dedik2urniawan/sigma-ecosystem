@@ -12,14 +12,29 @@
   --color-rcs-green: #10b981;
   --color-rcs-green-hover: #059669;
 
-  /* SIGMA Ecosystem 2026 Brand Tokens */
+  /* SIGMA Ecosystem 2026 Brand Tokens (Version 1) */
+  --color-sigma-teal: #21AFA9;
+  --color-sigma-deep-teal: #0B6268;
+  --color-sigma-forest: #09666B;
+  --color-sigma-lime: #CAD53D;
+  --color-sigma-tosca: #A0D6B4;
+  --color-sigma-cyan: #00A7C5;
+  --color-sigma-mint: #4BBBBD;
+  --color-sigma-purple: #876A96;
+  --color-sigma-primary: #09666B;
+  --color-sigma-surface: #F3FAF9;
+  --color-sigma-dark: #0F172A;
+  --color-sigma-text: #183B45;
+  --color-sigma-border: #C7E8E4;
+  --background-image-sigma-brand: linear-gradient(135deg, #09666B 0%, #21AFA9 52%, #A0D6B4 100%);
+
+  /* Legacy Compat Tokens */
   --color-sigma-50: #eff9ff;
   --color-sigma-400: #17d2fb;
   --color-sigma-500: #0a9ffb;
   --color-sigma-600: #0062ff;
   --color-sigma-700: #0051f1;
   --color-sigma-900: #17274d;
-  --background-image-sigma-brand: linear-gradient(135deg, #0051F1 0%, #0A9FFB 52%, #17D2FB 100%);
 
   --font-display: 'Public Sans', sans-serif;
 
@@ -84,4 +99,123 @@ body {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* ==============================================================================
+   WCAG 2.1 / 2.2 LEVEL AA ACCESSIBILITY ENHANCEMENTS
+   ============================================================================== */
+
+/* 1. Keyboard Focus Visible Outline (WCAG 2.4.7) */
+*:focus-visible {
+  outline: 3px solid #0B6268 !important;
+  outline-offset: 2px !important;
+}
+
+/* 2. Font Scaling Classes (WCAG 1.4.4) */
+html.a11y-font-medium {
+  font-size: 115% !important;
+}
+html.a11y-font-large {
+  font-size: 130% !important;
+}
+html.a11y-font-xlarge {
+  font-size: 145% !important;
+}
+
+/* 3. Dyslexic-Friendly Typography */
+html.a11y-dyslexic,
+html.a11y-dyslexic * {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Trebuchet MS', 'Verdana', sans-serif !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* 4. Text Spacing (WCAG 1.4.12) */
+html.a11y-text-spacing,
+html.a11y-text-spacing * {
+  line-height: 1.8 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+html.a11y-text-spacing p {
+  margin-bottom: 2em !important;
+}
+
+/* 5. Underline Links (WCAG 1.4.1) */
+html.a11y-underline-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+/* 6. Reduced Motion (WCAG 2.3.3) */
+html.a11y-reduce-motion *,
+html.a11y-reduce-motion *::before,
+html.a11y-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* 7. Large High-Contrast Cursor */
+html.a11y-big-cursor,
+html.a11y-big-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath fill='%23000' stroke='%23FFF' stroke-width='2' d='M5 2l21 21-8 2 5 9-4 2-5-9-7 6V2z'/%3E%3C/svg%3E"), auto !important;
+}
+
+/* 8. Monochrome / Grayscale Mode */
+html.a11y-monochrome {
+  filter: grayscale(100%) !important;
+}
+
+/* 9. High Contrast Light Mode */
+html.a11y-contrast-light body {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+html.a11y-contrast-light .bg-white,
+html.a11y-contrast-light .bg-slate-50,
+html.a11y-contrast-light .bg-slate-100 {
+  background-color: #ffffff !important;
+  border-color: #000000 !important;
+}
+html.a11y-contrast-light h1,
+html.a11y-contrast-light h2,
+html.a11y-contrast-light h3,
+html.a11y-contrast-light h4,
+html.a11y-contrast-light p,
+html.a11y-contrast-light span,
+html.a11y-contrast-light div {
+  color: #000000 !important;
+}
+
+/* 10. High Contrast Dark Mode */
+html.a11y-contrast-dark body {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+html.a11y-contrast-dark .bg-white,
+html.a11y-contrast-dark .bg-slate-50,
+html.a11y-contrast-dark .bg-slate-100,
+html.a11y-contrast-dark aside,
+html.a11y-contrast-dark header {
+  background-color: #0a0a0a !important;
+  border-color: #ffff00 !important;
+}
+html.a11y-contrast-dark h1,
+html.a11y-contrast-dark h2,
+html.a11y-contrast-dark h3,
+html.a11y-contrast-dark h4 {
+  color: #00ffff !important;
+}
+html.a11y-contrast-dark p,
+html.a11y-contrast-dark span,
+html.a11y-contrast-dark td,
+html.a11y-contrast-dark th,
+html.a11y-contrast-dark label {
+  color: #ffffff !important;
+}
+html.a11y-contrast-dark a,
+html.a11y-contrast-dark button {
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
 }

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { calculateTatalaksanaMetrics, TatalaksanaMetricsResult, TATALAKSANA_COLUMNS } from "@/lib/tatalaksanaHelper";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
+import { calculateTatalaksanaMetrics, calculateTatalaksanaTrend, TatalaksanaMetricsResult, TatalaksanaTrendDataPoint } from "@/lib/tatalaksanaHelper";
+import { BarChart, Bar, LineChart, Line, Legend, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
 import { Info, ChevronDown, Activity, AlertTriangle, TrendingUp, TrendingDown, Table as TableIcon } from "lucide-react";
 
@@ -12,7 +12,7 @@ export default function TatalaksanaDashboard() {
     const effectiveRole = user?.role === "admin_puskesmas" ? "admin_puskesmas" : "superadmin";
 
     const [selectedJenisLaporan, setSelectedJenisLaporan] = useState<"Bulanan" | "Tahunan TW">("Bulanan");
-    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState(2);
+    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [selectedPuskesmas, setSelectedPuskesmas] = useState(
         effectiveRole === "admin_puskesmas" && user?.puskesmas_id ? user.puskesmas_id : "ALL"
@@ -22,12 +22,19 @@ export default function TatalaksanaDashboard() {
     const [puskesmasOptions, setPuskesmasOptions] = useState<{ id: string; name: string }[]>([]);
     const [kelurahanOptions, setKelurahanOptions] = useState<{ id: string; name: string; puskesmas_id: string }[]>([]);
     const [metricsResult, setMetricsResult] = useState<TatalaksanaMetricsResult | null>(null);
+    const [trendResult, setTrendResult] = useState<TatalaksanaTrendDataPoint[]>([]);
+    const [hiddenTrend, setHiddenTrend] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [showDefinitions, setShowDefinitions] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedChartMetric, setSelectedChartMetric] = useState<string>('gizi_kurang_pmt');
     const rowsPerPage = 10;
+
+    const toggleTrend = (e: any) => {
+        const { dataKey } = e;
+        setHiddenTrend(prev => prev.includes(dataKey) ? prev.filter(k => k !== dataKey) : [...prev, dataKey]);
+    };
 
     // Year-based targets
     const PMT_TARGETS: Record<string, number> = { '2025': 65, '2026': 70, '2027': 75, '2028': 80, '2029': 85 };
@@ -53,59 +60,70 @@ export default function TatalaksanaDashboard() {
             setLoading(true);
             try {
                 const year = Number(selectedYear);
-                // Determine months to fetch
+                // Determine months to fetch for current period
                 let monthsToFetch: number[];
                 if (selectedJenisLaporan === "Bulanan") {
                     monthsToFetch = [selectedMonthOrTW];
                 } else {
-                    // TW: need cumulative month (last of TW) + all months from Jan to end for average
                     const twEndMonth: Record<number, number> = { 1: 3, 2: 6, 3: 9, 4: 12 };
                     const end = twEndMonth[selectedMonthOrTW] || 12;
                     monthsToFetch = Array.from({ length: end }, (_, i) => i + 1);
                 }
 
-                const selectCols = ["kelurahan", "puskesmas", "bulan", "tahun", ...TATALAKSANA_COLUMNS].join(", ");
-                let query = supabase.from("data_balita_gizi").select(selectCols)
+                const fetchAll = async (queryBuilder: any) => {
+                    let allData: any[] = [];
+                    let from = 0;
+                    const step = 1000;
+                    while (true) {
+                        const { data, error } = await queryBuilder.range(from, from + step - 1);
+                        if (error) {
+                            console.error("fetchAll query error:", error);
+                            throw error;
+                        }
+                        if (!data || data.length === 0) break;
+                        allData = allData.concat(data);
+                        if (data.length < step) break;
+                        from += step;
+                    }
+                    return allData;
+                };
+
+                let currentQuery = supabase.from("data_balita_gizi").select("*")
                     .eq("tahun", year)
-                    .in("bulan", monthsToFetch);
+                    .in("bulan", monthsToFetch)
+                    .not("puskesmas", "ilike", "%dinkes%");
+
+                let fullYearQuery = supabase.from("data_balita_gizi").select("*")
+                    .eq("tahun", year)
+                    .not("puskesmas", "ilike", "%dinkes%");
 
                 if (selectedPuskesmas !== "ALL") {
                     const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                    if (pName) query = query.eq("puskesmas", pName);
+                    if (pName) {
+                        currentQuery = currentQuery.eq("puskesmas", pName);
+                        fullYearQuery = fullYearQuery.eq("puskesmas", pName);
+                    }
                 }
                 if (selectedKelurahan !== "ALL") {
                     const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                    if (kName) query = query.eq("kelurahan", kName);
+                    if (kName) {
+                        currentQuery = currentQuery.eq("kelurahan", kName);
+                        fullYearQuery = fullYearQuery.eq("kelurahan", kName);
+                    }
                 }
 
-                // Paginated fetch
-                let allData: any[] = [];
-                let from = 0;
-                const step = 1000;
-                while (true) {
-                    const { data, error } = await query.range(from, from + step - 1);
-                    if (error) throw error;
-                    if (!data || data.length === 0) break;
-                    allData = allData.concat(data);
-                    if (data.length < step) break;
-                    from += step;
-                    query = supabase.from("data_balita_gizi").select(selectCols)
-                        .eq("tahun", year).in("bulan", monthsToFetch);
-                    if (selectedPuskesmas !== "ALL") {
-                        const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                        if (pName) query = query.eq("puskesmas", pName);
-                    }
-                    if (selectedKelurahan !== "ALL") {
-                        const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                        if (kName) query = query.eq("kelurahan", kName);
-                    }
-                }
+                const [currentData, yearData] = await Promise.all([
+                    fetchAll(currentQuery),
+                    fetchAll(fullYearQuery)
+                ]);
 
                 const groupingRole = (effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
-                const result = calculateTatalaksanaMetrics(allData, groupingRole, selectedJenisLaporan, selectedMonthOrTW);
+                const result = calculateTatalaksanaMetrics(currentData, groupingRole, selectedJenisLaporan, selectedMonthOrTW);
+                const trends = calculateTatalaksanaTrend(yearData);
                 setMetricsResult(result);
-            } catch (err) {
-                console.error("TatalaksanaDashboard fetch error:", err);
+                setTrendResult(trends);
+            } catch (err: any) {
+                console.error("TatalaksanaDashboard fetch error:", err?.message || err);
             } finally {
                 setLoading(false);
             }
@@ -140,12 +158,78 @@ export default function TatalaksanaDashboard() {
 
     // Scorecard config
     const SCORE_CARDS = [
-        { id: 'gizi_kurang_pmt', title: '% Gizi Kurang PMT', val: overallMetrics.gizi_kurang_pmt, color: 'orange', target: pmtTarget, emoji: '🍽️' },
-        { id: 'bgm_pmt', title: '% BGM PMT', val: overallMetrics.bgm_pmt, color: 'amber', target: pmtTarget, emoji: '⚖️' },
-        { id: 'bb_t_pmt', title: '% BB Tidak Naik (T) PMT', val: overallMetrics.bb_t_pmt, color: 'yellow', target: pmtTarget, emoji: '📉' },
-        { id: 'gb_05', title: '% Gizi Buruk 0-5 Bln Dirawat', val: overallMetrics.gb_05, color: 'red', target: gbTarget, emoji: '🏥' },
-        { id: 'gb_659', title: '% Gizi Buruk 6-59 Bln Dirawat', val: overallMetrics.gb_659, color: 'rose', target: gbTarget, emoji: '🩺' },
-        { id: 'stunting_rujuk', title: '% Stunting Dirujuk PKM→RS', val: overallMetrics.stunting_rujuk, color: 'violet', target: null, emoji: '🔀' },
+        {
+            id: 'gizi_kurang_pmt',
+            title: '% Gizi Kurang PMT',
+            val: overallMetrics.gizi_kurang_pmt,
+            color: 'text-orange-600',
+            target: pmtTarget,
+            emoji: '🍽️',
+            numerator: overallMetrics.gk_num,
+            denominator: overallMetrics.gk_den,
+            numLabel: 'Dapat PMT',
+            denLabel: 'Sasaran Gikur',
+        },
+        {
+            id: 'bgm_pmt',
+            title: '% BGM PMT',
+            val: overallMetrics.bgm_pmt,
+            color: 'text-amber-600',
+            target: pmtTarget,
+            emoji: '⚖️',
+            numerator: overallMetrics.bgm_num,
+            denominator: overallMetrics.bgm_den,
+            numLabel: 'Dapat PMT',
+            denLabel: 'Sasaran BGM',
+        },
+        {
+            id: 'bb_t_pmt',
+            title: '% BB Tidak Naik (T) PMT',
+            val: overallMetrics.bb_t_pmt,
+            color: 'text-amber-500',
+            target: pmtTarget,
+            emoji: '📉',
+            numerator: overallMetrics.t_num,
+            denominator: overallMetrics.t_den,
+            numLabel: 'Dapat PMT',
+            denLabel: 'Sasaran Balita T',
+        },
+        {
+            id: 'gb_05',
+            title: '% Gizi Buruk 0-5 Bln Dirawat',
+            val: overallMetrics.gb_05,
+            color: 'text-red-600',
+            target: gbTarget,
+            emoji: '🏥',
+            numerator: overallMetrics.gb05_num,
+            denominator: overallMetrics.gb05_den,
+            numLabel: 'Dirawat',
+            denLabel: 'Kasus 0-5 Bln',
+        },
+        {
+            id: 'gb_659',
+            title: '% Gizi Buruk 6-59 Bln Dirawat',
+            val: overallMetrics.gb_659,
+            color: 'text-rose-600',
+            target: gbTarget,
+            emoji: '🩺',
+            numerator: overallMetrics.gb659_num,
+            denominator: overallMetrics.gb659_den,
+            numLabel: 'Dirawat',
+            denLabel: 'Kasus 6-59 Bln',
+        },
+        {
+            id: 'stunting_rujuk',
+            title: '% Stunting Dirujuk PKM→RS',
+            val: overallMetrics.stunting_rujuk,
+            color: 'text-purple-600',
+            target: null,
+            emoji: '🔀',
+            numerator: overallMetrics.stunt_num,
+            denominator: overallMetrics.stunt_den,
+            numLabel: 'Dirujuk RS',
+            denLabel: 'Balita Stunting',
+        },
     ];
 
     // Chart metrics
@@ -179,7 +263,7 @@ export default function TatalaksanaDashboard() {
                     <div className="flex gap-2">
                         <select
                             value={selectedJenisLaporan}
-                            onChange={(e) => { setSelectedJenisLaporan(e.target.value as any); setSelectedMonthOrTW(e.target.value === "Bulanan" ? 2 : 1); }}
+                            onChange={(e) => { setSelectedJenisLaporan(e.target.value as any); setSelectedMonthOrTW(e.target.value === "Bulanan" ? (new Date().getMonth() + 1) : Math.ceil((new Date().getMonth() + 1) / 3)); }}
                             className="w-1/3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-rose-500 focus:border-rose-500 block p-2.5 outline-none"
                         >
                             <option value="Bulanan">Bulanan</option>
@@ -329,24 +413,48 @@ export default function TatalaksanaDashboard() {
             </div>
 
             {/* Score Cards — 3×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {SCORE_CARDS.map(card => (
-                    <div key={card.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <h4 className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider mb-1 leading-tight">{card.title}</h4>
-                        <div className="flex items-end gap-2 mt-auto">
-                            <span className={`text-2xl font-black text-${card.color}-600`}>
-                                {card.val.toFixed(2)}<span className="text-base text-slate-400">%</span>
-                            </span>
-                            {card.target !== null && (
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${card.val >= card.target
-                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                    : 'bg-red-50 text-red-600 border border-red-200'}`}>
-                                    Target: {card.target}%
+                    <div key={card.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all group">
+                        <div>
+                            <h4 className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider mb-1 leading-tight group-hover:text-rose-600 transition-colors">{card.title}</h4>
+                            <div className="flex items-end gap-2 mt-1">
+                                <span className={`text-2xl font-black ${card.color}`}>
+                                    {card.val.toFixed(2)}<span className="text-base text-slate-400">%</span>
                                 </span>
-                            )}
+                                {card.target !== null && (
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${card.val >= card.target
+                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                        : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                                        Target: {card.target}%
+                                    </span>
+                                )}
+                            </div>
                         </div>
+
+                        {card.numerator !== undefined && card.denominator !== undefined && (
+                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                <div className="flex flex-col">
+                                    <span className="text-slate-400 font-medium">{card.numLabel}</span>
+                                    <span className="text-slate-700 font-bold">{Math.round(card.numerator).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="h-6 w-px bg-slate-200"></div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-slate-400 font-medium">{card.denLabel}</span>
+                                    <span className="text-slate-700 font-bold">{Math.round(card.denominator).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ))}
+            </div>
+
+            {/* Legend untuk Variabel Akronim */}
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 shadow-sm text-xs text-slate-600 flex flex-wrap gap-x-6 gap-y-3">
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">PMT</span> Pemberian Makanan Tambahan Lokal</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">BGM</span> Bawah Garis Merah (BB Sangat Kurang)</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">T</span> Balita Tidak Naik Berat Badannya</div>
+                <div className="flex items-center gap-2"><span className="px-2 py-1 bg-white rounded-md border border-slate-200 font-bold text-slate-800">PKM→RS</span> Rujukan dari Puskesmas ke Rumah Sakit</div>
             </div>
 
             {/* ── Unified Chart ── */}
@@ -460,6 +568,46 @@ export default function TatalaksanaDashboard() {
                 </div>
             </div>
 
+            {/* ── Tren Temporal Line Chart ── */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px]">
+                <div className="flex items-center gap-2 mb-4">
+                    <Activity className="w-5 h-5 text-rose-600" />
+                    <div>
+                        <h3 className="font-bold text-slate-800">Tren Temporal Tatalaksana Balita Bermasalah Gizi ({selectedYear})</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Pola capaian bulanan Januari – Desember (Klik label legenda untuk menyembunyikan/menampilkan grafik)</p>
+                    </div>
+                </div>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendResult} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
+                            <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
+                            <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
+                            <Line type="monotone" hide={hiddenTrend.includes("gizi_kurang_pmt")} dataKey="gizi_kurang_pmt" name="Gizi Kurang PMT" stroke="#ea580c" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="gizi_kurang_pmt" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#ea580c', fontWeight: 'bold' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("bgm_pmt")} dataKey="bgm_pmt" name="BGM PMT" stroke="#d97706" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="bgm_pmt" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#d97706' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("bb_t_pmt")} dataKey="bb_t_pmt" name="BB Tidak Naik (T) PMT" stroke="#ca8a04" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="bb_t_pmt" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#ca8a04' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("gb_05")} dataKey="gb_05" name="Gizi Buruk 0-5 Bln" stroke="#dc2626" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="gb_05" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#dc2626' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("gb_659")} dataKey="gb_659" name="Gizi Buruk 6-59 Bln" stroke="#be123c" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="gb_659" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#be123c' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("stunting_rujuk")} dataKey="stunting_rujuk" name="Stunting Dirujuk" stroke="#7c3aed" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="stunting_rujuk" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#7c3aed' }} />
+                            </Line>
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
             {/* Detail Rekap Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
                 <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -474,7 +622,7 @@ export default function TatalaksanaDashboard() {
                 <div className="p-4 bg-sky-50 border-b border-sky-100 flex gap-2">
                     <Info size={16} className="text-sky-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-slate-700">
-                        <strong>Catatan:</strong> Sel dengan warna <span className="text-red-600 font-bold">merah</span> menandakan nilai di bawah target program. PMT Target: <strong>{pmtTarget}%</strong> | Gizi Buruk Target: <strong>{gbTarget}%</strong>
+                        <strong>Catatan:</strong> Angka di bawah persentase menunjukkan perbandingan <strong>(Numerator / Denominator)</strong>. Sel dengan warna <span className="text-red-600 font-bold">merah</span> menandakan nilai di bawah target program. PMT Target: <strong>{pmtTarget}%</strong> | Gizi Buruk Target: <strong>{gbTarget}%</strong>
                     </p>
                 </div>
                 <div className="overflow-auto" style={{ maxHeight: 480 }}>
@@ -492,23 +640,28 @@ export default function TatalaksanaDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => {
-                                const deficitCell = (val: number, target: number | null) => {
+                                const deficitCell = (val: number, target: number | null, num: number, den: number) => {
                                     const below = target !== null && val > 0 && val < target;
                                     return (
-                                        <td className={`px-4 py-4 text-center font-medium ${below ? 'text-red-600 bg-red-50 font-bold' : 'text-slate-700'}`}>
-                                            {val.toFixed(2)}%{below && <span className="ml-1 text-[10px]">▼</span>}
+                                        <td className={`px-4 py-3 text-center ${below ? 'bg-red-50' : ''}`}>
+                                            <div className={`font-semibold ${below ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                {val.toFixed(2)}%{below && <span className="ml-1 text-[10px]">▼</span>}
+                                            </div>
+                                            <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                {Math.round(num).toLocaleString('id-ID')} / {Math.round(den).toLocaleString('id-ID')}
+                                            </div>
                                         </td>
                                     );
                                 };
                                 return (
                                     <tr key={row.name} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                        {deficitCell(row.gizi_kurang_pmt_rate, pmtTarget)}
-                                        {deficitCell(row.bgm_pmt_rate, pmtTarget)}
-                                        {deficitCell(row.bb_t_pmt_rate, pmtTarget)}
-                                        {deficitCell(row.gb_05_rate, gbTarget)}
-                                        {deficitCell(row.gb_659_rate, gbTarget)}
-                                        {deficitCell(row.stunting_rujuk_rate, null)}
+                                        <td className="px-6 py-3 font-semibold text-slate-800">{row.name}</td>
+                                        {deficitCell(row.gizi_kurang_pmt_rate, pmtTarget, row.gk_num, row.gk_den)}
+                                        {deficitCell(row.bgm_pmt_rate, pmtTarget, row.bgm_num, row.bgm_den)}
+                                        {deficitCell(row.bb_t_pmt_rate, pmtTarget, row.t_num, row.t_den)}
+                                        {deficitCell(row.gb_05_rate, gbTarget, row.gb05_num, row.gb05_den)}
+                                        {deficitCell(row.gb_659_rate, gbTarget, row.gb659_num, row.gb659_den)}
+                                        {deficitCell(row.stunting_rujuk_rate, null, row.stunt_num, row.stunt_den)}
                                     </tr>
                                 );
                             })}

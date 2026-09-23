@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { calculateSuplemenMetrics, SuplemenMetricsResult, SUPLEMEN_COLUMNS, VisibleCard } from "@/lib/suplemenHelper";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
+import { calculateSuplemenMetrics, calculateSuplemenTrend, SuplemenMetricsResult, SuplemenTrendDataPoint, SUPLEMEN_COLUMNS, VisibleCard } from "@/lib/suplemenHelper";
+import { BarChart, Bar, LineChart, Line, Legend, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { useAuth } from "@/app/dashboard/layout";
 import { Info, ChevronDown, Activity, AlertTriangle, CheckCircle2, Table as TableIcon, TrendingUp, TrendingDown, Pill } from "lucide-react";
 
@@ -21,7 +21,7 @@ export default function SuplemenDashboard() {
 
     // Filters
     const [selectedJenisLaporan, setSelectedJenisLaporan] = useState<"Bulanan" | "Tahunan TW">("Bulanan");
-    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState(2);
+    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [selectedPuskesmas, setSelectedPuskesmas] = useState(
         effectiveRole === "admin_puskesmas" && user?.puskesmas_id ? user.puskesmas_id : "ALL"
@@ -34,6 +34,8 @@ export default function SuplemenDashboard() {
 
     // Data
     const [metricsResult, setMetricsResult] = useState<SuplemenMetricsResult | null>(null);
+    const [trendResult, setTrendResult] = useState<SuplemenTrendDataPoint[]>([]);
+    const [hiddenTrend, setHiddenTrend] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
     // UI State
@@ -41,6 +43,11 @@ export default function SuplemenDashboard() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedChartMetric, setSelectedChartMetric] = useState<string>('vit_a_6_11_feb');
     const rowsPerPage = 10;
+
+    const toggleTrend = (e: any) => {
+        const { dataKey } = e;
+        setHiddenTrend(prev => prev.includes(dataKey) ? prev.filter(k => k !== dataKey) : [...prev, dataKey]);
+    };
 
     // Load filter options
     useEffect(() => {
@@ -75,51 +82,57 @@ export default function SuplemenDashboard() {
                 // Deduplicate
                 monthsToFetch = [...new Set(monthsToFetch)];
 
-                // Build query
                 const selectCols = ["kelurahan", "puskesmas", "bulan", "tahun", ...SUPLEMEN_COLUMNS].join(", ");
-                let query = supabase.from("data_balita_gizi").select(selectCols)
+
+                const fetchAll = async (queryBuilder: any) => {
+                    let allData: any[] = [];
+                    let from = 0;
+                    const step = 1000;
+                    while (true) {
+                        const { data, error } = await queryBuilder.range(from, from + step - 1);
+                        if (error) throw error;
+                        if (!data || data.length === 0) break;
+                        allData = allData.concat(data);
+                        if (data.length < step) break;
+                        from += step;
+                    }
+                    return allData;
+                };
+
+                let currentQuery = supabase.from("data_balita_gizi").select(selectCols)
                     .eq("tahun", year)
                     .in("bulan", monthsToFetch);
+
+                let fullYearQuery = supabase.from("data_balita_gizi").select(selectCols)
+                    .eq("tahun", year);
 
                 // RBAC filter
                 if (selectedPuskesmas !== "ALL") {
                     const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                    if (pName) query = query.eq("puskesmas", pName);
+                    if (pName) {
+                        currentQuery = currentQuery.eq("puskesmas", pName);
+                        fullYearQuery = fullYearQuery.eq("puskesmas", pName);
+                    }
                 }
 
                 if (selectedKelurahan !== "ALL") {
                     const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                    if (kName) query = query.eq("kelurahan", kName);
+                    if (kName) {
+                        currentQuery = currentQuery.eq("kelurahan", kName);
+                        fullYearQuery = fullYearQuery.eq("kelurahan", kName);
+                    }
                 }
 
-                // Fetch all pages
-                let allData: any[] = [];
-                let from = 0;
-                const step = 1000;
-                while (true) {
-                    const { data, error } = await query.range(from, from + step - 1);
-                    if (error) throw error;
-                    if (!data || data.length === 0) break;
-                    allData = allData.concat(data);
-                    if (data.length < step) break;
-                    from += step;
-                    // Rebuild query for next page
-                    query = supabase.from("data_balita_gizi").select(selectCols)
-                        .eq("tahun", year)
-                        .in("bulan", monthsToFetch);
-                    if (selectedPuskesmas !== "ALL") {
-                        const pName = puskesmasOptions.find(p => p.id === selectedPuskesmas)?.name;
-                        if (pName) query = query.eq("puskesmas", pName);
-                    }
-                    if (selectedKelurahan !== "ALL") {
-                        const kName = kelurahanOptions.find(k => k.id === selectedKelurahan)?.name;
-                        if (kName) query = query.eq("kelurahan", kName);
-                    }
-                }
+                const [currentData, yearData] = await Promise.all([
+                    fetchAll(currentQuery),
+                    fetchAll(fullYearQuery)
+                ]);
 
                 const groupingRole = (effectiveRole === "superadmin" && selectedPuskesmas === "ALL") ? "superadmin" : "admin_puskesmas";
-                const result = calculateSuplemenMetrics(allData, groupingRole, selectedJenisLaporan, selectedMonthOrTW);
+                const result = calculateSuplemenMetrics(currentData, groupingRole, selectedJenisLaporan, selectedMonthOrTW);
+                const trends = calculateSuplemenTrend(yearData);
                 setMetricsResult(result);
+                setTrendResult(trends);
 
                 // Set default chart metric based on visible cards
                 if (result.visibleCards.length > 0) {
@@ -198,7 +211,7 @@ export default function SuplemenDashboard() {
                             value={selectedJenisLaporan}
                             onChange={(e) => {
                                 setSelectedJenisLaporan(e.target.value as "Bulanan" | "Tahunan TW");
-                                setSelectedMonthOrTW(e.target.value === "Bulanan" ? 2 : 1);
+                                setSelectedMonthOrTW(e.target.value === "Bulanan" ? (new Date().getMonth() + 1) : Math.ceil((new Date().getMonth() + 1) / 3));
                             }}
                             className="w-1/3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-teal-500 focus:border-teal-500 block p-2.5 outline-none transition-all"
                         >
@@ -564,6 +577,40 @@ export default function SuplemenDashboard() {
                 );
             })()}
 
+            {/* ── Tren Temporal Suplementasi Zat Gizi Mikro ── */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px] mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Activity className="w-5 h-5 text-teal-600" />
+                    <div>
+                        <h3 className="font-bold text-slate-800">Tren Temporal Suplementasi Zat Gizi Mikro ({selectedYear})</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Pola capaian bulanan Januari – Desember (Klik label legenda untuk menyembunyikan/menampilkan grafik)</p>
+                    </div>
+                </div>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendResult} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
+                            <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
+                            <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
+                            <Line type="monotone" hide={hiddenTrend.includes("Suplemen Gizi Mikro")} dataKey="Suplemen Gizi Mikro" name="Suplemen Gizi Mikro" stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="Suplemen Gizi Mikro" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#e11d48', fontWeight: 'bold' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("Vitamin A (6-11 Bln)")} dataKey="Vitamin A (6-11 Bln)" name="Vitamin A (6-11 Bln)" stroke="#ea580c" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="Vitamin A (6-11 Bln)" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#ea580c' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("Vitamin A (12-59 Bln)")} dataKey="Vitamin A (12-59 Bln)" name="Vitamin A (12-59 Bln)" stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="Vitamin A (12-59 Bln)" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#0284c7' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("Vitamin A (6-59 Bln)")} dataKey="Vitamin A (6-59 Bln)" name="Vitamin A (6-59 Bln)" stroke="#7c3aed" strokeWidth={2.5} dot={{ r: 3 }}>
+                                <LabelList dataKey="Vitamin A (6-59 Bln)" position="top" formatter={(val: any) => val !== 0 ? `${val}%` : ''} style={{ fontSize: '10px', fill: '#7c3aed' }} />
+                            </Line>
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
             {/* Detail Rekap Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
                 <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -574,6 +621,12 @@ export default function SuplemenDashboard() {
                             <p className="text-sm text-slate-500 mt-1">Data agregat level {groupingRole === 'superadmin' ? 'Puskesmas' : 'Desa'}</p>
                         </div>
                     </div>
+                </div>
+                <div className="p-4 bg-sky-50 border-b border-sky-100 flex gap-2">
+                    <Info size={16} className="text-sky-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-slate-700">
+                        <strong>Catatan:</strong> Angka di bawah persentase menunjukkan perbandingan <strong>(Numerator / Denominator)</strong>. Sel dengan warna <span className="text-red-600 font-bold">merah</span> menandakan nilai di bawah target program.
+                    </p>
                 </div>
                 <div className="overflow-auto" style={{ maxHeight: 480 }}>
                     <table className="w-full text-sm text-left align-middle min-w-[900px]">
@@ -601,20 +654,39 @@ export default function SuplemenDashboard() {
                                     'vit_a_2x': 'vit_a_2x_rate',
                                     'suplemen_mikro': 'suplemen_mikro_rate',
                                 };
+                                const numDenMap: Record<string, { num: string; den: string }> = {
+                                    'vit_a_6_11_feb': { num: 'feb_6_11_num', den: 'feb_6_11_den' },
+                                    'vit_a_12_59_feb': { num: 'feb_12_59_num', den: 'feb_12_59_den' },
+                                    'vit_a_54_59_feb': { num: 'feb_54_59_num', den: 'feb_54_59_den' },
+                                    'vit_a_6_59_feb': { num: 'feb_6_59_num', den: 'feb_6_59_den' },
+                                    'vit_a_6_11_aug': { num: 'aug_6_11_num', den: 'aug_6_11_den' },
+                                    'vit_a_12_59_aug': { num: 'aug_12_59_num', den: 'aug_12_59_den' },
+                                    'vit_a_6_59_aug': { num: 'aug_6_59_num', den: 'aug_6_59_den' },
+                                    'vit_a_6_11_tahunan': { num: 'tahunan_6_11_num', den: 'tahunan_6_11_den' },
+                                    'vit_a_12_59_tahunan': { num: 'tahunan_12_59_num', den: 'tahunan_12_59_den' },
+                                    'vit_a_2x': { num: 'vit2x_num', den: 'vit2x_den' },
+                                    'suplemen_mikro': { num: 'sup_num', den: 'sup_den' },
+                                };
                                 // Cards that are Vitamin A metrics (should be checked against target)
                                 const vitACardIds = ['vit_a_6_11_feb', 'vit_a_12_59_feb', 'vit_a_54_59_feb', 'vit_a_6_59_feb', 'vit_a_6_11_aug', 'vit_a_12_59_aug', 'vit_a_6_59_aug', 'vit_a_6_11_tahunan', 'vit_a_12_59_tahunan', 'vit_a_2x'];
                                 return (
                                     <tr key={row.name} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
+                                        <td className="px-6 py-3 font-semibold text-slate-800">{row.name}</td>
                                         {visibleCards.filter(c => c.id !== 'program_belum').map(c => {
                                             const val = Number(row[keyMap[c.id] as keyof typeof row] || 0);
+                                            const num = Number(row[numDenMap[c.id]?.num as keyof typeof row] || 0);
+                                            const den = Number(row[numDenMap[c.id]?.den as keyof typeof row] || 0);
                                             const isVitA = vitACardIds.includes(c.id);
                                             const isBelowTarget = isVitA && val < vitATarget && val > 0;
                                             return (
-                                                <td key={c.id} className={`px-4 py-4 text-center font-medium ${isBelowTarget ? 'text-red-600 bg-red-50 font-bold' : 'text-slate-700'
-                                                    }`}>
-                                                    {val.toFixed(2)}%
-                                                    {isBelowTarget && <span className="ml-1 text-[10px]">▼</span>}
+                                                <td key={c.id} className={`px-4 py-3 text-center ${isBelowTarget ? 'bg-red-50' : ''}`}>
+                                                    <div className={`font-semibold ${isBelowTarget ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                        {val.toFixed(2)}%
+                                                        {isBelowTarget && <span className="ml-1 text-[10px]">▼</span>}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                        {Math.round(num).toLocaleString('id-ID')} / {Math.round(den).toLocaleString('id-ID')}
+                                                    </div>
                                                 </td>
                                             );
                                         })}

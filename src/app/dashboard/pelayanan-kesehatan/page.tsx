@@ -23,6 +23,7 @@ import TrendAnalysisChart from "@/components/dashboard/TrendAnalysisChart";
 import PlausibilitasAnalysisSection from "@/components/dashboard/PlausibilitasAnalysisSection";
 import CiafDashboardView from "@/components/dashboard/ciaf/CiafDashboardView";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
+import { RefreshCw } from "lucide-react";
 
 // Dynamic import for Map (Leaflet doesn't work with SSR)
 const MapComponent = dynamic(() => import("@/components/dashboard/MapPuskesmas"), {
@@ -239,121 +240,121 @@ export default function PelayananKesehatanPage() {
     const [lockedPuskesmas, setLockedPuskesmas] = useState<string | null>(null);
 
     // Initial Data Fetch
-    useEffect(() => {
-        const fetchUserAndData = async () => {
-            setLoading(true);
+    const fetchUserAndData = useCallback(async () => {
+        setLoading(true);
 
-            // 1. Check User Role
-            const { data: { user } } = await supabase.auth.getUser();
+        // 1. Check User Role
+        const { data: { user } } = await supabase.auth.getUser();
 
-            if (user) {
-                const { data: userProfile } = await supabase
-                    .from("app_users")
-                    .select("role, puskesmas_id")
-                    .eq("id", user.id)
-                    .single();
+        if (user) {
+            const { data: userProfile } = await supabase
+                .from("app_users")
+                .select("role, puskesmas_id")
+                .eq("id", user.id)
+                .single();
 
-                if (userProfile) {
-                    setUserRole(userProfile.role);
+            if (userProfile) {
+                setUserRole(userProfile.role);
 
-                    if (userProfile.role === "admin_puskesmas" && userProfile.puskesmas_id) {
-                        const { data: pkm } = await supabase
-                            .from("ref_puskesmas")
-                            .select("nama")
-                            .eq("id", userProfile.puskesmas_id)
-                            .single();
+                if (userProfile.role === "admin_puskesmas" && userProfile.puskesmas_id) {
+                    const { data: pkm } = await supabase
+                        .from("ref_puskesmas")
+                        .select("nama")
+                        .eq("id", userProfile.puskesmas_id)
+                        .single();
 
-                        if (pkm) {
-                            setLockedPuskesmas(pkm.nama);
-                        }
+                    if (pkm) {
+                        setLockedPuskesmas(pkm.nama);
                     }
                 }
             }
+        }
 
-            // 2. Fetch Dashboard Data (Puskesmas Level)
-            let allPuskesmasRows: BultimRow[] = [];
-            let pkmPage = 0;
-            const pkmSize = 1000;
-            let hasMorePkm = true;
+        // 2. Fetch Dashboard Data (Puskesmas Level)
+        let allPuskesmasRows: BultimRow[] = [];
+        let pkmPage = 0;
+        const pkmSize = 1000;
+        let hasMorePkm = true;
 
-            while (hasMorePkm) {
-                const { data: rows, error } = await supabase
-                    .from("data_bultim")
-                    .select("*")
-                    .range(pkmPage * pkmSize, (pkmPage + 1) * pkmSize - 1)
-                    .order("tahun", { ascending: false })
-                    .order("bulan", { ascending: false });
+        while (hasMorePkm) {
+            const { data: rows, error } = await supabase
+                .from("data_bultim")
+                .select("*")
+                .range(pkmPage * pkmSize, (pkmPage + 1) * pkmSize - 1)
+                .order("tahun", { ascending: false })
+                .order("bulan", { ascending: false });
 
-                if (error) {
-                    console.error("Error fetching data_bultim:", error);
-                    hasMorePkm = false;
-                } else if (rows) {
-                    allPuskesmasRows = [...allPuskesmasRows, ...rows];
-                    if (rows.length < pkmSize) hasMorePkm = false;
-                    pkmPage++;
-                } else {
-                    hasMorePkm = false;
-                }
+            if (error) {
+                console.error("Error fetching data_bultim:", error);
+                hasMorePkm = false;
+            } else if (rows) {
+                allPuskesmasRows = [...allPuskesmasRows, ...rows];
+                if (rows.length < pkmSize) hasMorePkm = false;
+                pkmPage++;
+            } else {
+                hasMorePkm = false;
             }
-            setDataPuskesmas(allPuskesmasRows);
+        }
+        setDataPuskesmas(allPuskesmasRows);
 
-            // 3. Fetch Dashboard Data (Desa Level)
-            // Loop fetch for potentially large village dataset
-            let allDesaRows: BultimRow[] = [];
-            let desaPage = 0;
-            const desaSize = 1000;
-            let hasMoreDesa = true;
+        // 3. Fetch Dashboard Data (Desa Level)
+        // Loop fetch for potentially large village dataset
+        let allDesaRows: BultimRow[] = [];
+        let desaPage = 0;
+        const desaSize = 1000;
+        let hasMoreDesa = true;
 
-            while (hasMoreDesa) {
-                const { data: rows, error } = await supabase
-                    .from("data_bultim_desa")
-                    .select("*")
-                    .range(desaPage * desaSize, (desaPage + 1) * desaSize - 1)
-                    .order("tahun", { ascending: false })
-                    .order("bulan", { ascending: false });
+        while (hasMoreDesa) {
+            const { data: rows, error } = await supabase
+                .from("data_bultim_desa")
+                .select("*")
+                .range(desaPage * desaSize, (desaPage + 1) * desaSize - 1)
+                .order("tahun", { ascending: false })
+                .order("bulan", { ascending: false });
 
-                if (error) {
-                    console.error("Error fetching data_bultim_desa:", error);
-                    hasMoreDesa = false;
-                } else if (rows) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const mapped = rows.map((r: any) => ({
-                        ...r,
-                        // Ensure data_sasaran exists (sum L+P if missing)
-                        data_sasaran: r.data_sasaran ?? ((r.data_sasaran_l || 0) + (r.data_sasaran_p || 0)),
-                    }));
+            if (error) {
+                console.error("Error fetching data_bultim_desa:", error);
+                hasMoreDesa = false;
+            } else if (rows) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mapped = rows.map((r: any) => ({
+                    ...r,
+                    // Ensure data_sasaran exists (sum L+P if missing)
+                    data_sasaran: r.data_sasaran ?? ((r.data_sasaran_l || 0) + (r.data_sasaran_p || 0)),
+                }));
 
-                    allDesaRows = [...allDesaRows, ...mapped];
-                    if (rows.length < desaSize) hasMoreDesa = false;
-                    desaPage++;
-                } else {
-                    hasMoreDesa = false;
-                }
+                allDesaRows = [...allDesaRows, ...mapped];
+                if (rows.length < desaSize) hasMoreDesa = false;
+                desaPage++;
+            } else {
+                hasMoreDesa = false;
             }
-            setDataDesa(allDesaRows);
+        }
+        setDataDesa(allDesaRows);
 
-            if (allPuskesmasRows.length > 0) {
-                // Get last updated using puskesmas rows (assuming sync upload)
-                const latest = allPuskesmasRows.reduce((a, b) =>
-                    new Date(a.uploaded_at) > new Date(b.uploaded_at) ? a : b
-                );
-                setLastUpdated(latest.uploaded_at);
+        if (allPuskesmasRows.length > 0) {
+            // Get last updated using puskesmas rows (assuming sync upload)
+            const latest = allPuskesmasRows.reduce((a, b) =>
+                new Date(a.uploaded_at) > new Date(b.uploaded_at) ? a : b
+            );
+            setLastUpdated(latest.uploaded_at);
 
-                // Default filters based on puskesmas data
-                const years = [...new Set(allPuskesmasRows.map((r) => r.tahun))].sort((a, b) => b - a);
-                const latestYear = years[0];
-                setFilterTahun(latestYear);
+            // Default filters based on puskesmas data
+            const years = [...new Set(allPuskesmasRows.map((r) => r.tahun))].sort((a, b) => b - a);
+            const latestYear = years[0];
+            setFilterTahun(latestYear);
 
-                const monthsInYear = [...new Set(allPuskesmasRows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
-                if (monthsInYear.length > 0) {
-                    setFilterBulan(monthsInYear[0]);
-                }
+            const monthsInYear = [...new Set(allPuskesmasRows.filter((r) => r.tahun === latestYear).map((r) => r.bulan))].sort((a, b) => b - a);
+            if (monthsInYear.length > 0) {
+                setFilterBulan(monthsInYear[0]);
             }
-            setLoading(false);
-        };
-
-        fetchUserAndData();
+        }
+        setLoading(false);
     }, []);
+
+    useEffect(() => {
+        fetchUserAndData();
+    }, [fetchUserAndData]);
 
     // Enforce Locked Puskesmas when switching tabs
     useEffect(() => {
@@ -776,18 +777,29 @@ export default function PelayananKesehatanPage() {
 
             {/* ─── Header ──────────────────────────────────────────── */}
             <div>
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-200">
-                        <span className="material-icons-round text-white text-xl">local_hospital</span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-200">
+                            <span className="material-icons-round text-white text-xl">local_hospital</span>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                                Indikator Pelayanan Kesehatan
+                            </h1>
+                            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">
+                                Analisis Pertumbuhan • SIGIZI KESGA
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                            Indikator Pelayanan Kesehatan
-                        </h1>
-                        <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">
-                            Analisis Pertumbuhan • SIGIZI KESGA
-                        </p>
-                    </div>
+
+                    <button
+                        onClick={fetchUserAndData}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? "animate-spin" : ""}`} />
+                        <span>Muat Ulang</span>
+                    </button>
                 </div>
 
                 {/* Description */}

@@ -28,7 +28,7 @@ export default function AsiMpasiDashboard() {
     // Filter States
     const [selectedJenisLaporan, setSelectedJenisLaporan] = useState<"Bulanan" | "Tahunan TW">("Bulanan");
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState<number | "ALL">("ALL");
+    const [selectedMonthOrTW, setSelectedMonthOrTW] = useState<number | "ALL">(new Date().getMonth() + 1);
     const [selectedPuskesmas, setSelectedPuskesmas] = useState<string>("ALL");
     const [selectedKelurahan, setSelectedKelurahan] = useState<string>("ALL");
 
@@ -228,7 +228,7 @@ export default function AsiMpasiDashboard() {
                             value={selectedJenisLaporan}
                             onChange={(e) => {
                                 setSelectedJenisLaporan(e.target.value as "Bulanan" | "Tahunan TW");
-                                setSelectedMonthOrTW(e.target.value === "Bulanan" ? 2 : 1);
+                                setSelectedMonthOrTW(e.target.value === "Bulanan" ? (new Date().getMonth() + 1) : Math.ceil((new Date().getMonth() + 1) / 3));
                             }}
                             className="w-1/3 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none transition-all"
                         >
@@ -667,6 +667,49 @@ export default function AsiMpasiDashboard() {
                 );
             })()}
 
+            {/* ── Tren Temporal Line Chart ASI & MPASI ── */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px] mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Activity className="w-5 h-5 text-indigo-600" />
+                    <div>
+                        <h3 className="font-bold text-slate-800">Tren Prevalensi ASI Eksklusif & MPASI ({selectedYear})</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Pola capaian bulanan Januari – Desember (Klik label legenda untuk menyembunyikan/menampilkan grafik)</p>
+                    </div>
+                </div>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendResult} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
+                            <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
+                            <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
+                            <Line type="monotone" hide={hiddenTrend.includes("Recall 0-5 Bln")} dataKey="Recall 0-5 Bln" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="Recall 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#14b8a6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 0-5 Bln")} dataKey="ASI Eksklusif 0-5 Bln" stroke="#06b6d4" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="ASI Eksklusif 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#06b6d4' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 6 Bln")} dataKey="ASI Eksklusif 6 Bln" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="ASI Eksklusif 6 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("Diwawancarai 6-23 Bln")} dataKey="Diwawancarai 6-23 Bln" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }}>
+                                <LabelList dataKey="Diwawancarai 6-23 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#6366f1' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok")} dataKey="MPASI 5 Kelompok" name={selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok"} stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI 5 Kelompok" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging")} dataKey="MPASI Telur/Ikan/Daging" name={selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging"} stroke="#a855f7" strokeWidth={3} dot={{ r: 4, fill: '#a855f7' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI Telur/Ikan/Daging" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#a855f7' }} />
+                            </Line>
+                            <Line type="monotone" hide={hiddenTrend.includes("MPASI Baik")} dataKey="MPASI Baik" stroke="#d946ef" strokeWidth={3} dot={{ r: 4, fill: '#d946ef' }} activeDot={{ r: 6 }}>
+                                <LabelList dataKey="MPASI Baik" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#d946ef' }} />
+                            </Line>
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
             {/* Comprehensive Data Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
                 <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -679,6 +722,12 @@ export default function AsiMpasiDashboard() {
                             <p className="text-sm text-slate-500 mt-1">Data agregat level {groupingRole === 'superadmin' ? 'Puskesmas' : 'Desa'}</p>
                         </div>
                     </div>
+                </div>
+                <div className="p-4 bg-sky-50 border-b border-sky-100 flex gap-2">
+                    <Info size={16} className="text-sky-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-slate-700">
+                        <strong>Catatan:</strong> Angka di bawah persentase menunjukkan perbandingan <strong>(Numerator / Denominator)</strong>. Sel dengan warna <span className="text-red-600 font-bold">merah</span> menandakan nilai di bawah target.
+                    </p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left align-middle min-w-[1000px]">
@@ -714,11 +763,16 @@ export default function AsiMpasiDashboard() {
                                 const asi05Target = ASI_05_TARGETS[selectedYear] || 73;
                                 const asi6Target = ASI_6_TARGETS[selectedYear] || 61;
 
-                                const deficitCell = (val: number, target: number) => {
+                                const deficitCell = (val: number, target: number, num: number, den: number) => {
                                     const below = val > 0 && val < target;
                                     return (
-                                        <td className={`px-6 py-4 text-center font-medium ${below ? 'text-red-600 bg-red-50 font-bold' : 'text-slate-700'}`}>
-                                            {val.toFixed(2)}%{below && <span className="ml-1 text-[10px]">▼</span>}
+                                        <td className={`px-4 py-3 text-center ${below ? 'bg-red-50' : ''}`}>
+                                            <div className={`font-semibold ${below ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                                                {val.toFixed(2)}%{below && <span className="ml-1 text-[10px]">▼</span>}
+                                            </div>
+                                            <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                                                {Math.round(num || 0).toLocaleString('id-ID')} / {Math.round(den || 0).toLocaleString('id-ID')}
+                                            </div>
                                         </td>
                                     );
                                 };
@@ -728,14 +782,14 @@ export default function AsiMpasiDashboard() {
 
                                 return summaryTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row) => (
                                     <tr key={row.name} className="hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                                        <td className="px-6 py-4 font-semibold text-slate-800">{row.name}</td>
-                                        {showFebAug && deficitCell(row.recall_rate, RECALL_TARGET)}
-                                        {showFebAug && deficitCell(row.asi_0_5_rate, asi05Target)}
-                                        {deficitCell(row.asi_6_rate, asi6Target)}
-                                        {showQMonths && deficitCell(row.wawancara_rate, WAWANCARA_TARGET)}
-                                        {showQMonths && deficitCell(row.mpasi_5_8_rate, mpasiTarget)}
-                                        {showQMonths && deficitCell(row.mpasi_telur_rate, mpasiTarget)}
-                                        {showQMonths && deficitCell(row.mpasi_baik_rate, mpasiTarget)}
+                                        <td className="px-6 py-3 font-semibold text-slate-800">{row.name}</td>
+                                        {showFebAug && deficitCell(row.recall_rate, RECALL_TARGET, row.recall_num, row.recall_den)}
+                                        {showFebAug && deficitCell(row.asi_0_5_rate, asi05Target, row.asi_0_5_num, row.asi_0_5_den)}
+                                        {deficitCell(row.asi_6_rate, asi6Target, row.asi_6_num, row.asi_6_den)}
+                                        {showQMonths && deficitCell(row.wawancara_rate, WAWANCARA_TARGET, row.wawancara_num, row.wawancara_den)}
+                                        {showQMonths && deficitCell(row.mpasi_5_8_rate, mpasiTarget, row.mpasi_5_8_num, row.mpasi_5_8_den)}
+                                        {showQMonths && deficitCell(row.mpasi_telur_rate, mpasiTarget, row.mpasi_telur_num, row.mpasi_telur_den)}
+                                        {showQMonths && deficitCell(row.mpasi_baik_rate, mpasiTarget, row.mpasi_baik_num, row.mpasi_baik_den)}
                                     </tr>
                                 ));
                             })()}
@@ -768,47 +822,6 @@ export default function AsiMpasiDashboard() {
                 )}
             </div>
 
-            {/* Trend Chart ASI & MPASI */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px] mt-6">
-                <div className="flex items-center gap-2 mb-6">
-                    <Activity className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-bold text-slate-800">Tren Prevalensi ASI Eksklusif & MPASI ({selectedYear})</h3>
-                </div>
-                <div className="flex-1 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={trendResult} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                            <XAxis dataKey="bulanName" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} tickFormatter={(val) => `${val}%`} />
-                            <RechartsTooltip cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} />
-                            <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px', cursor: 'pointer' }} onClick={toggleTrend} />
-                            
-                            <Line type="monotone" hide={hiddenTrend.includes("Recall 0-5 Bln")} dataKey="Recall 0-5 Bln" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }}>
-                                <LabelList dataKey="Recall 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#14b8a6' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 0-5 Bln")} dataKey="ASI Eksklusif 0-5 Bln" stroke="#06b6d4" strokeWidth={2} dot={{ r: 3 }}>
-                                <LabelList dataKey="ASI Eksklusif 0-5 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#06b6d4' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes("ASI Eksklusif 6 Bln")} dataKey="ASI Eksklusif 6 Bln" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}>
-                                <LabelList dataKey="ASI Eksklusif 6 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#3b82f6' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes("Diwawancarai 6-23 Bln")} dataKey="Diwawancarai 6-23 Bln" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }}>
-                                <LabelList dataKey="Diwawancarai 6-23 Bln" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#6366f1' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok")} dataKey="MPASI 5 Kelompok" name={selectedYear >= 2026 ? "MPASI (6-23 bln)" : "MPASI 5 Kelompok"} stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} activeDot={{ r: 6 }}>
-                                <LabelList dataKey="MPASI 5 Kelompok" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#8b5cf6' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes(selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging")} dataKey="MPASI Telur/Ikan/Daging" name={selectedYear >= 2026 ? "Telur/Ikan/Daging (6-23 bln)" : "MPASI Telur/Ikan/Daging"} stroke="#a855f7" strokeWidth={3} dot={{ r: 4, fill: '#a855f7' }} activeDot={{ r: 6 }}>
-                                <LabelList dataKey="MPASI Telur/Ikan/Daging" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#a855f7' }} />
-                            </Line>
-                            <Line type="monotone" hide={hiddenTrend.includes("MPASI Baik")} dataKey="MPASI Baik" stroke="#d946ef" strokeWidth={3} dot={{ r: 4, fill: '#d946ef' }} activeDot={{ r: 6 }}>
-                                <LabelList dataKey="MPASI Baik" position="top" formatter={(val: any) => val !== 0 ? val : ''} style={{ fontSize: '10px', fill: '#d946ef' }} />
-                            </Line>
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-        </div >
+        </div>
     );
 }

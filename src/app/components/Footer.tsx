@@ -9,8 +9,9 @@ export default function Footer() {
                     {/* Logo */}
                     <div className="mb-2">
                         <SigmaLogo
-                            variant="primary"
-                            className="h-9 w-auto object-contain mx-auto"
+                            variant="tagline"
+                            tone="color"
+                            className="h-11 w-auto object-contain mx-auto"
                         />
                     </div>
 

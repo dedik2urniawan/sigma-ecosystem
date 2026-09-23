@@ -16,6 +16,7 @@ export default function AiAdvisorPanel({ data }: AiAdvisorPanelProps) {
     const [error, setError] = useState<string | null>(null);
     const hasAnalyzed = useRef(false);
     const [showQuotaInfo, setShowQuotaInfo] = useState(false);
+    const [activeModel, setActiveModel] = useState<string>("gemini-3.6-flash");
 
     const handleAnalyze = async () => {
         if (hasAnalyzed.current && analysisResult) return;
@@ -27,6 +28,9 @@ export default function AiAdvisorPanel({ data }: AiAdvisorPanelProps) {
             const result = await generateHealthAnalysis(data);
             if (result.success && result.data) {
                 setAnalysisResult(result.data);
+                if (result.modelUsed) {
+                    setActiveModel(result.modelUsed);
+                }
                 hasAnalyzed.current = true;
             } else {
                 setError(result.error || "Gagal mendapatkan analisis.");
@@ -145,7 +149,9 @@ export default function AiAdvisorPanel({ data }: AiAdvisorPanelProps) {
                                     <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
                                         <div className="flex justify-between mb-1">
                                             <span className="font-semibold text-indigo-900">Model Aktif:</span>
-                                            <span className="font-mono text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded text-[10px]">Gemini 1.5 Flash</span>
+                                            <span className="font-mono text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded text-[10px] font-bold">
+                                                {activeModel}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold text-indigo-900">Kecepatan:</span>
@@ -208,8 +214,8 @@ export default function AiAdvisorPanel({ data }: AiAdvisorPanelProps) {
                         <p className="text-[10px] text-slate-400">
                             AI Experiment by SIGMA
                         </p>
-                        <p className="text-[10px] text-slate-300 font-mono">
-                            v1.5-flash
+                        <p className="text-[10px] text-slate-400 font-mono">
+                            {activeModel}
                         </p>
                     </div>
                 </div>

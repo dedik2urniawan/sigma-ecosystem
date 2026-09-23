@@ -27,7 +27,8 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center group py-1" aria-label="SIGMA Ecosystem">
                         <SigmaLogo
-                            variant="primary"
+                            variant="navbar"
+                            tone="color"
                             className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-[1.02]"
                             priority
                         />

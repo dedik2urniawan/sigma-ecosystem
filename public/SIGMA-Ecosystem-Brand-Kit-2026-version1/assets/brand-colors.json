@@ -1,0 +1,15 @@
+{
+  "brand": "SIGMA Ecosystem",
+  "version": "2026",
+  "colors": {
+    "sigmaBlue": "#0062FF",
+    "deepBlue": "#0051F1",
+    "digitalCyan": "#0A9FFB",
+    "healthCyan": "#17D2FB",
+    "sigmaNavy": "#17274D",
+    "iceSurface": "#EFF9FF",
+    "white": "#FFFFFF"
+  },
+  "gradient": "linear-gradient(135deg, #0051F1 0%, #0A9FFB 52%, #17D2FB 100%)"
+}
+

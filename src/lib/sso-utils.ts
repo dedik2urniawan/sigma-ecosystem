@@ -103,6 +103,7 @@ export type SigmaRole =
     | "admin_puskesmas"
     | "admin_dinkes"
     | "stakeholder"
+    | "opd"
     | "mitra_api"
     | "chatbot_user"
     | "user";
@@ -141,12 +142,14 @@ export function isAllowedRedirect(url: string): boolean {
     return ALLOWED_REDIRECT_PREFIXES.some(prefix => url.startsWith(prefix));
 }
 
-export function formatRoleDisplay(role: string): string {
+export function formatRoleDisplay(role: string, email?: string): string {
+    if (email && email.toLowerCase().includes("opd")) return "OPD Kab Malang";
     const roleMap: Record<string, string> = {
         superadmin: "Super Admin",
         admin_puskesmas: "Admin Puskesmas",
         admin_dinkes: "Admin Dinkes",
         stakeholder: "Stakeholder",
+        opd: "OPD Kab Malang",
         mitra_api: "Mitra API",
         chatbot_user: "Chatbot User",
         user: "User",

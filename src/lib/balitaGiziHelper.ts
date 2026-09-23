@@ -488,7 +488,15 @@ export function calculateGrowthMetrics(
         num_nd_rill: g.jumlah_balita_naik_berat_badannya_n / currentMonthsCount,
         den_nd_rill: g.jumlah_balita_ditimbang / currentMonthsCount,
         num_nd_koreksi: g.jumlah_balita_naik_berat_badannya_n / currentMonthsCount,
-        den_nd_koreksi: g.jumlah_balita_ditimbang_terkoreksi_daksen / currentMonthsCount
+        den_nd_koreksi: g.jumlah_balita_ditimbang_terkoreksi_daksen / currentMonthsCount,
+        num_stunting: g.jumlah_balita_stunting / currentMonthsCount,
+        den_stunting: g.jumlah_balita_diukur_pbtb / currentMonthsCount,
+        num_wasting: g.jumlah_balita_wasting / currentMonthsCount,
+        den_wasting: g.jumlah_balita_ditimbang_dan_diukur / currentMonthsCount,
+        num_underweight: g.jumlah_balita_underweight / currentMonthsCount,
+        den_underweight: g.jumlah_balita_ditimbang / currentMonthsCount,
+        num_obesitas: g.jumlah_balita_overweight / currentMonthsCount,
+        den_obesitas: g.jumlah_balita_ditimbang / currentMonthsCount
     }));
 
     return { metrics, summaryTable };

@@ -41,6 +41,18 @@ export interface SuplemenSummaryRow {
     vit_a_2x_rate: number;
     // Suplemen gizi mikro
     suplemen_mikro_rate: number;
+    // Raw Numerators & Denominators for table details
+    feb_6_11_num: number; feb_6_11_den: number;
+    feb_12_59_num: number; feb_12_59_den: number;
+    feb_54_59_num: number; feb_54_59_den: number;
+    feb_6_59_num: number; feb_6_59_den: number;
+    aug_6_11_num: number; aug_6_11_den: number;
+    aug_12_59_num: number; aug_12_59_den: number;
+    aug_6_59_num: number; aug_6_59_den: number;
+    tahunan_6_11_num: number; tahunan_6_11_den: number;
+    tahunan_12_59_num: number; tahunan_12_59_den: number;
+    vit2x_num: number; vit2x_den: number;
+    sup_num: number; sup_den: number;
 }
 
 export interface SuplemenOverallMetrics {
@@ -253,6 +265,18 @@ export function calculateSuplemenMetrics(
         vit_a_12_59_tahunan_rate: calcDiv(g.aug_12_59_num, g.aug_12_59_den), // Same as Aug
         vit_a_2x_rate: calcDiv(g.vit2x_num, g.vit2x_den),
         suplemen_mikro_rate: calcDiv(g.sup_num, g.sup_den),
+        // Raw Numerators & Denominators for table details
+        feb_6_11_num: g.feb_6_11_num, feb_6_11_den: g.feb_6_11_den,
+        feb_12_59_num: g.feb_12_59_num, feb_12_59_den: g.feb_12_59_den,
+        feb_54_59_num: g.feb_54_59_num, feb_54_59_den: g.feb_54_59_den,
+        feb_6_59_num: g.feb_6_59_num, feb_6_59_den: g.feb_6_59_den,
+        aug_6_11_num: g.aug_6_11_num, aug_6_11_den: g.aug_6_11_den,
+        aug_12_59_num: g.aug_12_59_num, aug_12_59_den: g.aug_12_59_den,
+        aug_6_59_num: g.aug_6_59_num, aug_6_59_den: g.aug_6_59_den,
+        tahunan_6_11_num: g.feb_6_11_num + g.aug_6_11_num, tahunan_6_11_den: g.feb_6_11_den + g.aug_6_11_den,
+        tahunan_12_59_num: g.aug_12_59_num, tahunan_12_59_den: g.aug_12_59_den,
+        vit2x_num: g.vit2x_num, vit2x_den: g.vit2x_den,
+        sup_num: g.sup_num, sup_den: g.sup_den,
     })).sort((a, b) => a.name.localeCompare(b.name));
 
     // Overall metrics
@@ -321,4 +345,60 @@ export function calculateSuplemenMetrics(
     const visibleCards = cardDefs.filter(c => visibleIds.includes(c.id));
 
     return { summaryTable, overallMetrics, visibleCards };
+}
+
+export interface SuplemenTrendDataPoint {
+    bulan: number;
+    bulanName: string;
+    "Suplemen Gizi Mikro": number;
+    "Vitamin A (6-11 Bln)": number;
+    "Vitamin A (12-59 Bln)": number;
+    "Vitamin A (6-59 Bln)": number;
+}
+
+export function calculateSuplemenTrend(yearData: any[]): SuplemenTrendDataPoint[] {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    const trendData: SuplemenTrendDataPoint[] = [];
+
+    for (let m = 1; m <= 12; m++) {
+        const monthData = yearData.filter(d => Number(d.bulan) === m);
+        let supNum = 0, supDen = 0;
+        let va611Num = 0, va611Den = 0;
+        let va1259Num = 0, va1259Den = 0;
+        let va659Num = 0, va659Den = 0;
+
+        monthData.forEach(r => {
+            supNum += Number(r.jumlah_balita_yang_mendapatkan_suplementasi_gizi_mikro) || 0;
+            supDen += Number(r.jumlah_balita_underweight_suplemen) || 0;
+
+            const b611 = Number(r.jumlah_bayi_6_11_bulan) || 0;
+            const b611Va = Number(r.jumlah_bayi_6_11_bulan_mendapat_vitamin_a) || 0;
+            const a1259 = Number(r.jumlah_anak_12_59_bulan) || 0;
+            const a1259Va = Number(r.jumlah_anak_12_59_bulan_mendapat_vitamin_a) || 0;
+            
+            va611Num += b611Va;
+            va611Den += b611;
+            va1259Num += a1259Va;
+            va1259Den += a1259;
+
+            if (m === 2) {
+                va659Num += Number(r.jumlah_anak_6_59_bulan_mendapat_vitamin_a_februari) || 0;
+                va659Den += Number(r.jumlah_anak_6_59_bulan_februari) || 0;
+            } else if (m === 8) {
+                va659Num += Number(r.jumlah_anak_6_59_bulan_mendapat_vitamin_a_agustus) || 0;
+                va659Den += Number(r.jumlah_anak_6_59_bulan_agustus) || 0;
+            }
+        });
+
+        trendData.push({
+            bulan: m,
+            bulanName: months[m - 1],
+            "Suplemen Gizi Mikro": Math.round(calcDiv(supNum, supDen) * 10) / 10,
+            "Vitamin A (6-11 Bln)": (m === 2 || m === 8) ? Math.round(calcDiv(va611Num, va611Den) * 10) / 10 : 0,
+            "Vitamin A (12-59 Bln)": (m === 2 || m === 8) ? Math.round(calcDiv(va1259Num, va1259Den) * 10) / 10 : 0,
+            "Vitamin A (6-59 Bln)": (m === 2 || m === 8) ? Math.round(calcDiv(va659Num, va659Den) * 10) / 10 : 0,
+        });
+    }
+
+    return trendData;
 }

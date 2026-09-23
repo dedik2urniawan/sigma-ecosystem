@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * SSOAuthBanner — Toolbar Autentikasi Modern (Light Theme)
@@ -108,7 +108,7 @@ export default function SSOAuthBanner({
     if (loading || !user) return null;
 
     const displayName = user.nama_lengkap || user.email.split("@")[0] || "User";
-    const roleDisplay = formatRoleDisplay(user.role);
+    const roleDisplay = formatRoleDisplay(user.role, user.email);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();

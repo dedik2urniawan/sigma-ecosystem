@@ -213,8 +213,14 @@ function ChatbotAppLayoutInner({ children }: { children: React.ReactNode }) {
                     {/* Header Sidebar */}
                     <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                         <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
-                                <span className="material-icons-round text-lg">smart_toy</span>
+                            <div className="w-8 h-8 rounded-xl bg-white border border-teal-200/80 shadow-md shadow-teal-500/10 flex items-center justify-center p-0.5 shrink-0">
+                                <Image
+                                    src="/images/branding/avatar-ai-128.png"
+                                    alt="SIGMA Advisor AI"
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-contain rounded-lg"
+                                />
                             </div>
                             <div>
                                 <h2 className="font-black text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
@@ -373,8 +379,14 @@ function ChatbotAppLayoutInner({ children }: { children: React.ReactNode }) {
                             </button>
                         )}
                         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
-                                <span className="material-icons-round text-sm">smart_toy</span>
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white border border-teal-200/80 shadow-xs flex items-center justify-center p-0.5 shrink-0">
+                                <Image
+                                    src="/images/branding/avatar-ai-128.png"
+                                    alt="SIGMA Advisor AI"
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-contain rounded-lg"
+                                />
                             </div>
                             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                                 <h1 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">SIGMA Advisor</h1>

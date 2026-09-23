@@ -34,6 +34,8 @@ interface ModuleCardData {
     highlights: string[];
 }
 
+const RCS_GRADIENT_BUTTON = "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5";
+
 const MODULES: ModuleCardData[] = [
     {
         id: "rcs",
@@ -47,11 +49,11 @@ const MODULES: ModuleCardData[] = [
         accent: {
             bgLight: "bg-emerald-50/50",
             border: "border-emerald-200/80 hover:border-emerald-400",
-            badgeBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+            badgeBg: "bg-emerald-50 text-emerald-700 border-emerald-200",
             badgeText: "text-emerald-700",
-            iconBg: "bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-emerald-200",
-            buttonBg: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200 hover:shadow-emerald-300",
-            shadow: "hover:shadow-xl hover:shadow-emerald-100/60",
+            iconBg: "bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-lg shadow-emerald-500/25",
+            buttonBg: RCS_GRADIENT_BUTTON,
+            shadow: "hover:shadow-xl hover:shadow-emerald-500/10",
         },
         highlights: ["Mirroring SIGIZI KESGA", "Early Warning System", "AI Tren Prevalensi"],
     },
@@ -67,11 +69,11 @@ const MODULES: ModuleCardData[] = [
         accent: {
             bgLight: "bg-amber-50/50",
             border: "border-amber-200/80 hover:border-amber-400",
-            badgeBg: "bg-amber-100 text-amber-800 border-amber-200",
+            badgeBg: "bg-amber-50 text-amber-700 border-amber-200",
             badgeText: "text-amber-700",
-            iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-200",
-            buttonBg: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200 hover:shadow-amber-300",
-            shadow: "hover:shadow-xl hover:shadow-amber-100/60",
+            iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/25",
+            buttonBg: RCS_GRADIENT_BUTTON,
+            shadow: "hover:shadow-xl hover:shadow-amber-500/10",
         },
         highlights: ["Audit Kepatuhan Menu", "Supervisi Puskesmas", "Pelaporan Sasaran SPPG"],
     },
@@ -85,13 +87,13 @@ const MODULES: ModuleCardData[] = [
         landingUrl: "/chatbot",
         appUrl: "/chatbot/app",
         accent: {
-            bgLight: "bg-purple-50/50",
-            border: "border-purple-200/80 hover:border-purple-400",
-            badgeBg: "bg-purple-100 text-purple-800 border-purple-200",
-            badgeText: "text-purple-700",
-            iconBg: "bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-purple-200",
-            buttonBg: "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-200 hover:shadow-purple-300",
-            shadow: "hover:shadow-xl hover:shadow-purple-100/60",
+            bgLight: "bg-teal-50/50",
+            border: "border-teal-200/80 hover:border-teal-400",
+            badgeBg: "bg-teal-50 text-teal-700 border-teal-200",
+            badgeText: "text-teal-700",
+            iconBg: "bg-gradient-to-br from-cyan-500 via-teal-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/25",
+            buttonBg: RCS_GRADIENT_BUTTON,
+            shadow: "hover:shadow-xl hover:shadow-teal-500/10",
         },
         highlights: ["Konsultasi 24/7", "Integrasi Data SIGMA", "Rekomendasi Intervensi"],
     },
@@ -105,13 +107,13 @@ const MODULES: ModuleCardData[] = [
         landingUrl: "/api-gateway",
         appUrl: "/api-gateway/portal",
         accent: {
-            bgLight: "bg-indigo-50/50",
-            border: "border-indigo-200/80 hover:border-indigo-400",
-            badgeBg: "bg-indigo-100 text-indigo-800 border-indigo-200",
-            badgeText: "text-indigo-700",
-            iconBg: "bg-gradient-to-br from-indigo-500 to-purple-700 text-white shadow-indigo-200",
-            buttonBg: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 hover:shadow-indigo-300",
-            shadow: "hover:shadow-xl hover:shadow-indigo-100/60",
+            bgLight: "bg-purple-50/50",
+            border: "border-purple-200/80 hover:border-purple-400",
+            badgeBg: "bg-purple-50 text-purple-700 border-purple-200",
+            badgeText: "text-purple-700",
+            iconBg: "bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/25",
+            buttonBg: RCS_GRADIENT_BUTTON,
+            shadow: "hover:shadow-xl hover:shadow-purple-500/10",
         },
         highlights: ["REST API Standar", "Autentikasi API Key", "Log & Rate Limiting"],
     },
@@ -127,11 +129,11 @@ const MODULES: ModuleCardData[] = [
         accent: {
             bgLight: "bg-blue-50/50",
             border: "border-blue-200/80 hover:border-blue-400",
-            badgeBg: "bg-blue-100 text-blue-800 border-blue-200",
+            badgeBg: "bg-blue-50 text-blue-700 border-blue-200",
             badgeText: "text-blue-700",
-            iconBg: "bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-blue-200",
-            buttonBg: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 hover:shadow-blue-300",
-            shadow: "hover:shadow-xl hover:shadow-blue-100/60",
+            iconBg: "bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/25",
+            buttonBg: RCS_GRADIENT_BUTTON,
+            shadow: "hover:shadow-xl hover:shadow-blue-500/10",
         },
         highlights: ["Kebutuhan Kalori & AKG", "Analisis Menu Harian", "Format Siap Cetak"],
     },
@@ -219,7 +221,7 @@ export default function SSOModulesHubPage() {
                         {/* Logo & Title */}
                         <div className="flex items-center gap-3">
                             <Link href="/" className="flex items-center gap-3 group" aria-label="SIGMA Ecosystem">
-                                <SigmaLogo variant="primary" className="h-9 sm:h-10 w-auto object-contain" priority />
+                                <SigmaLogo variant="navbar" tone="color" className="h-9 sm:h-10 w-auto object-contain" priority />
                                 <div className="hidden sm:block border-l border-slate-200 pl-3">
                                     <p className="text-[11px] text-slate-500 font-medium leading-tight">
                                         Single Sign-On • Portal Layanan Terpadu
@@ -338,7 +340,7 @@ export default function SSOModulesHubPage() {
 
                                     {/* Title & Tagline */}
                                     <div className="mb-3">
-                                        <h3 className="text-xl font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                                        <h3 className="text-xl font-extrabold text-teal-800 group-hover:text-teal-600 transition-colors">
                                             {mod.title}
                                         </h3>
                                         <p className={`text-xs font-bold uppercase tracking-wide font-mono mt-0.5 ${mod.accent.badgeText}`}>
@@ -377,29 +379,29 @@ export default function SSOModulesHubPage() {
                     })}
 
                     {/* Card ke-6: SIGMA PKMK (Sistem Terpisah) */}
-                    <div className="group bg-gradient-to-br from-violet-50/50 to-white rounded-3xl p-7 border border-violet-200/80 hover:border-violet-400 shadow-sm hover:shadow-xl hover:shadow-violet-100/60 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+                    <div className="group bg-gradient-to-br from-indigo-50/40 to-white rounded-3xl p-7 border border-indigo-200/80 hover:border-indigo-400 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
                         <div>
                             <div className="flex items-start justify-between gap-4 mb-5">
-                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-violet-200 group-hover:scale-105 transition-transform duration-300">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-300">
                                     <span className="material-icons-round text-2xl">medical_services</span>
                                 </div>
 
                                 <div className="flex flex-col items-end gap-1.5">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider font-mono px-3 py-1 rounded-full border bg-violet-100 text-violet-800 border-violet-200">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider font-mono px-3 py-1 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
                                         Domain Eksternal
                                     </span>
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md font-mono">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md font-mono">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                                         Terpisah
                                     </span>
                                 </div>
                             </div>
 
                             <div className="mb-3">
-                                <h3 className="text-xl font-extrabold text-slate-900 group-hover:text-purple-700 transition-colors">
+                                <h3 className="text-xl font-extrabold text-teal-800 group-hover:text-teal-600 transition-colors">
                                     SIGMA PKMK
                                 </h3>
-                                <p className="text-xs font-bold uppercase tracking-wide font-mono mt-0.5 text-violet-700">
+                                <p className="text-xs font-bold uppercase tracking-wide font-mono mt-0.5 text-indigo-700">
                                     Intervensi Pangan Medis Khusus
                                 </p>
                             </div>
@@ -410,11 +412,11 @@ export default function SSOModulesHubPage() {
 
                             <div className="space-y-2 mb-6 pt-4 border-t border-slate-100">
                                 <div className="flex items-center gap-2 text-xs text-slate-600">
-                                    <span className="material-icons-round text-purple-600 text-sm">open_in_new</span>
+                                    <span className="material-icons-round text-emerald-600 text-sm">open_in_new</span>
                                     <span className="font-medium">Aplikasi Web Mandiri</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-600">
-                                    <span className="material-icons-round text-purple-600 text-sm">cloud_queue</span>
+                                    <span className="material-icons-round text-emerald-600 text-sm">cloud_queue</span>
                                     <span className="font-medium">Basis Data PKMK Terpisah</span>
                                 </div>
                             </div>
@@ -425,7 +427,7 @@ export default function SSOModulesHubPage() {
                                 href="https://pkmk-malangkab.app/landing-page.html"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full py-3.5 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shadow-violet-200 hover:shadow-violet-300"
+                                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 hover:shadow-lg hover:shadow-teal-600/35 hover:-translate-y-0.5"
                             >
                                 <span>Akses PKMK Eksternal</span>
                                 <span className="material-icons-round text-base">open_in_new</span>
@@ -436,20 +438,48 @@ export default function SSOModulesHubPage() {
             </main>
 
             {/* ─── Footer ──────────────────────────────────────────────── */}
-            <footer className="mt-auto border-t border-slate-200 bg-white py-6">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                    <p>© 2026 Dinas Kesehatan Kabupaten Malang · SIGMA Ecosystem v2.1</p>
-                    <p>
-                        Pusat Bantuan:{" "}
+            <footer className="mt-auto border-t border-slate-200/90 bg-white/90 backdrop-blur-md py-5">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+                    <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <p className="font-medium text-slate-600">
+                            © 2026 Dinas Kesehatan Kabupaten Malang · <span className="font-semibold text-teal-800">SIGMA Ecosystem v2.1</span>
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                        <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                            <span className="material-icons-round text-slate-400 text-sm">support_agent</span>
+                            Pusat Bantuan:
+                        </span>
                         <a
-                            href="https://wa.me/6281216354887"
+                            href="https://wa.me/6281216354887?text=Halo%20Admin%20SIGMA%20Dinkes,%20saya%20memerlukan%20bantuan%20terkait%20layanan%20SSO%20SIGMA%20Ecosystem."
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-bold text-emerald-700 hover:text-emerald-800 underline"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/90 border border-emerald-200/90 text-emerald-900 font-semibold text-xs transition-all duration-200 shadow-xs hover:shadow-md hover:shadow-emerald-600/10 hover:-translate-y-0.5 group"
+                            aria-label="Hubungi WhatsApp Dinkes"
+                            title="Chat WhatsApp Resmi Dinas Kesehatan Kabupaten Malang"
                         >
-                            WhatsApp Dinkes (+6281216354887)
+                            {/* Official WhatsApp Logo SVG */}
+                            <div className="w-5 h-5 rounded-full bg-[#25D366] flex items-center justify-center shrink-0 shadow-xs text-white group-hover:scale-110 transition-transform">
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                                </svg>
+                            </div>
+                            <span className="font-bold text-slate-800 group-hover:text-emerald-800 transition-colors">
+                                WhatsApp Dinkes
+                            </span>
+                            <span className="font-mono text-[11px] text-emerald-700 bg-white/90 px-2 py-0.5 rounded-md border border-emerald-200/70 shadow-xs">
+                                +6281216354887
+                            </span>
+                            <span className="material-icons-round text-xs text-emerald-600 group-hover:translate-x-0.5 transition-transform">
+                                open_in_new
+                            </span>
                         </a>
-                    </p>
+                    </div>
                 </div>
             </footer>
         </div>

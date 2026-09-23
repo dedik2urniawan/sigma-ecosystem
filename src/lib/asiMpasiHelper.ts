@@ -184,9 +184,23 @@ export function calculateAsiMpasiMetrics(
             mpasi_5_8_rate: calcDiv(g.mpasi_5_8_num, g.mpasi_5_8_den),
             mpasi_telur_rate: calcDiv(g.mpasi_telur_num, g.mpasi_telur_den),
             mpasi_baik_rate: calcDiv(g.mpasi_baik_num, g.mpasi_baik_den),
-            // Denom to decide if we should render it or not (e.g. 0 responses)
+            // Numerators and Denominators for table details
+            imd_num: g.imd_num,
+            imd_den: g.imd_den,
+            recall_num: g.recall_num,
+            recall_den: g.recall_den,
+            asi_0_5_num: g.asi_0_5_num,
+            asi_0_5_den: g.asi_0_5_den,
+            asi_6_num: g.asi_6_num,
+            asi_6_den: g.asi_6_den,
+            wawancara_num: g.wawancara_num,
             wawancara_den: g.wawancara_den,
-            asi_0_5_den: g.asi_0_5_den
+            mpasi_5_8_num: g.mpasi_5_8_num,
+            mpasi_5_8_den: g.mpasi_5_8_den,
+            mpasi_telur_num: g.mpasi_telur_num,
+            mpasi_telur_den: g.mpasi_telur_den,
+            mpasi_baik_num: g.mpasi_baik_num,
+            mpasi_baik_den: g.mpasi_baik_den
         };
     }).sort((a, b) => a.name.localeCompare(b.name));
 

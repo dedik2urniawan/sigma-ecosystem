@@ -258,48 +258,29 @@ export async function POST(req: Request) {
             return Response.json({ content: "Konfigurasi API Key tidak lengkap." }, { status: 500 });
         }
 
-        // Build Vertex AI Gemini API request (gemini-3.1-flash-lite)
+        // Call Gemini with multi-model automatic failover
+        const { generateGeminiContentWithFallback } = await import("@/lib/gemini");
         const geminiMessages = sanitizedMessages.map((m) => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
+            role: (m.role === 'assistant' ? 'model' : 'user') as "model" | "user",
             parts: [{ text: m.content }]
         }));
 
-        const aiModel = 'gemini-3.1-flash-lite';
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                systemInstruction: { parts: [{ text: fullSystemPrompt }] },
-                contents: geminiMessages,
-                generationConfig: {
-                    temperature: 0.3,       // Lower = more factual/consistent
-                    topP: 0.8,
-                    maxOutputTokens: 2048,
-                }
-            }),
+        const result = await generateGeminiContentWithFallback(geminiMessages, {
+            systemInstruction: fullSystemPrompt,
+            generationConfig: {
+                temperature: 0.3,
+                topP: 0.8,
+                maxOutputTokens: 2048,
+            }
         });
 
-        const responseData = await response.json();
-
-        if (!response.ok || responseData.error) {
-            const errMsg = responseData.error?.message || 'Unknown error';
-            console.error("Vertex AI Error:", errMsg);
-
-            if (response.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED')) {
-                return Response.json({
-                    content: "⏳ **SIGMA Advisor sedang sibuk.** Batas kuota AI tercapai. Silakan coba kembali dalam beberapa saat.",
-                }, { status: 200 });
-            }
-
-            return Response.json({ content: "Layanan Vertex AI tidak tersedia: " + errMsg }, { status: 500 });
+        if (!result.success || !result.text) {
+            return Response.json({
+                content: "⏳ **SIGMA Advisor sedang mengalami antrean tinggi.** Silakan klik coba lagi dalam beberapa saat.",
+            }, { status: 200 });
         }
 
-        const aiText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respons dari AI.";
-        return Response.json({ content: aiText });
+        return Response.json({ content: result.text });
 
     } catch (error: any) {
         console.error("=== CHATBOT API ERROR ===", error.message);

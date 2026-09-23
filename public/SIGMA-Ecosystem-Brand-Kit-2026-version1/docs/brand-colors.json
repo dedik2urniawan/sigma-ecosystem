@@ -1,0 +1,18 @@
+{
+  "sampled_logo": {
+    "teal": "#21AFA9",
+    "deep_teal": "#0B6268",
+    "cyan": "#00A7C5",
+    "mint": "#4BBBBD",
+    "purple": "#876A96",
+    "wordmark_black": "#000000"
+  },
+  "suggested_ui": {
+    "primary": "#0B737A",
+    "surface": "#F3FAF9",
+    "dark": "#0F172A",
+    "text": "#183B45",
+    "border": "#C7E8E4"
+  },
+  "note": "Nilai representatif dari logo bergradasi; bukan palet brand resmi terpisah. Token UI merupakan usulan."
+}

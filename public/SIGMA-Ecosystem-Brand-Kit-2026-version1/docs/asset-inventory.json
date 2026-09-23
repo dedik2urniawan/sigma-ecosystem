@@ -1,0 +1,456 @@
+[
+  {
+    "path": "PREVIEW.html",
+    "bytes": 4482
+  },
+  {
+    "path": "PREVIEW.png",
+    "bytes": 321113,
+    "width": 1800,
+    "height": 1440,
+    "mode": "RGB"
+  },
+  {
+    "path": "README.md",
+    "bytes": 4274
+  },
+  {
+    "path": "docs/IMPLEMENTASI-NEXTJS.md",
+    "bytes": 4458
+  },
+  {
+    "path": "docs/brand-colors.json",
+    "bytes": 444
+  },
+  {
+    "path": "docs/brand-colors.txt",
+    "bytes": 435
+  },
+  {
+    "path": "integration/SigmaLogo.tsx",
+    "bytes": 1086
+  },
+  {
+    "path": "integration/brand-tokens.css",
+    "bytes": 310
+  },
+  {
+    "path": "integration/cobranding-template.svg",
+    "bytes": 57072,
+    "viewBox": "0 0 1500 360"
+  },
+  {
+    "path": "integration/manifest.example.json",
+    "bytes": 802
+  },
+  {
+    "path": "integration/metadata.example.ts",
+    "bytes": 1532
+  },
+  {
+    "path": "integration/usage.example.tsx",
+    "bytes": 440
+  },
+  {
+    "path": "print/logo-sigma-print-300dpi.png",
+    "bytes": 196077,
+    "width": 3600,
+    "height": 1052,
+    "mode": "RGBA"
+  },
+  {
+    "path": "print/logo-sigma-print.svg",
+    "bytes": 69122,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/favicon.ico",
+    "bytes": 47238,
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/icons/apple-touch-icon.png",
+    "bytes": 11412,
+    "width": 180,
+    "height": 180,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/icons/favicon-16x16.png",
+    "bytes": 564,
+    "width": 16,
+    "height": 16,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/icons/favicon-32x32.png",
+    "bytes": 1609,
+    "width": 32,
+    "height": 32,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/icons/favicon-48x48.png",
+    "bytes": 2930,
+    "width": 48,
+    "height": 48,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/icons/favicon-64x64.png",
+    "bytes": 4375,
+    "width": 64,
+    "height": 64,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/icons/favicon.svg",
+    "bytes": 32759,
+    "viewBox": "0 0 1024 1024"
+  },
+  {
+    "path": "public/icons/icon-192x192.png",
+    "bytes": 13958,
+    "width": 192,
+    "height": 192,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/icons/icon-512x512.png",
+    "bytes": 45931,
+    "width": 512,
+    "height": 512,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/icons/icon-maskable-192x192.png",
+    "bytes": 10205,
+    "width": 192,
+    "height": 192,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/icons/icon-maskable-512x512.png",
+    "bytes": 34271,
+    "width": 512,
+    "height": 512,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/icons/pwa-maskable-512.png",
+    "bytes": 34271,
+    "width": 512,
+    "height": 512,
+    "mode": "RGB"
+  },
+  {
+    "path": "public/images/branding/avatar-ai-128.png",
+    "bytes": 7209,
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/avatar-ai-256.png",
+    "bytes": 17539,
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/avatar-ai-64.png",
+    "bytes": 2638,
+    "width": 64,
+    "height": 64,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-1024.png",
+    "bytes": 122085,
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-512.png",
+    "bytes": 54627,
+    "width": 512,
+    "height": 512,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-dark.png",
+    "bytes": 50476,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-dark.svg",
+    "bytes": 25345,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline-dark.png",
+    "bytes": 59453,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline-dark.svg",
+    "bytes": 38108,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline-white.png",
+    "bytes": 41539,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline-white.svg",
+    "bytes": 38108,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline.png",
+    "bytes": 75851,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-tagline.svg",
+    "bytes": 69122,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-white.png",
+    "bytes": 35724,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal-white.svg",
+    "bytes": 25345,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal.png",
+    "bytes": 69525,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-horizontal.svg",
+    "bytes": 56411,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark-dark.png",
+    "bytes": 34567,
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark-dark.svg",
+    "bytes": 7680,
+    "viewBox": "0 0 1024 1024"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark-white.png",
+    "bytes": 26435,
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark-white.svg",
+    "bytes": 7680,
+    "viewBox": "0 0 1024 1024"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark.png",
+    "bytes": 122085,
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-mark.svg",
+    "bytes": 32759,
+    "viewBox": "0 0 1024 1024"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar-dark.png",
+    "bytes": 29985,
+    "width": 1040,
+    "height": 240,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar-dark.svg",
+    "bytes": 25382,
+    "viewBox": "0 0 1040 240"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar-white.png",
+    "bytes": 20375,
+    "width": 1040,
+    "height": 240,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar-white.svg",
+    "bytes": 25382,
+    "viewBox": "0 0 1040 240"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar.png",
+    "bytes": 37289,
+    "width": 1040,
+    "height": 240,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-navbar.svg",
+    "bytes": 56448,
+    "viewBox": "0 0 1040 240"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked-dark.png",
+    "bytes": 57855,
+    "width": 1000,
+    "height": 1000,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked-dark.svg",
+    "bytes": 38180,
+    "viewBox": "0 0 1000 1000"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked-white.png",
+    "bytes": 40963,
+    "width": 1000,
+    "height": 1000,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked-white.svg",
+    "bytes": 38180,
+    "viewBox": "0 0 1000 1000"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked.png",
+    "bytes": 79525,
+    "width": 1000,
+    "height": 1000,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-stacked.svg",
+    "bytes": 69194,
+    "viewBox": "0 0 1000 1000"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-white.png",
+    "bytes": 35724,
+    "width": 1595,
+    "height": 466,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-white.svg",
+    "bytes": 25345,
+    "viewBox": "0 0 1595 466"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark-dark.png",
+    "bytes": 31770,
+    "width": 1266,
+    "height": 148,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark-dark.svg",
+    "bytes": 17761,
+    "viewBox": "0 0 1266 148"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark-white.png",
+    "bytes": 21315,
+    "width": 1266,
+    "height": 148,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark-white.svg",
+    "bytes": 17761,
+    "viewBox": "0 0 1266 148"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark.png",
+    "bytes": 26503,
+    "width": 1266,
+    "height": 148,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/images/branding/logo-sigma-wordmark.svg",
+    "bytes": 23748,
+    "viewBox": "0 0 1266 148"
+  },
+  {
+    "path": "public/social/og-banner.png",
+    "bytes": 116246,
+    "width": 1200,
+    "height": 630,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/social/opengraph-image.png",
+    "bytes": 116246,
+    "width": 1200,
+    "height": 630,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/social/opengraph-image.svg",
+    "bytes": 58823,
+    "viewBox": "0 0 1200 630"
+  },
+  {
+    "path": "public/social/twitter-image.png",
+    "bytes": 114257,
+    "width": 1200,
+    "height": 600,
+    "mode": "RGBA"
+  },
+  {
+    "path": "public/social/twitter-image.svg",
+    "bytes": 58823,
+    "viewBox": "0 0 1200 600"
+  },
+  {
+    "path": "source/original-horizontal-tagline.png",
+    "bytes": 158435,
+    "width": 2048,
+    "height": 1152,
+    "mode": "RGBA"
+  },
+  {
+    "path": "source/original-logo-mark.png",
+    "bytes": 200585,
+    "width": 2048,
+    "height": 1152,
+    "mode": "RGBA"
+  }
+]
