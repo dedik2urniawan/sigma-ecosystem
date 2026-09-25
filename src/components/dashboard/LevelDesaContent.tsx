@@ -9,6 +9,7 @@ import {
     PieChart, Pie, Legend, LabelList,
 } from "recharts";
 import TrendAnalysisChart from "./TrendAnalysisChart";
+import HeatbarMapSection from "./HeatbarMapSection";
 import * as XLSX from "xlsx";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
@@ -654,6 +655,14 @@ export default function LevelDesaContent() {
 
                     {/* ─── Trend Analysis ─── */}
                     <TrendAnalysisChart data={trendData} year={filterTahun} />
+
+                    {/* ─── Heatbar Map Progres Prevalensi Status Gizi Level Desa ─── */}
+                    <HeatbarMapSection
+                        data={data}
+                        year={filterTahun}
+                        level="desa"
+                        filterPuskesmas={filterPuskesmas}
+                    />
 
                     {/* ─── Interactive Map ─── */}
                     <div className="bg-white rounded-2xl border border-slate-200 p-6">

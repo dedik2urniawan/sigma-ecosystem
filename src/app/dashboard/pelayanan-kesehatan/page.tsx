@@ -21,6 +21,7 @@ import LevelDesaContent from "@/components/dashboard/LevelDesaContent";
 import InsidenStuntingContent from "@/components/dashboard/InsidenStuntingContent";
 import TrendAnalysisChart from "@/components/dashboard/TrendAnalysisChart";
 import PlausibilitasAnalysisSection from "@/components/dashboard/PlausibilitasAnalysisSection";
+import HeatbarMapSection from "@/components/dashboard/HeatbarMapSection";
 import CiafDashboardView from "@/components/dashboard/ciaf/CiafDashboardView";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
 import { RefreshCw } from "lucide-react";
@@ -1011,6 +1012,13 @@ export default function PelayananKesehatanPage() {
                                         puskesmas={filterPuskesmas}
                                         allData={dataPuskesmas}
                                         filterBulan={filterBulan}
+                                    />
+
+                                    {/* ─── Heatbar Map Progres Prevalensi Status Gizi ─────── */}
+                                    <HeatbarMapSection
+                                        data={dataPuskesmas}
+                                        year={filterTahun}
+                                        level="puskesmas"
                                     />
 
                                     {/* ─── Interactive Map ───────────────────────────────── */}
