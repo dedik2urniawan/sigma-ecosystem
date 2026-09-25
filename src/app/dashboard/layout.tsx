@@ -26,101 +26,187 @@ const AuthContext = createContext<{ user: UserData | null; loading: boolean }>({
 
 export const useAuth = () => useContext(AuthContext);
 
-// ─── Menu Items ─────────────────────────────────────────────────────────────
-const menuItems = [
+// ─── Menu Groups & Items ───────────────────────────────────────────────────
+interface SidebarMenuItem {
+    id: string;
+    label: string;
+    icon: string;
+    href: string;
+    ready: boolean;
+    roleFilter?: (role: string) => boolean;
+}
+
+interface SidebarGroup {
+    id: string;
+    label: string;
+    icon: string;
+    items: SidebarMenuItem[];
+}
+
+const SIDEBAR_GROUPS: SidebarGroup[] = [
     {
-        id: "pelayanan-kesehatan",
-        label: "Pelayanan Kesehatan",
-        icon: "local_hospital",
-        href: "/dashboard/pelayanan-kesehatan",
-        ready: true,
+        id: "indikator-utama",
+        label: "Indikator Utama",
+        icon: "dashboard_customize",
+        items: [
+            {
+                id: "pelayanan-kesehatan",
+                label: "Pelayanan Kesehatan",
+                icon: "local_hospital",
+                href: "/dashboard/pelayanan-kesehatan",
+                ready: true,
+            },
+            {
+                id: "balita-gizi",
+                label: "Balita Gizi",
+                icon: "child_care",
+                href: "/dashboard/balita-gizi",
+                ready: true,
+            },
+            {
+                id: "balita-kia",
+                label: "Balita KIA",
+                icon: "favorite",
+                href: "/dashboard/balita-kia",
+                ready: false,
+            },
+            {
+                id: "ibu-hamil",
+                label: "Ibu Hamil",
+                icon: "pregnant_woman",
+                href: "/dashboard/ibu-hamil",
+                ready: true,
+            },
+            {
+                id: "remaja-putri",
+                label: "Remaja Putri",
+                icon: "girl",
+                href: "/dashboard/remaja-putri",
+                ready: true,
+            },
+            {
+                id: "analisis-pertumbuhan",
+                label: "Analisis Pertumbuhan",
+                icon: "query_stats",
+                href: "/dashboard/analisis-pertumbuhan",
+                ready: true,
+            },
+            {
+                id: "analisis-mpdn",
+                label: "Analisis MPDN",
+                icon: "monitor_heart",
+                href: "/dashboard/analisis-mpdn",
+                ready: false,
+            },
+            {
+                id: "program-catin",
+                label: "Program Catin",
+                icon: "favorite_border",
+                href: "/dashboard/program-catin",
+                ready: false,
+            },
+        ],
     },
     {
-        id: "balita-gizi",
-        label: "Balita Gizi",
-        icon: "child_care",
-        href: "/dashboard/balita-gizi",
-        ready: true,
-    },
-    {
-        id: "balita-kia",
-        label: "Balita KIA",
-        icon: "favorite",
-        href: "/dashboard/balita-kia",
-        ready: false,
-    },
-    {
-        id: "ibu-hamil",
-        label: "Ibu Hamil",
-        icon: "pregnant_woman",
-        href: "/dashboard/ibu-hamil",
-        ready: true,
-    },
-    {
-        id: "remaja-putri",
-        label: "Remaja Putri",
-        icon: "girl",
-        href: "/dashboard/remaja-putri",
-        ready: true,
-    },
-    {
-        id: "analisis-pertumbuhan",
-        label: "Analisis Pertumbuhan",
-        icon: "query_stats",
-        href: "/dashboard/analisis-pertumbuhan",
-        ready: true,
-    },
-    {
-        id: "ai-analytics",
-        label: "AI Analytics",
-        icon: "auto_awesome",
-        href: "/dashboard/ai-analytics",
-        ready: true,
-    },
-    {
-        id: "program-mbg",
-        label: "Program MBG",
-        icon: "restaurant_menu",
-        href: "/dashboard/program-mbg",
-        ready: true,
-    },
-    {
-        id: "intervensi-pkmk",
-        label: "Intervensi PKMK",
+        id: "tatalaksana-balita",
+        label: "Tatalaksana Balita Bermasalah Gizi",
         icon: "healing",
-        href: "/dashboard/intervensi-pkmk",
-        ready: true,
+        items: [
+            {
+                id: "program-mbg",
+                label: "Program MBG",
+                icon: "restaurant_menu",
+                href: "/dashboard/program-mbg",
+                ready: true,
+            },
+            {
+                id: "intervensi-pkmk",
+                label: "Intervensi PKMK",
+                icon: "medication_liquid",
+                href: "/dashboard/intervensi-pkmk",
+                ready: true,
+            },
+            {
+                id: "analisis-pmt-lokal",
+                label: "Analisis PMT Lokal",
+                icon: "soup_kitchen",
+                href: "/dashboard/analisis-pmt-lokal",
+                ready: true,
+            },
+            {
+                id: "intervensi-gizi-buruk",
+                label: "Intervensi Gizi Buruk",
+                icon: "emergency",
+                href: "/dashboard/intervensi-gizi-buruk",
+                ready: false,
+            },
+            {
+                id: "obat-gizi",
+                label: "Logistik Obat Gizi",
+                icon: "medication",
+                href: "/dashboard/obat-gizi",
+                ready: false,
+            },
+        ],
     },
     {
-        id: "analisis-mpdn",
-        label: "Analisis MPDN",
-        icon: "monitor_heart",
-        href: "/dashboard/analisis-mpdn",
-        ready: false,
+        id: "portal-dddm",
+        label: "Portal DDDM",
+        icon: "hub",
+        items: [
+            {
+                id: "ai-analytics",
+                label: "AI Analytics",
+                icon: "auto_awesome",
+                href: "/dashboard/ai-analytics",
+                ready: true,
+            },
+            {
+                id: "dddm-insight",
+                label: "DDDM Insight",
+                icon: "insights",
+                href: "/dashboard/dddm-insight",
+                ready: false,
+            },
+        ],
     },
     {
-        id: "analisis-pmt-lokal",
-        label: "Analisis PMT Lokal",
-        icon: "soup_kitchen",
-        href: "/dashboard/analisis-pmt-lokal",
-        ready: false,
-    },
-    {
-        id: "obat-gizi",
-        label: "Obat Gizi",
-        icon: "medication",
-        href: "/dashboard/obat-gizi",
-        ready: false,
+        id: "monev-reports",
+        label: "Monev Reports",
+        icon: "summarize",
+        items: [
+            {
+                id: "bimtek-gizi",
+                label: "Bimtek Gizi",
+                icon: "assignment",
+                href: "/dashboard/bimtek-gizi",
+                ready: true,
+            },
+            {
+                id: "bimtek-rs",
+                label: "Bimtek RS",
+                icon: "domain",
+                href: "/dashboard/bimtek-rs",
+                ready: true,
+                roleFilter: (role: string) => role === "superadmin" || role === "stakeholder",
+            },
+            {
+                id: "pkp",
+                label: "PKP",
+                icon: "assessment",
+                href: "/dashboard/pkp",
+                ready: false,
+            },
+        ],
     },
 ];
 
-const uploadMenuItem = {
+const uploadMenuItem: SidebarMenuItem = {
     id: "upload",
     label: "Upload Data",
     icon: "cloud_upload",
     href: "/dashboard/upload",
     ready: true,
-    superadminOnly: true,
 };
 
 // ─── Dashboard Layout ───────────────────────────────────────────────────────
@@ -136,6 +222,32 @@ export default function DashboardLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const { toggleToolbar } = useAccessibility();
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+        "indikator-utama": true,
+        "tatalaksana-balita": true,
+        "portal-dddm": true,
+        "monev-reports": true,
+    });
+
+    // Auto-expand group that contains current pathname
+    useEffect(() => {
+        const activeGroup = SIDEBAR_GROUPS.find((group) =>
+            group.items.some((item) => item.href === pathname)
+        );
+        if (activeGroup) {
+            setExpandedGroups((prev) => ({
+                ...prev,
+                [activeGroup.id]: true,
+            }));
+        }
+    }, [pathname]);
+
+    const toggleGroup = (groupId: string) => {
+        setExpandedGroups((prev) => ({
+            ...prev,
+            [groupId]: !prev[groupId],
+        }));
+    };
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -262,165 +374,189 @@ export default function DashboardLayout({
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                        {!sidebarCollapsed && (
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 font-mono">
-                                Indikator
-                            </p>
-                        )}
+                    <nav className="flex-1 overflow-y-auto sidebar-scroll py-3 px-3 space-y-3">
+                        {SIDEBAR_GROUPS.map((group) => {
+                            const visibleItems = group.items.filter(
+                                (item) => !item.roleFilter || item.roleFilter(user?.role || "")
+                            );
+                            if (visibleItems.length === 0) return null;
 
-                        {menuItems.map((item) => (
-                            <Link
-                                key={item.id}
-                                href={item.href}
-                                onClick={() => setSidebarOpen(false)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                  ${isActive(item.href)
-                                        ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                    }
-                  ${sidebarCollapsed ? "justify-center" : ""}
-                `}
-                                title={sidebarCollapsed ? item.label : undefined}
-                            >
-                                <span
-                                    className={`material-icons-round text-xl shrink-0 ${isActive(item.href)
-                                        ? "text-emerald-600"
-                                        : "text-slate-400 group-hover:text-slate-600"
-                                        }`}
-                                >
-                                    {item.icon}
-                                </span>
-                                {!sidebarCollapsed && (
-                                    <>
-                                        <span className="truncate">{item.label}</span>
-                                        {!item.ready && (
-                                            <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0">
-                                                Soon
-                                            </span>
-                                        )}
-                                    </>
-                                )}
-                                {sidebarCollapsed && !item.ready && (
-                                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>
-                                )}
-                            </Link>
-                        ))}
+                            const isExpanded = expandedGroups[group.id] ?? true;
+                            const hasActiveItem = visibleItems.some((item) => isActive(item.href));
 
-                        {/* ── Monev Report Section ── */}
-                        {!sidebarCollapsed && (
-                            <div className="pt-4 mt-4 border-t border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 font-mono">
-                                    Monev Report
-                                </p>
-                            </div>
-                        )}
-                        {sidebarCollapsed && <div className="border-t border-slate-100 my-2"></div>}
-                        {/* Monev Report — Bimtek Gizi (all roles) */}
-                        <Link
-                            href="/dashboard/bimtek-gizi"
-                            onClick={() => setSidebarOpen(false)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                  ${isActive("/dashboard/bimtek-gizi")
-                                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                }
-                  ${sidebarCollapsed ? "justify-center" : ""}
-                `}
-                            title={sidebarCollapsed ? "Bimtek Gizi" : undefined}
-                        >
-                            <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/bimtek-gizi") ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`}>
-                                assignment
-                            </span>
-                            {!sidebarCollapsed && <span className="truncate">Bimtek Gizi</span>}
-                        </Link>
+                            return (
+                                <div key={group.id} className="space-y-1">
+                                    {!sidebarCollapsed ? (
+                                        <>
+                                            {/* Expandable Group Header */}
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleGroup(group.id)}
+                                                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all duration-150 select-none group cursor-pointer ${
+                                                    hasActiveItem && !isExpanded
+                                                        ? "text-emerald-800 bg-emerald-50/90 border border-emerald-200/80 shadow-xs"
+                                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/70"
+                                                }`}
+                                                aria-expanded={isExpanded}
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span
+                                                        className={`material-icons-round text-base transition-colors ${
+                                                            hasActiveItem
+                                                                ? "text-emerald-600"
+                                                                : "text-slate-400 group-hover:text-emerald-600"
+                                                        }`}
+                                                    >
+                                                        {group.icon}
+                                                    </span>
+                                                    <span className="uppercase tracking-wider font-mono text-[10px] font-extrabold truncate">
+                                                        {group.label}
+                                                    </span>
+                                                </div>
 
-                        {/* Bimtek RS — superadmin & stakeholder only (di antara Bimtek Gizi dan PKP) */}
-                        {(user?.role === "superadmin" || user?.role === "stakeholder") && (
-                            <Link
-                                href="/dashboard/bimtek-rs"
-                                onClick={() => setSidebarOpen(false)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                  ${isActive("/dashboard/bimtek-rs")
-                                        ? "bg-cyan-50 text-cyan-700 shadow-sm border border-cyan-100"
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                    }
-                  ${sidebarCollapsed ? "justify-center" : ""}
-                `}
-                                title={sidebarCollapsed ? "Bimtek RS" : undefined}
-                            >
-                                <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/bimtek-rs") ? "text-cyan-600" : "text-slate-400 group-hover:text-slate-600"}`}>
-                                    local_hospital
-                                </span>
-                                {!sidebarCollapsed && <span className="truncate">Bimtek RS</span>}
-                            </Link>
-                        )}
+                                                <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                                                    {!isExpanded && hasActiveItem && (
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    )}
+                                                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 group-hover:bg-slate-200">
+                                                        {visibleItems.length}
+                                                    </span>
+                                                    <span
+                                                        className={`material-icons-round text-base text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ${
+                                                            isExpanded ? "rotate-90" : ""
+                                                        }`}
+                                                    >
+                                                        chevron_right
+                                                    </span>
+                                                </div>
+                                            </button>
 
-                        {/* PKP — paling bawah */}
-                        <Link
-                            href="/dashboard/pkp"
-                            onClick={() => setSidebarOpen(false)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                  ${isActive("/dashboard/pkp")
-                                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                }
-                  ${sidebarCollapsed ? "justify-center" : ""}
-                `}
-                            title={sidebarCollapsed ? "PKP" : undefined}
-                        >
-                            <span className={`material-icons-round text-xl shrink-0 ${isActive("/dashboard/pkp") ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"}`}>
-                                assessment
-                            </span>
-                            {!sidebarCollapsed && (
-                                <>
-                                    <span className="truncate">PKP</span>
-                                    <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0">
-                                        Soon
-                                    </span>
-                                </>
-                            )}
-                            {sidebarCollapsed && (
-                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>
-                            )}
-                        </Link>
+                                            {/* Expandable Items List */}
+                                            <div
+                                                className={`grid transition-[grid-template-rows] duration-200 ease-out ${
+                                                    isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                                                }`}
+                                            >
+                                                <div className="overflow-hidden space-y-0.5 pt-0.5">
+                                                    {visibleItems.map((item) => (
+                                                        <Link
+                                                            key={item.id}
+                                                            href={item.href}
+                                                            onClick={() => setSidebarOpen(false)}
+                                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-medium transition-all duration-150 group relative ${
+                                                                isActive(item.href)
+                                                                    ? "bg-emerald-50 text-emerald-700 shadow-xs border border-emerald-200/80 font-semibold"
+                                                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                                            }`}
+                                                        >
+                                                            <span
+                                                                className={`material-icons-round text-lg shrink-0 ${
+                                                                    isActive(item.href)
+                                                                        ? "text-emerald-600"
+                                                                        : "text-slate-400 group-hover:text-slate-600"
+                                                                }`}
+                                                            >
+                                                                {item.icon}
+                                                            </span>
+                                                            <span className="truncate">{item.label}</span>
+                                                            {!item.ready && (
+                                                                <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200/70 uppercase tracking-wider shrink-0 font-mono">
+                                                                    Soon
+                                                                </span>
+                                                            )}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        /* Collapsed Icon Rail Mode */
+                                        <div className="space-y-1">
+                                            <div className="border-t border-slate-100 my-2 first:hidden" />
+                                            {visibleItems.map((item) => (
+                                                <Link
+                                                    key={item.id}
+                                                    href={item.href}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={`flex items-center justify-center p-2.5 rounded-xl text-sm transition-all duration-150 group relative ${
+                                                        isActive(item.href)
+                                                            ? "bg-emerald-50 text-emerald-700 shadow-xs border border-emerald-200/80"
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                                    }`}
+                                                    title={`${item.label}${!item.ready ? " (Soon)" : ""}`}
+                                                >
+                                                    <span
+                                                        className={`material-icons-round text-xl shrink-0 ${
+                                                            isActive(item.href)
+                                                                ? "text-emerald-600"
+                                                                : "text-slate-400 group-hover:text-slate-600"
+                                                        }`}
+                                                    >
+                                                        {item.icon}
+                                                    </span>
+                                                    {!item.ready && (
+                                                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white"></span>
+                                                    )}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
 
-                        {/* Upload - Superadmin only */}
+                        {/* Administrasi - Superadmin Only */}
                         {user?.role === "superadmin" && (
-                            <>
-                                {!sidebarCollapsed && (
-                                    <div className="pt-4 mt-4 border-t border-slate-100">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 font-mono">
+                            <div className="pt-2 border-t border-slate-100">
+                                {!sidebarCollapsed ? (
+                                    <>
+                                        <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-2.5 mb-1 font-mono">
                                             Administrasi
                                         </p>
-                                    </div>
-                                )}
-                                {sidebarCollapsed && <div className="border-t border-slate-100 my-2"></div>}
-                                <Link
-                                    href={uploadMenuItem.href}
-                                    onClick={() => setSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
-                    ${isActive(uploadMenuItem.href)
-                                            ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                        }
-                    ${sidebarCollapsed ? "justify-center" : ""}
-                  `}
-                                    title={sidebarCollapsed ? uploadMenuItem.label : undefined}
-                                >
-                                    <span
-                                        className={`material-icons-round text-xl shrink-0 ${isActive(uploadMenuItem.href)
-                                            ? "text-emerald-600"
-                                            : "text-slate-400 group-hover:text-slate-600"
+                                        <Link
+                                            href={uploadMenuItem.href}
+                                            onClick={() => setSidebarOpen(false)}
+                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-medium transition-all duration-150 group ${
+                                                isActive(uploadMenuItem.href)
+                                                    ? "bg-emerald-50 text-emerald-700 shadow-xs border border-emerald-200/80 font-semibold"
+                                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                             }`}
+                                        >
+                                            <span
+                                                className={`material-icons-round text-lg shrink-0 ${
+                                                    isActive(uploadMenuItem.href)
+                                                        ? "text-emerald-600"
+                                                        : "text-slate-400 group-hover:text-slate-600"
+                                                }`}
+                                            >
+                                                {uploadMenuItem.icon}
+                                            </span>
+                                            <span className="truncate">{uploadMenuItem.label}</span>
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <Link
+                                        href={uploadMenuItem.href}
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center justify-center p-2.5 rounded-xl text-sm transition-all duration-150 group ${
+                                            isActive(uploadMenuItem.href)
+                                                ? "bg-emerald-50 text-emerald-700 shadow-xs border border-emerald-200/80"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        }`}
+                                        title={uploadMenuItem.label}
                                     >
-                                        {uploadMenuItem.icon}
-                                    </span>
-                                    {!sidebarCollapsed && (
-                                        <span className="truncate">{uploadMenuItem.label}</span>
-                                    )}
-                                </Link>
-                            </>
+                                        <span
+                                            className={`material-icons-round text-xl shrink-0 ${
+                                                isActive(uploadMenuItem.href)
+                                                    ? "text-emerald-600"
+                                                    : "text-slate-400 group-hover:text-slate-600"
+                                            }`}
+                                        >
+                                            {uploadMenuItem.icon}
+                                        </span>
+                                    </Link>
+                                )}
+                            </div>
                         )}
                     </nav>
 

@@ -295,6 +295,93 @@ const UPLOAD_CONFIGS: UploadConfig[] = [
         ready: true,
         hasManage: true,
     },
+    {
+        id: "analisis-mpdn",
+        label: "Analisis MPDN",
+        icon: "monitor_heart",
+        gradient: "from-red-500 to-rose-700",
+        tableName: "data_mpdn",
+        fileName: "data_mpdn",
+        description: "Data surveilans kematian maternal dan perinatal terintegrasi",
+        columns: [],
+        ready: false,
+    },
+    {
+        id: "program-catin",
+        label: "Program Catin",
+        icon: "favorite_border",
+        gradient: "from-rose-500 to-pink-600",
+        tableName: "data_catin",
+        fileName: "data_catin",
+        description: "Data skrining kesehatan calon pengantin dan kadar Hb pranikah",
+        columns: [],
+        ready: false,
+    },
+    {
+        id: "analisis-pmt-lokal",
+        label: "Analisis PMT Lokal (Balita)",
+        icon: "soup_kitchen",
+        gradient: "from-amber-500 to-orange-700",
+        tableName: "data_pmt_balita",
+        fileName: "data_pmt_balita",
+        description: "Data riwayat PMT pangan lokal balita (Gizi Kurang, Underweight, Balita T) dari e-PPGBM",
+        columns: [
+            "NIK", "Nama", "JK", "Tgl Lahir", "Provinsi", "Kabupaten", "Kecamatan", "Puskesmas", "Desa", "Posyandu",
+            "Indikasi", "Tanggal Pengukuran Awal", "BB Awal", "TB Awal", "ZS BB/U Awal", "ZS TB/U Awal", "ZS BB/TB Awal",
+            "BB Akhir", "TB Akhir", "ZS BB/U Akhir", "ZS TB/U Akhir", "ZS BB/TB Akhir", "Status Pertumbuhan Akhir"
+        ],
+        ready: true,
+        hasManage: true,
+    },
+    {
+        id: "pmt-bumil-kek",
+        label: "Analisis PMT Lokal (Bumil KEK)",
+        icon: "pregnant_woman",
+        gradient: "from-purple-500 to-indigo-700",
+        tableName: "data_pmt_bumil",
+        fileName: "data_pmt_bumil",
+        description: "Data riwayat PMT pangan lokal ibu hamil KEK dan risiko KEK dari e-PPGBM",
+        columns: [
+            "NIK", "Nama", "Kabupaten", "Kecamatan", "Puskesmas", "Desa", "Posyandu",
+            "Alasan Diberi", "Tanggal Pemberian Pertama", "Tanggal Selesai",
+            "Berat Badan Awal", "Berat Badan Akhir", "LiLA", "Status PMT", "Hasil Pemberian MT"
+        ],
+        ready: true,
+        hasManage: true,
+    },
+    {
+        id: "intervensi-gizi-buruk",
+        label: "Intervensi Gizi Buruk",
+        icon: "emergency",
+        gradient: "from-red-500 to-amber-600",
+        tableName: "data_gizi_buruk_klinis",
+        fileName: "data_gizi_buruk_klinis",
+        description: "Data tatalaksana balita gizi buruk TFC dan CFC",
+        columns: [],
+        ready: false,
+    },
+    {
+        id: "obat-gizi",
+        label: "Logistik Obat Gizi",
+        icon: "medication",
+        gradient: "from-emerald-500 to-teal-700",
+        tableName: "data_obat_gizi",
+        fileName: "data_obat_gizi",
+        description: "Data logistik suplementasi gizi mikro Puskesmas",
+        columns: [],
+        ready: false,
+    },
+    {
+        id: "dddm-insight",
+        label: "DDDM Insight",
+        icon: "insights",
+        gradient: "from-indigo-500 to-cyan-600",
+        tableName: "data_dddm_insight",
+        fileName: "data_dddm_insight",
+        description: "Dataset indikator analitik multisektoral untuk Data-Driven Decision Making",
+        columns: [],
+        ready: false,
+    },
 ];
 
 // ─── Column mapping from Excel headers to DB columns ────────────────────────
@@ -631,6 +718,39 @@ const COLUMN_MAP: Record<string, string> = {
     "jumlah_rematri_kelas_7_dan_10_mendapatkan_tatalaksana_anemia_sampai_bulan_ini": "anemia_treated",
     "rematri_anemia_mendapat_tatalaksana": "anemia_treated",
     "anemia_treated": "anemia_treated",
+
+    // ── Data PMT Lokal (Balita & Bumil e-PPGBM) ──
+    "pukesmas": "puskesmas",
+    "desa/kel": "desa",
+    "tanggal_pengukuran_awal": "tgl_ukur_awal",
+    "tgl_pengukuran_awal": "tgl_ukur_awal",
+    "tanggal_pengukuran_akhir": "tgl_ukur_akhir",
+    "tgl_pengukuran_akhir": "tgl_ukur_akhir",
+    "bb_awal": "bb_awal",
+    "tb_awal": "tb_awal",
+    "zs_bb/u_awal": "zs_bbu_awal",
+    "zs_tb/u_awal": "zs_tbu_awal",
+    "zs_bb/tb_awal": "zs_bbtb_awal",
+    "bb_akhir": "bb_akhir",
+    "tb_akhir": "tb_akhir",
+    "zs_bb/u_akhir": "zs_bbu_akhir",
+    "zs_tb/u_akhir": "zs_tbu_akhir",
+    "zs_bb/tb_akhir": "zs_bbtb_akhir",
+    "status_pertumbuhan_awal": "status_pertumbuhan_awal",
+    "status_pertumbuhan_akhir": "status_pertumbuhan_akhir",
+    "status_kenaikan_bb": "status_pertumbuhan_akhir",
+    "sumber_anggaran": "sumber_anggaran",
+    "siklus_pmt": "siklus_pmt",
+    "jumlah_pemantauan": "jumlah_pemantauan",
+    "tanggal_pemberian_pertama": "tgl_pemberian_pertama",
+    "tgl_pemberian_pertama": "tgl_pemberian_pertama",
+    "tanggal_selesai": "tgl_selesai_reported",
+    "tgl_selesai": "tgl_selesai_reported",
+    "alasan_diberi": "alasan_raw",
+    "berat_badan_awal": "bb_awal",
+    "berat_badan_akhir": "bb_akhir",
+    "hasil_pemberian_mt": "hasil_pemberian_reported",
+    "status_pmt": "status_pmt_reported",
 };
 
 export default function UploadPage() {
@@ -788,12 +908,17 @@ export default function UploadPage() {
                 const mapped: Record<string, unknown> = {};
 
                 const stringColumns = [
-                    "periode", "nik", "nama_balita", "jk", "nama_ortu", "prov", "kabupaten",
-                    "kab_kota", "kec", "kecamatan", "puskesmas", "kelurahan", "posyandu", "rt", "rw", "alamat",
+                    "periode", "nik", "nama_balita", "nama", "jk", "nama_ortu", "prov", "provinsi", "kabupaten",
+                    "kab_kota", "kec", "kecamatan", "puskesmas", "kelurahan", "desa", "posyandu", "rt", "rw", "alamat",
                     "cara_ukur", "bbu", "tbu", "bbtb", "naik_berat_badan", "jml_vit_a",
-                    "kpsp", "kia", "detail"
+                    "kpsp", "kia", "detail", "indikasi", "status_pertumbuhan_awal", "status_pertumbuhan_akhir",
+                    "status_bbu_awal", "status_tbu_awal", "status_bbtb_awal", "status_bbu_akhir", "status_tbu_akhir", "status_bbtb_akhir",
+                    "sumber_anggaran", "mitra", "alasan_raw", "status_pmt_reported", "hasil_pemberian_reported"
                 ];
-                const dateColumns = ["tgl_lahir", "tgl_ukur"];
+                const dateColumns = [
+                    "tgl_lahir", "tgl_ukur", "tgl_ukur_awal", "tgl_ukur_akhir",
+                    "tgl_pemberian_pertama", "tgl_selesai_reported", "tgl_timbang_akhir"
+                ];
 
                 const IBU_HAMIL_VALID_COLUMNS = new Set([
                     "id", "tahun", "bulan", "kab_kota", "kecamatan", "puskesmas", "kelurahan",
@@ -872,6 +997,15 @@ export default function UploadPage() {
                         // Ensure only valid table columns are mapped
                         if (dbCol && !REMAJA_PUTRI_VALID_COLUMNS.has(dbCol)) {
                             return;
+                        }
+                    }
+
+                    // Strict contextual mapping and normalization for data_pmt_balita & data_pmt_bumil
+                    if (selectedConfig.tableName === "data_pmt_balita" || selectedConfig.tableName === "data_pmt_bumil") {
+                        if (normalizedKey === "desa" || normalizedKey === "kelurahan" || normalizedKey === "desa/kel" || normalizedKey === "desa/kelurahan") {
+                            dbCol = "desa";
+                        } else if (normalizedKey === "lila") {
+                            dbCol = "lila_cm";
                         }
                     }
 
@@ -980,9 +1114,11 @@ export default function UploadPage() {
             // Filter out rows that don't have required fields
             const isDesa = selectedConfig.tableName === "data_bultim_desa" || selectedConfig.tableName === "data_balita_gizi" || selectedConfig.tableName === "data_ibu_hamil" || selectedConfig.tableName === "data_remaja_putri";
             const isEPPGBM = selectedConfig.tableName === "data_eppgbm";
+            const isPmt = selectedConfig.tableName === "data_pmt_balita" || selectedConfig.tableName === "data_pmt_bumil";
 
             const validRows = rows.filter((r) => {
                 if (isEPPGBM) return r.periode && r.nik && r.puskesmas;
+                if (isPmt) return (r.nik || r.nama || r.person_key) && r.puskesmas;
                 return r.puskesmas && r.tahun && r.bulan && (!isDesa || r.kelurahan);
             });
 
@@ -1014,6 +1150,14 @@ export default function UploadPage() {
                         return;
                     }
                 }
+            } else if (isPmt) {
+                const puskesmasSet = new Set(validRows.map((r) => String(r.puskesmas)));
+                for (const pkm of puskesmasSet) {
+                    await supabase
+                        .from(selectedConfig.tableName)
+                        .delete()
+                        .eq("puskesmas", pkm);
+                }
             } else {
                 const periods = new Set(validRows.map((r) => `${r.tahun}-${r.bulan}`));
 
@@ -1037,18 +1181,34 @@ export default function UploadPage() {
                 }
             }
 
-            // Insert new data
-            const { error } = await supabase.from(selectedConfig.tableName).insert(validRows);
+            // Insert new data (chunked by 500 rows)
+            const chunkSize = 500;
+            let insertError: any = null;
+            for (let i = 0; i < validRows.length; i += chunkSize) {
+                const chunk = validRows.slice(i, i + chunkSize);
+                const { error } = await supabase.from(selectedConfig.tableName).insert(chunk);
+                if (error) {
+                    insertError = error;
+                    break;
+                }
+            }
 
-            if (error) {
+            if (insertError) {
+                let msg = `Error upload: ${insertError.message}`;
+                if (insertError.message?.includes("does not exist") || insertError.message?.includes("schema cache")) {
+                    msg += " (Tabel belum dibuat di database. Silakan jalankan file migration 'sql/create_data_pmt_lokal.sql' di Supabase SQL Editor).";
+                }
                 setUploadResult({
                     success: false,
-                    message: `Error upload: ${error.message}`,
+                    message: msg,
                 });
             } else {
                 let periodList = "";
                 if (isEPPGBM) {
                     periodList = Array.from(new Set(validRows.map((r) => String(r.periode)))).join(", ");
+                } else if (isPmt) {
+                    const pkms = Array.from(new Set(validRows.map((r) => String(r.puskesmas)))).join(", ");
+                    periodList = `Puskesmas: ${pkms}`;
                 } else {
                     const periods = new Set(validRows.map((r) => `${r.tahun}-${r.bulan}`));
                     periodList = Array.from(periods)
@@ -1062,7 +1222,7 @@ export default function UploadPage() {
 
                 setUploadResult({
                     success: true,
-                    message: `Berhasil replace ${validRows.length} baris data ${selectedConfig.label} untuk periode: ${periodList}`,
+                    message: `Berhasil replace ${validRows.length} baris data ${selectedConfig.label} untuk: ${periodList}`,
                     count: validRows.length,
                 });
                 setPreviewData(null);

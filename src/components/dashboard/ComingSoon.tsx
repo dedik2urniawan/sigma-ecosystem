@@ -7,9 +7,18 @@ interface ComingSoonProps {
     icon: string;
     description: string;
     gradient: string;
+    progress?: number;
+    features?: string[];
 }
 
-export default function ComingSoon({ title, icon, description, gradient }: ComingSoonProps) {
+export default function ComingSoon({
+    title,
+    icon,
+    description,
+    gradient,
+    progress = 15,
+    features = ["Analisis Data", "Visualisasi", "Laporan"]
+}: ComingSoonProps) {
     return (
         <div className="flex items-center justify-center min-h-[70vh]">
             <div className="max-w-lg text-center px-6">
@@ -48,16 +57,16 @@ export default function ComingSoon({ title, icon, description, gradient }: Comin
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                             Progress
                         </span>
-                        <span className="text-[10px] font-bold text-amber-600 font-mono">15%</span>
+                        <span className="text-[10px] font-bold text-amber-600 font-mono">{progress}%</span>
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full bg-gradient-to-r ${gradient} transition-all duration-1000`} style={{ width: "15%" }}></div>
+                        <div className={`h-full rounded-full bg-gradient-to-r ${gradient} transition-all duration-1000`} style={{ width: `${progress}%` }}></div>
                     </div>
                 </div>
 
                 {/* Features preview */}
                 <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-                    {["Analisis Data", "Visualisasi", "Laporan"].map((f) => (
+                    {features.map((f) => (
                         <div key={f} className="p-3 rounded-xl bg-white border border-slate-200 shadow-sm">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center mx-auto mb-2">
                                 <div className="w-4 h-2 bg-slate-200 rounded"></div>

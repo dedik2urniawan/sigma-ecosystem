@@ -14,6 +14,7 @@ interface MapPuskesmasProps {
 const METRIC_LABELS: Record<string, string> = {
     stunting: "Prevalensi Stunting",
     wasting: "Prevalensi Wasting",
+    gizi_buruk: "Prevalensi Gizi Buruk",
     underweight: "Prevalensi Underweight",
     obesitas: "Prevalensi Obesitas",
 };
@@ -42,6 +43,17 @@ function getColor(value: number, metric: string): string {
                 : value >= 5
                     ? "#f97316"
                     : value >= 3
+                        ? "#fbbf24"
+                        : "#86efac";
+    }
+    if (metric === "gizi_buruk") {
+        return value >= 2.0
+            ? "#991b1b"
+            : value >= 1.5
+                ? "#dc2626"
+                : value >= 1.0
+                    ? "#f97316"
+                    : value >= 0.5
                         ? "#fbbf24"
                         : "#86efac";
     }
@@ -311,6 +323,14 @@ export default function MapPuskesmas({ data, metric, selectedPuskesmas = null }:
                                 { color: "#fbbf24", label: "3-5%" },
                                 { color: "#86efac", label: "< 3%" },
                             ]
+                            : metric === "gizi_buruk"
+                                ? [
+                                    { color: "#991b1b", label: "≥ 2.0%" },
+                                    { color: "#dc2626", label: "1.5-2.0%" },
+                                    { color: "#f97316", label: "1.0-1.5%" },
+                                    { color: "#fbbf24", label: "0.5-1.0%" },
+                                    { color: "#86efac", label: "< 0.5%" },
+                                ]
                             : metric === "underweight"
                                 ? [
                                     { color: "#991b1b", label: "≥ 20%" },

@@ -105,6 +105,11 @@ function getPrevalenceColor(value: number, type: string): string {
         if (value >= 5) return "text-amber-600";
         return "text-emerald-600";
     }
+    if (type === "gizi_buruk") {
+        if (value >= 2) return "text-red-600";
+        if (value >= 1) return "text-amber-600";
+        return "text-emerald-600";
+    }
     if (type === "underweight") {
         if (value >= 20) return "text-red-600";
         if (value >= 10) return "text-amber-600";
@@ -132,6 +137,11 @@ function getBarColor(value: number, metric: string): string {
     if (metric === "wasting") {
         if (value >= 10) return "#ef4444";
         if (value >= 5) return "#f59e0b";
+        return "#10b981";
+    }
+    if (metric === "gizi_buruk") {
+        if (value >= 2) return "#ef4444";
+        if (value >= 1) return "#f59e0b";
         return "#10b981";
     }
     if (metric === "underweight") {
@@ -419,6 +429,7 @@ export default function PelayananKesehatanPage() {
             jumlah_timbang_ukur: 0,
             stunting: 0,
             wasting: 0,
+            gizi_buruk: 0,
             underweight: 0,
             obesitas: 0,
             bb_outlier: 0,
@@ -433,6 +444,7 @@ export default function PelayananKesehatanPage() {
             t.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
             t.stunting += r.stunting;
             t.wasting += r.wasting;
+            t.gizi_buruk += r.gizi_buruk || 0;
             t.underweight += r.underweight;
             t.obesitas += r.obesitas;
             t.bb_outlier += r.bb_outlier || 0;
@@ -445,6 +457,7 @@ export default function PelayananKesehatanPage() {
             pctDataEntry: t.data_sasaran > 0 ? (t.jumlah_timbang_ukur / t.data_sasaran) * 100 : 0,
             pctStunting: t.jumlah_timbang_ukur > 0 ? (t.stunting / t.jumlah_timbang_ukur) * 100 : 0,
             pctWasting: t.jumlah_timbang_ukur > 0 ? (t.wasting / t.jumlah_timbang_ukur) * 100 : 0,
+            pctGiziBuruk: t.jumlah_timbang_ukur > 0 ? (t.gizi_buruk / t.jumlah_timbang_ukur) * 100 : 0,
             pctUnderweight: t.jumlah_timbang_ukur > 0 ? (t.underweight / t.jumlah_timbang_ukur) * 100 : 0,
             pctObesitas: t.jumlah_timbang_ukur > 0 ? (t.obesitas / t.jumlah_timbang_ukur) * 100 : 0,
             pctBbOutlier: t.jumlah_timbang > 0 ? (t.bb_outlier / t.jumlah_timbang) * 100 : 0,
@@ -457,7 +470,7 @@ export default function PelayananKesehatanPage() {
     const chartData = useMemo(() => {
         const pkmMap = new Map<string, {
             data_sasaran: number; jumlah_timbang_ukur: number; jumlah_timbang: number; jumlah_ukur: number;
-            stunting: number; wasting: number; underweight: number; obesitas: number;
+            stunting: number; wasting: number; gizi_buruk: number; underweight: number; obesitas: number;
             bb_outlier: number; tb_outlier: number; outlier: number;
         }>();
 
@@ -468,7 +481,7 @@ export default function PelayananKesehatanPage() {
         chartFiltered.forEach((r) => {
             const existing = pkmMap.get(r.puskesmas) || {
                 data_sasaran: 0, jumlah_timbang_ukur: 0, jumlah_timbang: 0, jumlah_ukur: 0,
-                stunting: 0, wasting: 0, underweight: 0, obesitas: 0,
+                stunting: 0, wasting: 0, gizi_buruk: 0, underweight: 0, obesitas: 0,
                 bb_outlier: 0, tb_outlier: 0, outlier: 0
             };
             existing.data_sasaran += r.data_sasaran;
@@ -477,6 +490,7 @@ export default function PelayananKesehatanPage() {
             existing.jumlah_ukur += r.jumlah_ukur || 0;
             existing.stunting += r.stunting;
             existing.wasting += r.wasting;
+            existing.gizi_buruk += r.gizi_buruk || 0;
             existing.underweight += r.underweight;
             existing.obesitas += r.obesitas;
             existing.bb_outlier += r.bb_outlier || 0;
@@ -489,13 +503,14 @@ export default function PelayananKesehatanPage() {
             const dataEntry = v.data_sasaran > 0 ? (v.jumlah_timbang_ukur / v.data_sasaran) * 100 : 0;
             const stunting = v.jumlah_timbang_ukur > 0 ? (v.stunting / v.jumlah_timbang_ukur) * 100 : 0;
             const wasting = v.jumlah_timbang_ukur > 0 ? (v.wasting / v.jumlah_timbang_ukur) * 100 : 0;
+            const gizi_buruk = v.jumlah_timbang_ukur > 0 ? (v.gizi_buruk / v.jumlah_timbang_ukur) * 100 : 0;
             const underweight = v.jumlah_timbang_ukur > 0 ? (v.underweight / v.jumlah_timbang_ukur) * 100 : 0;
             const obesitas = v.jumlah_timbang_ukur > 0 ? (v.obesitas / v.jumlah_timbang_ukur) * 100 : 0;
             const bb_outlier = v.jumlah_timbang > 0 ? (v.bb_outlier / v.jumlah_timbang) * 100 : 0;
             const tb_outlier = v.jumlah_ukur > 0 ? (v.tb_outlier / v.jumlah_ukur) * 100 : 0;
             const outlier = v.jumlah_timbang_ukur > 0 ? (v.outlier / v.jumlah_timbang_ukur) * 100 : 0;
 
-            return { name, dataEntry, stunting, wasting, underweight, obesitas, bb_outlier, tb_outlier, outlier };
+            return { name, dataEntry, stunting, wasting, gizi_buruk, underweight, obesitas, bb_outlier, tb_outlier, outlier };
         });
 
         // Sort descending by chosen metric
@@ -509,7 +524,7 @@ export default function PelayananKesehatanPage() {
 
     // Map data: per puskesmas
     const mapData = useMemo(() => {
-        const pkmMap = new Map<string, { jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number }>();
+        const pkmMap = new Map<string, { jumlah_timbang_ukur: number; stunting: number; wasting: number; gizi_buruk: number; underweight: number; obesitas: number }>();
 
         // For map, always show all puskesmas (ignore puskesmas filter)
         let mapFiltered = activeData;
@@ -517,10 +532,11 @@ export default function PelayananKesehatanPage() {
         if (filterBulan) mapFiltered = mapFiltered.filter((r: BultimRow) => r.bulan === filterBulan);
 
         mapFiltered.forEach((r: BultimRow) => {
-            const existing = pkmMap.get(r.puskesmas) || { jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0 };
+            const existing = pkmMap.get(r.puskesmas) || { jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, gizi_buruk: 0, underweight: 0, obesitas: 0 };
             existing.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
             existing.stunting += r.stunting;
             existing.wasting += r.wasting;
+            existing.gizi_buruk += r.gizi_buruk || 0;
             existing.underweight += r.underweight;
             existing.obesitas += r.obesitas;
             pkmMap.set(r.puskesmas, existing);
@@ -532,6 +548,8 @@ export default function PelayananKesehatanPage() {
                 result[name] = v.jumlah_timbang_ukur > 0 ? (v.stunting / v.jumlah_timbang_ukur) * 100 : 0;
             } else if (mapMetric === "wasting") {
                 result[name] = v.jumlah_timbang_ukur > 0 ? (v.wasting / v.jumlah_timbang_ukur) * 100 : 0;
+            } else if (mapMetric === "gizi_buruk") {
+                result[name] = v.jumlah_timbang_ukur > 0 ? (v.gizi_buruk / v.jumlah_timbang_ukur) * 100 : 0;
             } else if (mapMetric === "underweight") {
                 result[name] = v.jumlah_timbang_ukur > 0 ? (v.underweight / v.jumlah_timbang_ukur) * 100 : 0;
             } else if (mapMetric === "obesitas") {
@@ -544,16 +562,17 @@ export default function PelayananKesehatanPage() {
 
     // Table data with sorting
     const tableData = useMemo(() => {
-        const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang: number; jumlah_ukur: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; underweight: number; obesitas: number; bb_outlier: number; tb_outlier: number; outlier: number; }>();
+        const pkmMap = new Map<string, { data_sasaran: number; jumlah_timbang: number; jumlah_ukur: number; jumlah_timbang_ukur: number; stunting: number; wasting: number; gizi_buruk: number; underweight: number; obesitas: number; bb_outlier: number; tb_outlier: number; outlier: number; }>();
 
         filteredData.forEach((r) => {
-            const existing = pkmMap.get(r.puskesmas) || { data_sasaran: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0, outlier: 0 };
+            const existing = pkmMap.get(r.puskesmas) || { data_sasaran: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, gizi_buruk: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0, outlier: 0 };
             existing.data_sasaran += r.data_sasaran;
             existing.jumlah_timbang += r.jumlah_timbang;
             existing.jumlah_ukur += r.jumlah_ukur;
             existing.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
             existing.stunting += r.stunting;
             existing.wasting += r.wasting;
+            existing.gizi_buruk += r.gizi_buruk || 0;
             existing.underweight += r.underweight;
             existing.obesitas += r.obesitas;
             existing.bb_outlier += r.bb_outlier || 0;
@@ -573,6 +592,8 @@ export default function PelayananKesehatanPage() {
             pctStunting: v.jumlah_timbang_ukur > 0 ? (v.stunting / v.jumlah_timbang_ukur) * 100 : 0,
             wasting: v.wasting,
             pctWasting: v.jumlah_timbang_ukur > 0 ? (v.wasting / v.jumlah_timbang_ukur) * 100 : 0,
+            gizi_buruk: v.gizi_buruk,
+            pctGiziBuruk: v.jumlah_timbang_ukur > 0 ? (v.gizi_buruk / v.jumlah_timbang_ukur) * 100 : 0,
             underweight: v.underweight,
             pctUnderweight: v.jumlah_timbang_ukur > 0 ? (v.underweight / v.jumlah_timbang_ukur) * 100 : 0,
             obesitas: v.obesitas,
@@ -611,6 +632,7 @@ export default function PelayananKesehatanPage() {
         dataEntry: "% Data Entry Penimbangan",
         stunting: "Prevalensi Stunting",
         wasting: "Prevalensi Wasting",
+        gizi_buruk: "Prevalensi Gizi Buruk",
         underweight: "Prevalensi Underweight",
         obesitas: "Prevalensi Obesitas",
         bb_outlier: "% Outlier Berat Badan (BBU)",
@@ -635,6 +657,8 @@ export default function PelayananKesehatanPage() {
             "% Stunting": Number(r.pctStunting.toFixed(2)),
             Wasting: r.wasting,
             "% Wasting": Number(r.pctWasting.toFixed(2)),
+            "Gizi Buruk": r.gizi_buruk,
+            "% Gizi Buruk": Number(r.pctGiziBuruk.toFixed(2)),
             Underweight: r.underweight,
             "% Underweight": Number(r.pctUnderweight.toFixed(2)),
             Obesitas: r.obesitas,
@@ -743,11 +767,13 @@ export default function PelayananKesehatanPage() {
                 jumlah_timbang_ukur: totals.jumlah_timbang_ukur,
                 stunting: totals.stunting,
                 wasting: totals.wasting,
+                gizi_buruk: totals.gizi_buruk,
                 underweight: totals.underweight,
                 obesitas: totals.obesitas,
                 pctDataEntry: totals.pctDataEntry,
                 pctStunting: totals.pctStunting,
                 pctWasting: totals.pctWasting,
+                pctGiziBuruk: totals.pctGiziBuruk,
                 pctUnderweight: totals.pctUnderweight,
                 pctObesitas: totals.pctObesitas,
             },
@@ -942,17 +968,19 @@ export default function PelayananKesehatanPage() {
                                         <ScoreCard label="Timbang & Ukur" value={formatNum(totals.jumlah_timbang_ukur)} suffix="Balita" icon="assignment_turned_in" color="purple" />
                                     </div>
 
-                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                                         <ScoreCard label="% Data Entry" value={formatPct(totals.pctDataEntry)} icon="percent" color="blue" highlight />
                                         <ScoreCard label="Kasus Stunting" value={formatNum(totals.stunting)} suffix="Balita" icon="height" color="amber" />
                                         <ScoreCard label="Kasus Wasting" value={formatNum(totals.wasting)} suffix="Balita" icon="trending_down" color="amber" />
+                                        <ScoreCard label="Kasus Gizi Buruk" value={formatNum(totals.gizi_buruk)} suffix="Balita" icon="emergency" color="red" />
                                         <ScoreCard label="Kasus Underweight" value={formatNum(totals.underweight)} suffix="Balita" icon="scale" color="amber" />
                                         <ScoreCard label="Kasus Obesitas" value={formatNum(totals.obesitas)} suffix="Balita" icon="trending_up" color="red" />
                                     </div>
 
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                         <ScoreCard label="Prevalensi Stunting" value={formatPct(totals.pctStunting)} icon="height" color={totals.pctStunting >= 20 ? "red" : totals.pctStunting >= 10 ? "amber" : "emerald"} highlight />
                                         <ScoreCard label="Prevalensi Wasting" value={formatPct(totals.pctWasting)} icon="trending_down" color={totals.pctWasting >= 10 ? "red" : totals.pctWasting >= 5 ? "amber" : "emerald"} highlight />
+                                        <ScoreCard label="Prevalensi Gizi Buruk" value={formatPct(totals.pctGiziBuruk)} icon="emergency" color={totals.pctGiziBuruk >= 2 ? "red" : totals.pctGiziBuruk >= 1 ? "amber" : "emerald"} highlight />
                                         <ScoreCard label="Prevalensi Underweight" value={formatPct(totals.pctUnderweight)} icon="scale" color={totals.pctUnderweight >= 20 ? "red" : totals.pctUnderweight >= 10 ? "amber" : "emerald"} highlight />
                                         <ScoreCard label="Prevalensi Obesitas" value={formatPct(totals.pctObesitas)} icon="trending_up" color={totals.pctObesitas >= 5 ? "red" : totals.pctObesitas >= 3 ? "amber" : "emerald"} highlight />
                                     </div>
@@ -1005,6 +1033,7 @@ export default function PelayananKesehatanPage() {
                                             >
                                                 <option value="stunting">Prevalensi Stunting</option>
                                                 <option value="wasting">Prevalensi Wasting</option>
+                                                <option value="gizi_buruk">Prevalensi Gizi Buruk</option>
                                                 <option value="underweight">Prevalensi Underweight</option>
                                                 <option value="obesitas">Prevalensi Obesitas</option>
                                             </select>
@@ -1156,6 +1185,8 @@ export default function PelayananKesehatanPage() {
                                                             { key: "pctStunting", label: "% Stunting" },
                                                             { key: "wasting", label: "Wasting" },
                                                             { key: "pctWasting", label: "% Wasting" },
+                                                            { key: "gizi_buruk", label: "Gizi Buruk" },
+                                                            { key: "pctGiziBuruk", label: "% Gizi Buruk" },
                                                             { key: "underweight", label: "Underweight" },
                                                             { key: "pctUnderweight", label: "% Underweight" },
                                                             { key: "obesitas", label: "Obesitas" },
@@ -1218,6 +1249,12 @@ export default function PelayananKesehatanPage() {
                                                                         {formatPct(row.pctWasting)}
                                                                     </td>
                                                                     <td className="px-4 py-3 text-slate-700 font-mono">
+                                                                        {formatNum(row.gizi_buruk)}
+                                                                    </td>
+                                                                    <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctGiziBuruk, "gizi_buruk")}`}>
+                                                                        {formatPct(row.pctGiziBuruk)}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-700 font-mono">
                                                                         {formatNum(row.underweight)}
                                                                     </td>
                                                                     <td className={`px-4 py-3 font-bold font-mono ${getPrevalenceColor(row.pctUnderweight, "underweight")}`}>
@@ -1262,6 +1299,12 @@ export default function PelayananKesehatanPage() {
                                                         </td>
                                                         <td className="px-4 py-3 text-emerald-800 font-mono">
                                                             {formatPct(totals.pctWasting)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatNum(totals.gizi_buruk)}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-emerald-800 font-mono">
+                                                            {formatPct(totals.pctGiziBuruk)}
                                                         </td>
                                                         <td className="px-4 py-3 text-emerald-800 font-mono">
                                                             {formatNum(totals.underweight)}

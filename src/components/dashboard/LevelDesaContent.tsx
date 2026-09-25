@@ -48,6 +48,7 @@ function getBarColor(value: number, metric: string): string {
     if (metric === "dataEntry") return value >= 80 ? "#10b981" : value >= 60 ? "#f59e0b" : "#ef4444";
     if (metric === "stunting") return value >= 20 ? "#ef4444" : value >= 10 ? "#f59e0b" : "#10b981";
     if (metric === "wasting") return value >= 10 ? "#ef4444" : value >= 5 ? "#f59e0b" : "#10b981";
+    if (metric === "gizi_buruk") return value >= 2 ? "#ef4444" : value >= 1 ? "#f59e0b" : "#10b981";
     if (metric === "underweight") return value >= 20 ? "#ef4444" : value >= 10 ? "#f59e0b" : "#10b981";
     if (metric === "obesitas") return value >= 5 ? "#ef4444" : value >= 3 ? "#f59e0b" : "#10b981";
     if (metric === "bb_outlier" || metric === "tb_outlier") return value >= 5 ? "#ef4444" : value >= 2 ? "#f59e0b" : "#10b981";
@@ -57,6 +58,7 @@ function getBarColor(value: number, metric: string): string {
 function getPrevalenceColor(value: number, type: string): string {
     if (type === "stunting") return value >= 20 ? "text-red-600" : value >= 10 ? "text-amber-600" : "text-emerald-600";
     if (type === "wasting") return value >= 10 ? "text-red-600" : value >= 5 ? "text-amber-600" : "text-emerald-600";
+    if (type === "gizi_buruk") return value >= 2 ? "text-red-600" : value >= 1 ? "text-amber-600" : "text-emerald-600";
     if (type === "underweight") return value >= 20 ? "text-red-600" : value >= 10 ? "text-amber-600" : "text-emerald-600";
     if (type === "obesitas") return value >= 5 ? "text-red-600" : value >= 3 ? "text-amber-600" : "text-emerald-600";
     return "text-slate-700";
@@ -272,12 +274,12 @@ export default function LevelDesaContent() {
 
     // Aggregated totals
     const totals = useMemo(() => {
-        const t = { sasaran_l: 0, sasaran_p: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0 };
+        const t = { sasaran_l: 0, sasaran_p: 0, jumlah_timbang: 0, jumlah_ukur: 0, jumlah_timbang_ukur: 0, stunting: 0, wasting: 0, gizi_buruk: 0, underweight: 0, obesitas: 0, bb_outlier: 0, tb_outlier: 0 };
         filteredData.forEach((r) => {
             t.sasaran_l += r.data_sasaran_l; t.sasaran_p += r.data_sasaran_p;
             t.jumlah_timbang += r.jumlah_timbang || 0; t.jumlah_ukur += r.jumlah_ukur || 0;
             t.jumlah_timbang_ukur += r.jumlah_timbang_ukur;
-            t.stunting += r.stunting; t.wasting += r.wasting; t.underweight += r.underweight; t.obesitas += r.obesitas;
+            t.stunting += r.stunting; t.wasting += r.wasting; t.gizi_buruk += r.gizi_buruk || 0; t.underweight += r.underweight; t.obesitas += r.obesitas;
             t.bb_outlier += r.bb_outlier || 0; t.tb_outlier += r.tb_outlier || 0;
         });
         const totalSasaran = t.sasaran_l + t.sasaran_p;
@@ -286,6 +288,7 @@ export default function LevelDesaContent() {
             pctDataEntry: totalSasaran > 0 ? (t.jumlah_timbang_ukur / totalSasaran) * 100 : 0,
             pctStunting: t.jumlah_timbang_ukur > 0 ? (t.stunting / t.jumlah_timbang_ukur) * 100 : 0,
             pctWasting: t.jumlah_timbang_ukur > 0 ? (t.wasting / t.jumlah_timbang_ukur) * 100 : 0,
+            pctGiziBuruk: t.jumlah_timbang_ukur > 0 ? (t.gizi_buruk / t.jumlah_timbang_ukur) * 100 : 0,
             pctUnderweight: t.jumlah_timbang_ukur > 0 ? (t.underweight / t.jumlah_timbang_ukur) * 100 : 0,
             pctObesitas: t.jumlah_timbang_ukur > 0 ? (t.obesitas / t.jumlah_timbang_ukur) * 100 : 0,
             pctBbOutlier: t.jumlah_timbang > 0 ? (t.bb_outlier / t.jumlah_timbang) * 100 : 0,
@@ -310,6 +313,7 @@ export default function LevelDesaContent() {
                     : chartMetric === "tb_outlier" ? (r.jumlah_ukur > 0 ? ((r.tb_outlier || 0) / r.jumlah_ukur) * 100 : 0)
                     : chartMetric === "stunting" ? (r.jumlah_timbang_ukur > 0 ? (r.stunting / r.jumlah_timbang_ukur) * 100 : 0)
                         : chartMetric === "wasting" ? (r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0)
+                            : chartMetric === "gizi_buruk" ? (r.jumlah_timbang_ukur > 0 ? ((r.gizi_buruk || 0) / r.jumlah_timbang_ukur) * 100 : 0)
                             : chartMetric === "underweight" ? (r.jumlah_timbang_ukur > 0 ? (r.underweight / r.jumlah_timbang_ukur) * 100 : 0)
                                 : (r.jumlah_timbang_ukur > 0 ? (r.obesitas / r.jumlah_timbang_ukur) * 100 : 0);
                 return { name: r.kelurahan, value: parseFloat(metricVal.toFixed(2)), type: "desa" as "puskesmas" | "desa" };
@@ -374,7 +378,7 @@ export default function LevelDesaContent() {
         const desaMap: Record<string, { metric: number; ttu: number }> = {};
         filteredData.forEach((r) => {
             if (!desaMap[r.kelurahan]) desaMap[r.kelurahan] = { metric: 0, ttu: 0 };
-            desaMap[r.kelurahan].metric += r[mapMetric as keyof DesaRow] as number;
+            desaMap[r.kelurahan].metric += (r[mapMetric as keyof DesaRow] as number) || 0;
             desaMap[r.kelurahan].ttu += r.jumlah_timbang_ukur;
         });
         const result: Record<string, number> = {};
@@ -398,6 +402,8 @@ export default function LevelDesaContent() {
                 pctDataEntry: totalSasaran > 0 ? (r.jumlah_timbang_ukur / totalSasaran) * 100 : 0,
                 pctStunting: r.jumlah_timbang_ukur > 0 ? (r.stunting / r.jumlah_timbang_ukur) * 100 : 0,
                 pctWasting: r.jumlah_timbang_ukur > 0 ? (r.wasting / r.jumlah_timbang_ukur) * 100 : 0,
+                gizi_buruk: r.gizi_buruk || 0,
+                pctGiziBuruk: r.jumlah_timbang_ukur > 0 ? ((r.gizi_buruk || 0) / r.jumlah_timbang_ukur) * 100 : 0,
                 pctUnderweight: r.jumlah_timbang_ukur > 0 ? (r.underweight / r.jumlah_timbang_ukur) * 100 : 0,
                 pctObesitas: r.jumlah_timbang_ukur > 0 ? (r.obesitas / r.jumlah_timbang_ukur) * 100 : 0,
                 pctBbOutlier: r.jumlah_timbang > 0 ? ((r.bb_outlier || 0) / r.jumlah_timbang) * 100 : 0,
@@ -417,6 +423,7 @@ export default function LevelDesaContent() {
             "Timbang & Ukur": r.jumlah_timbang_ukur, "% Data Entry": parseFloat(r.pctDataEntry.toFixed(2)),
             "Stunting": r.stunting, "% Stunting": parseFloat(r.pctStunting.toFixed(2)),
             "Wasting": r.wasting, "% Wasting": parseFloat(r.pctWasting.toFixed(2)),
+            "Gizi Buruk": r.gizi_buruk || 0, "% Gizi Buruk": parseFloat(r.pctGiziBuruk.toFixed(2)),
             "Underweight": r.underweight, "% Underweight": parseFloat(r.pctUnderweight.toFixed(2)),
             "Obesitas": r.obesitas, "% Obesitas": parseFloat(r.pctObesitas.toFixed(2)),
             "Outlier BBU": r.bb_outlier || 0, "% Outlier BBU": parseFloat(r.pctBbOutlier.toFixed(2)),
@@ -449,9 +456,14 @@ export default function LevelDesaContent() {
     }, [filterTahun, filterBulan]);
 
     const METRIC_OPTIONS = [
-        { key: "dataEntry", label: "% Data Entry" }, { key: "stunting", label: "Stunting" },
-        { key: "wasting", label: "Wasting" }, { key: "underweight", label: "Underweight" }, { key: "obesitas", label: "Obesitas" },
-        { key: "bb_outlier", label: "% Outlier BBU" }, { key: "tb_outlier", label: "% Outlier TBU" },
+        { key: "dataEntry", label: "% Data Entry" },
+        { key: "stunting", label: "Prevalensi Stunting" },
+        { key: "wasting", label: "Prevalensi Wasting" },
+        { key: "gizi_buruk", label: "Prevalensi Gizi Buruk" },
+        { key: "underweight", label: "Prevalensi Underweight" },
+        { key: "obesitas", label: "Prevalensi Obesitas" },
+        { key: "bb_outlier", label: "% Outlier BBU" },
+        { key: "tb_outlier", label: "% Outlier TBU" },
     ];
 
     const TABLE_COLS = [
@@ -460,7 +472,9 @@ export default function LevelDesaContent() {
         { key: "totalSasaran", label: "Total" }, { key: "jumlah_timbang_ukur", label: "T&U" },
         { key: "pctDataEntry", label: "% Entry" }, { key: "stunting", label: "Stunting" },
         { key: "pctStunting", label: "% Stunting" }, { key: "wasting", label: "Wasting" },
-        { key: "pctWasting", label: "% Wasting" }, { key: "underweight", label: "UW" },
+        { key: "pctWasting", label: "% Wasting" },
+        { key: "gizi_buruk", label: "Gizi Buruk" }, { key: "pctGiziBuruk", label: "% Gz Buruk" },
+        { key: "underweight", label: "UW" },
         { key: "pctUnderweight", label: "% UW" }, { key: "obesitas", label: "Obes" },
         { key: "pctObesitas", label: "% Obes" }, { key: "bb_outlier", label: "Outlier BBU" },
         { key: "pctBbOutlier", label: "% Out BBU" }, { key: "tb_outlier", label: "Outlier TBU" },
@@ -540,12 +554,20 @@ export default function LevelDesaContent() {
                         <ScoreCard label="Sasaran Perempuan" value={formatNum(totals.sasaran_p)} suffix="Balita" icon="girl" color="pink" />
                         <ScoreCard label="Timbang & Ukur" value={formatNum(totals.jumlah_timbang_ukur)} suffix="Balita" icon="assignment_turned_in" color="purple" />
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         <ScoreCard label="% Data Entry" value={formatPct(totals.pctDataEntry)} icon="percent" color="blue" highlight />
-                        <ScoreCard label="Stunting" value={formatNum(totals.stunting)} suffix={formatPct(totals.pctStunting)} icon="height" color="amber" />
-                        <ScoreCard label="Wasting" value={formatNum(totals.wasting)} suffix={formatPct(totals.pctWasting)} icon="trending_down" color="amber" />
-                        <ScoreCard label="Underweight" value={formatNum(totals.underweight)} suffix={formatPct(totals.pctUnderweight)} icon="scale" color="amber" />
-                        <ScoreCard label="Obesitas" value={formatNum(totals.obesitas)} suffix={formatPct(totals.pctObesitas)} icon="trending_up" color="red" />
+                        <ScoreCard label="Kasus Stunting" value={formatNum(totals.stunting)} suffix="Balita" icon="height" color="amber" />
+                        <ScoreCard label="Kasus Wasting" value={formatNum(totals.wasting)} suffix="Balita" icon="trending_down" color="amber" />
+                        <ScoreCard label="Kasus Gizi Buruk" value={formatNum(totals.gizi_buruk)} suffix="Balita" icon="emergency" color="red" />
+                        <ScoreCard label="Kasus Underweight" value={formatNum(totals.underweight)} suffix="Balita" icon="scale" color="amber" />
+                        <ScoreCard label="Kasus Obesitas" value={formatNum(totals.obesitas)} suffix="Balita" icon="trending_up" color="red" />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <ScoreCard label="Prevalensi Stunting" value={formatPct(totals.pctStunting)} icon="height" color={totals.pctStunting >= 20 ? "red" : totals.pctStunting >= 10 ? "amber" : "emerald"} highlight />
+                        <ScoreCard label="Prevalensi Wasting" value={formatPct(totals.pctWasting)} icon="trending_down" color={totals.pctWasting >= 10 ? "red" : totals.pctWasting >= 5 ? "amber" : "emerald"} highlight />
+                        <ScoreCard label="Prevalensi Gizi Buruk" value={formatPct(totals.pctGiziBuruk)} icon="emergency" color={totals.pctGiziBuruk >= 2 ? "red" : totals.pctGiziBuruk >= 1 ? "amber" : "emerald"} highlight />
+                        <ScoreCard label="Prevalensi Underweight" value={formatPct(totals.pctUnderweight)} icon="scale" color={totals.pctUnderweight >= 20 ? "red" : totals.pctUnderweight >= 10 ? "amber" : "emerald"} highlight />
+                        <ScoreCard label="Prevalensi Obesitas" value={formatPct(totals.pctObesitas)} icon="trending_up" color={totals.pctObesitas >= 5 ? "red" : totals.pctObesitas >= 3 ? "amber" : "emerald"} highlight />
                     </div>
 
                     {/* ─── Analisis Anomali & Outlier Data ─── */}
@@ -649,6 +671,7 @@ export default function LevelDesaContent() {
                                 className="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 no-print">
                                 <option value="stunting">Prevalensi Stunting</option>
                                 <option value="wasting">Prevalensi Wasting</option>
+                                <option value="gizi_buruk">Prevalensi Gizi Buruk</option>
                                 <option value="underweight">Prevalensi Underweight</option>
                                 <option value="obesitas">Prevalensi Obesitas</option>
                             </select>
@@ -782,6 +805,8 @@ export default function LevelDesaContent() {
                                                     <td className={`px-3 py-2.5 font-bold ${getPrevalenceColor(row.pctStunting, "stunting")}`}>{formatPct(row.pctStunting)}</td>
                                                     <td className="px-3 py-2.5">{formatNum(row.wasting)}</td>
                                                     <td className={`px-3 py-2.5 font-bold ${getPrevalenceColor(row.pctWasting, "wasting")}`}>{formatPct(row.pctWasting)}</td>
+                                                    <td className="px-3 py-2.5">{formatNum(row.gizi_buruk)}</td>
+                                                    <td className={`px-3 py-2.5 font-bold ${getPrevalenceColor(row.pctGiziBuruk, "gizi_buruk")}`}>{formatPct(row.pctGiziBuruk)}</td>
                                                     <td className="px-3 py-2.5">{formatNum(row.underweight)}</td>
                                                     <td className={`px-3 py-2.5 font-bold ${getPrevalenceColor(row.pctUnderweight, "underweight")}`}>{formatPct(row.pctUnderweight)}</td>
                                                     <td className="px-3 py-2.5">{formatNum(row.obesitas)}</td>
