@@ -11,6 +11,8 @@ export type PkmkAppUser = {
     puskesmasName: string | null;
 };
 
+const DINKES_PKM_ID = "a3526e02-6f80-46ff-8b8e-1ee892400c0a";
+
 export async function getPkmkAppUser(searchParams?: URLSearchParams): Promise<PkmkAppUser> {
     try {
         const hdrs = await headers();
@@ -41,8 +43,15 @@ export async function getPkmkAppUser(searchParams?: URLSearchParams): Promise<Pk
             }
         }
 
-        // 1. If Admin Puskesmas (strictly locked to their assigned Puskesmas)
-        if (roleParam === "admin_puskesmas" && pkmIdParam) {
+        const normalizedRole = roleParam?.toLowerCase()?.trim();
+        const isSuperadmin =
+            normalizedRole === "superadmin" ||
+            normalizedRole === "stakeholder" ||
+            normalizedRole === "admin" ||
+            !normalizedRole;
+
+        // 1. If Admin Puskesmas (strictly locked to their assigned Puskesmas, ignore DINKES)
+        if (!isSuperadmin && normalizedRole === "admin_puskesmas" && pkmIdParam && pkmIdParam !== DINKES_PKM_ID) {
             let pkmName: string | null = null;
             // First check PKMK database
             const { data: pkmkData } = await pkmkSupabase
@@ -63,18 +72,21 @@ export async function getPkmkAppUser(searchParams?: URLSearchParams): Promise<Pk
                 pkmName = mainData?.nama ?? null;
             }
 
-            return {
-                id: pkmIdParam,
-                email: "admin@puskesmas.go.id",
-                role: "admin_puskesmas",
-                puskesmas_id: pkmIdParam,
-                puskesmasName: pkmName,
-            };
+            // Ensure not DINKES
+            if (!pkmName?.toLowerCase().includes("dinkes")) {
+                return {
+                    id: pkmIdParam,
+                    email: "admin@puskesmas.go.id",
+                    role: "admin_puskesmas",
+                    puskesmas_id: pkmIdParam,
+                    puskesmasName: pkmName,
+                };
+            }
         }
 
-        // 2. If Superadmin with optional Puskesmas filter
+        // 2. If Superadmin with explicit Puskesmas filter
         const queryPkm = searchParams?.get("puskesmas_id");
-        if (queryPkm && queryPkm !== "ALL" && queryPkm !== "all") {
+        if (queryPkm && queryPkm !== "ALL" && queryPkm !== "all" && queryPkm !== DINKES_PKM_ID) {
             let pkmName: string | null = null;
             const { data: pkmkData } = await pkmkSupabase
                 .from("ref_puskesmas")
@@ -82,27 +94,35 @@ export async function getPkmkAppUser(searchParams?: URLSearchParams): Promise<Pk
                 .eq("id", queryPkm)
                 .single();
 
-            if (pkmkData?.nama) {
+            if (pkmkData?.nama && !pkmkData.nama.toLowerCase().includes("dinkes")) {
                 pkmName = pkmkData.nama;
+                return {
+                    id: "superadmin",
+                    email: "admin@dinkes.go.id",
+                    role: "superadmin",
+                    puskesmas_id: queryPkm,
+                    puskesmasName: pkmName,
+                };
             } else {
                 const { data: mainData } = await supabase
                     .from("ref_puskesmas")
                     .select("nama")
                     .eq("id", queryPkm)
                     .single();
-                pkmName = mainData?.nama ?? null;
+                if (mainData?.nama && !mainData.nama.toLowerCase().includes("dinkes")) {
+                    pkmName = mainData.nama;
+                    return {
+                        id: "superadmin",
+                        email: "admin@dinkes.go.id",
+                        role: "superadmin",
+                        puskesmas_id: queryPkm,
+                        puskesmasName: pkmName,
+                    };
+                }
             }
-
-            return {
-                id: "superadmin",
-                email: "admin@dinkes.go.id",
-                role: "superadmin",
-                puskesmas_id: queryPkm,
-                puskesmasName: pkmName,
-            };
         }
 
-        // Default: Superadmin full Kabupaten
+        // Default: Superadmin full Kabupaten (no puskesmas filter)
         return {
             id: "superadmin",
             email: "admin@dinkes.go.id",

@@ -19,6 +19,7 @@ import {
     ResponsiveContainer,
     Cell
 } from "recharts";
+import ComplianceHeatmapSection from "@/components/dashboard/ComplianceHeatmapSection";
 
 export default function DataQualityDashboard() {
     const { user } = useAuth();
@@ -47,6 +48,39 @@ export default function DataQualityDashboard() {
     const [compliancePage, setCompliancePage] = useState(1);
     const [completenessPage, setCompletenessPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    // Full year records for Heatmap Kepatuhan
+    const [balitaYearRecords, setBalitaYearRecords] = useState<any[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        async function fetchBalitaYearRecords() {
+            try {
+                let allYearData: any[] = [];
+                let from = 0;
+                const step = 1000;
+                while (true) {
+                    const { data, error } = await supabase
+                        .from("data_balita_gizi")
+                        .select("id, puskesmas, kelurahan, bulan, tahun, jumlah_sasaran_balita, jumlah_balita_ditimbang, jumlah_balita_usia_0_59_bulan_ditimbang, jumlah_balita_bulan_ini, jumlah_balita_usia_0_59_bulan_ini")
+                        .eq("tahun", selectedTahun)
+                        .not("puskesmas", "ilike", "%dinkes%")
+                        .range(from, from + step - 1);
+                    if (error || !data || data.length === 0) break;
+                    allYearData = allYearData.concat(data);
+                    if (data.length < step) break;
+                    from += step;
+                }
+                if (isMounted) {
+                    setBalitaYearRecords(allYearData);
+                }
+            } catch (err) {
+                console.error("Error fetching balita year records for compliance heatmap:", err);
+            }
+        }
+        fetchBalitaYearRecords();
+        return () => { isMounted = false; };
+    }, [selectedTahun]);
 
     // Initialize logic
     useEffect(() => {
@@ -495,6 +529,32 @@ export default function DataQualityDashboard() {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* ─── Heatmap Kepatuhan Pelaporan Bulanan Balita Gizi (SS1 Drilldown) ─── */}
+                                <ComplianceHeatmapSection
+                                    indicatorType="balita"
+                                    year={selectedTahun}
+                                    refPuskesmas={puskesmasOptions}
+                                    refDesa={kelurahanOptions.map((k) => ({
+                                        id: k.id,
+                                        name: k.name,
+                                        puskesmas_id: k.puskesmas_id
+                                    }))}
+                                    records={balitaYearRecords}
+                                    isPuskesmasAdmin={!isSuperadmin}
+                                    userPuskesmasName={puskesmasOptions.find((p) => p.id === user?.puskesmas_id)?.name}
+                                    selectedPuskesmas={
+                                        selectedPuskesmas !== "ALL"
+                                            ? puskesmasOptions.find((p) => p.id === selectedPuskesmas)?.name
+                                            : "ALL"
+                                    }
+                                    onSelectPuskesmas={(pName) => {
+                                        const found = puskesmasOptions.find(
+                                            (p) => p.name.toLowerCase().trim() === pName.toLowerCase().trim()
+                                        );
+                                        if (found) setSelectedPuskesmas(found.id);
+                                    }}
+                                />
                             </div>
                         </div>
                     )}

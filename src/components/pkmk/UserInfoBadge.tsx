@@ -8,12 +8,21 @@ export default function UserInfoBadge({ fallbackText }: { fallbackText?: string 
     const { user, loading: authLoading } = useAuth();
     const [pkmName, setPkmName] = useState<string | null>(null);
 
+    const role = user?.role?.toLowerCase()?.trim() || "superadmin";
+    const isSuperadmin =
+        role === "superadmin" ||
+        role === "stakeholder" ||
+        role === "admin" ||
+        user?.email === "admin@dinkes.go.id";
+
+    const isPkmAdmin = !isSuperadmin && role === "admin_puskesmas";
+
     useEffect(() => {
         const fetchPkmName = async () => {
             try {
                 const headers = await getAuthHeaders();
                 const qParams = new URLSearchParams();
-                if (user?.role) qParams.set("role", user.role);
+                qParams.set("role", "admin_puskesmas");
                 if (user?.puskesmas_id) qParams.set("puskesmas_id", user.puskesmas_id);
 
                 const res = await fetch(`/api/pkmk/dashboard/stats?${qParams.toString()}`, {
@@ -29,18 +38,39 @@ export default function UserInfoBadge({ fallbackText }: { fallbackText?: string 
             }
         };
 
-        if (user?.role === "admin_puskesmas" || user?.puskesmas_id) {
+        if (isPkmAdmin && user?.puskesmas_id) {
             fetchPkmName();
         }
-    }, [user?.role, user?.puskesmas_id]);
+    }, [isPkmAdmin, user?.puskesmas_id]);
 
     if (authLoading) {
         return <span style={{ opacity: 0.6 }}>{fallbackText || "Loading..."}</span>;
     }
 
-    const role = user?.role?.toLowerCase()?.trim() || "superadmin";
+    // 1. Superadmin / Stakeholder (Dinas Kesehatan)
+    if (isSuperadmin) {
+        return (
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                    style={{
+                        background: "linear-gradient(135deg, #14b8a6, #0d9488)",
+                        color: "white",
+                        padding: "2px 10px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                    }}
+                >
+                    Superadmin
+                </span>
+                <span>Akses penuh ke semua data kabupaten</span>
+            </span>
+        );
+    }
 
-    if (role === "admin_puskesmas" || user?.puskesmas_id) {
+    // 2. Admin Puskesmas
+    if (isPkmAdmin) {
         const displayPkm = pkmName || (user?.puskesmas_id && !user.puskesmas_id.includes("-") ? user.puskesmas_id : "...");
         return (
             <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -58,27 +88,6 @@ export default function UserInfoBadge({ fallbackText }: { fallbackText?: string 
                     Admin
                 </span>
                 <span>Puskesmas {displayPkm}</span>
-            </span>
-        );
-    }
-
-    if (role === "superadmin" || role === "admin" || user?.email === "admin@dinkes.go.id") {
-        return (
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span
-                    style={{
-                        background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-                        color: "white",
-                        padding: "2px 10px",
-                        borderRadius: "12px",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                    }}
-                >
-                    Superadmin
-                </span>
-                <span>Akses penuh ke semua data kabupaten</span>
             </span>
         );
     }

@@ -57,7 +57,7 @@ export async function GET(request: Request) {
         }
 
         let filteredData = monitoringData || [];
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             filteredData = filteredData.filter((item: any) => {
                 return item.kohort?.puskesmas_id === appUser.puskesmas_id;
             });

@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         }
 
         let filteredData = konsumsiData || [];
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             filteredData = filteredData.filter((item: any) => {
                 const balita = item.kohort?.balita;
                 return balita?.puskesmas_id === appUser.puskesmas_id;

@@ -19,13 +19,18 @@ export default function DashboardStats() {
     const [stats, setStats] = useState<StatsData | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const isPkmAdmin = user?.role === "admin_puskesmas";
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
                 const headers = await getAuthHeaders();
                 const qParams = new URLSearchParams();
                 if (user?.role) qParams.set("role", user.role);
-                if (user?.puskesmas_id) qParams.set("puskesmas_id", user.puskesmas_id);
+                // ONLY send puskesmas_id if user is strictly admin_puskesmas
+                if (isPkmAdmin && user?.puskesmas_id && user.puskesmas_id !== "a3526e02-6f80-46ff-8b8e-1ee892400c0a") {
+                    qParams.set("puskesmas_id", user.puskesmas_id);
+                }
 
                 const response = await fetch(`/api/pkmk/dashboard/stats?${qParams.toString()}`, {
                     headers,
@@ -43,7 +48,7 @@ export default function DashboardStats() {
         };
 
         fetchStats();
-    }, [user?.role, user?.puskesmas_id]);
+    }, [user?.role, user?.puskesmas_id, isPkmAdmin]);
 
     if (loading) {
         return (
@@ -72,8 +77,8 @@ export default function DashboardStats() {
         );
     }
 
-    const effectiveRole = user?.role === 'admin_puskesmas' ? 'admin_puskesmas' : (stats?.role || 'superadmin');
-    const isAdmin = effectiveRole === 'admin_puskesmas';
+    const isSuperadmin = user?.role === "superadmin" || user?.role === "stakeholder" || user?.email === "admin@dinkes.go.id";
+    const isAdmin = !isSuperadmin && user?.role === "admin_puskesmas";
     const balitaCount = stats?.balitaCount ?? 0;
     const kohortCount = stats?.kohortCount ?? 0;
     const monitoringCount = stats?.monitoringCount ?? 0;

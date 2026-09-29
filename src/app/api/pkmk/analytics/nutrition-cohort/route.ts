@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
             .not("tanggal", "is", null)
             .order("tanggal", { ascending: true });
 
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             query = query.eq("kohort.puskesmas_id", appUser.puskesmas_id);
         }
 

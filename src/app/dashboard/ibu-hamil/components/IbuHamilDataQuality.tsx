@@ -21,6 +21,7 @@ import {
     MapPin,
     ArrowLeft
 } from "lucide-react";
+import ComplianceHeatmapSection from "@/components/dashboard/ComplianceHeatmapSection";
 
 interface IbuHamilDataQualityProps {
     allRecords: IbuHamilRawRecord[];
@@ -587,6 +588,18 @@ export default function IbuHamilDataQuality({
                     )}
                 </div>
             </div>
+
+            {/* ─── Heatmap Kepatuhan Pelaporan Bulanan (SS2 Drilldown) ─── */}
+            <ComplianceHeatmapSection
+                indicatorType="bumil"
+                year={year}
+                refPuskesmas={refPuskesmas}
+                refDesa={refDesa}
+                records={allRecords}
+                isPuskesmasAdmin={isPuskesmasAdmin}
+                selectedPuskesmas={selectedPuskesmas}
+                onSelectPuskesmas={setSelectedPuskesmas}
+            />
         </div>
     );
 }

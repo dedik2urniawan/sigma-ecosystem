@@ -48,7 +48,7 @@ export async function GET(request: Request) {
             .select("id, puskesmas_id, desa_kel, puskesmas:puskesmas_id(id, nama)", { count: "exact" })
             .lte("created_at", periodEndStr);
 
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             balitaQuery = balitaQuery.eq("puskesmas_id", appUser.puskesmas_id);
         }
 
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
             `)
             .lte("periode_mulai", periodEndStr);
 
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             kohortQuery = kohortQuery.eq("puskesmas_id", appUser.puskesmas_id);
         }
 

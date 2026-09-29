@@ -63,22 +63,24 @@ export default function AnalyticsSection() {
             .then((res) => res.json())
             .then((resData) => {
                 if (resData.success && resData.data?.puskesmas) {
-                    const pList = resData.data.puskesmas.map((p: any) => ({ id: p.id, nama: p.nama }));
+                    const pList = resData.data.puskesmas
+                        .filter((p: any) => !p.nama?.toLowerCase().includes("dinkes"))
+                        .map((p: any) => ({ id: p.id, nama: p.nama }));
                     setPuskesmasList(pList);
-                    if (user?.puskesmas_id) {
+                    if (isPuskesmasAdmin && user?.puskesmas_id) {
                         const found = pList.find((p: any) => p.id === user.puskesmas_id);
                         if (found) setUserPuskesmasName(found.nama);
                     }
                 }
             })
             .catch(() => {});
-    }, [user?.puskesmas_id]);
+    }, [user?.puskesmas_id, isPuskesmasAdmin]);
 
     const getPkmQuery = useCallback(() => {
-        if (isPuskesmasAdmin && user?.puskesmas_id) {
+        if (isPuskesmasAdmin && user?.puskesmas_id && user.puskesmas_id !== "a3526e02-6f80-46ff-8b8e-1ee892400c0a") {
             return `&puskesmas_id=${user.puskesmas_id}`;
         }
-        if (selectedPuskesmas && selectedPuskesmas !== "ALL") {
+        if (selectedPuskesmas && selectedPuskesmas !== "ALL" && selectedPuskesmas !== "a3526e02-6f80-46ff-8b8e-1ee892400c0a") {
             return `&puskesmas_id=${selectedPuskesmas}`;
         }
         return "";

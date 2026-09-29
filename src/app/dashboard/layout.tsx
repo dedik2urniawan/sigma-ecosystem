@@ -166,7 +166,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
                 label: "DDDM Insight",
                 icon: "insights",
                 href: "/dashboard/dddm-insight",
-                ready: false,
+                ready: true,
             },
         ],
     },

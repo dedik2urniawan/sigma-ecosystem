@@ -24,7 +24,8 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
         const headers: Record<string, string> = {};
         const role = appUser?.role?.toLowerCase()?.trim() || (authUser.email === "admin@dinkes.go.id" ? "superadmin" : "user");
         headers["x-user-role"] = role;
-        if (appUser?.puskesmas_id) {
+        // Only attach puskesmas-id if user is an actual admin_puskesmas and not DINKES
+        if (role === "admin_puskesmas" && appUser?.puskesmas_id && appUser.puskesmas_id !== "a3526e02-6f80-46ff-8b8e-1ee892400c0a") {
             headers["x-user-puskesmas-id"] = appUser.puskesmas_id;
         }
 

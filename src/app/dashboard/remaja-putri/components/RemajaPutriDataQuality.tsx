@@ -19,6 +19,7 @@ import {
     MapPin,
     ArrowLeft
 } from "lucide-react";
+import ComplianceHeatmapSection from "@/components/dashboard/ComplianceHeatmapSection";
 
 interface RemajaPutriDataQualityProps {
     allRecords: RemajaPutriRawRecord[];
@@ -533,6 +534,18 @@ export default function RemajaPutriDataQuality({
                     )}
                 </div>
             </div>
+
+            {/* ─── Heatmap Kepatuhan Pelaporan Bulanan (SS3 Drilldown) ─── */}
+            <ComplianceHeatmapSection
+                indicatorType="rematri"
+                year={year}
+                refPuskesmas={refPuskesmas}
+                refDesa={refDesa}
+                records={allRecords}
+                isPuskesmasAdmin={isPuskesmasAdmin}
+                selectedPuskesmas={selectedPuskesmas}
+                onSelectPuskesmas={setSelectedPuskesmas}
+            />
         </div>
     );
 }

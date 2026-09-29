@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         }
 
         let filteredData = antropometriData || [];
-        if (appUser.role === "admin_puskesmas" && appUser.puskesmas_id) {
+        if (appUser.puskesmas_id) {
             filteredData = filteredData.filter((item: any) => {
                 const kohort = item.kohort;
                 return kohort?.puskesmas_id === appUser.puskesmas_id;
