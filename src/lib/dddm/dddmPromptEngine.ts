@@ -69,7 +69,24 @@ export async function generateProblemScope(
       let seriousness = 3;
       let growth = 3;
 
-      if (evd.domain === "balita_gizi" && evd.indicator_key.includes("stunting")) {
+      if (evd.indicator_key === "pct_kek_pmt") {
+        // PMT Bumil KEK gap is severe (68.7 pp)
+        urgency = 5;
+        seriousness = 5;
+        growth = 5; // Max priority 15/15
+      } else if (evd.indicator_key === "pct_anemia_modsev_advanced" || evd.indicator_key === "gizi_buruk_rawat_inap_jalan_rate") {
+        urgency = 5;
+        seriousness = 5;
+        growth = 4;
+      } else if (evd.indicator_key === "intervensi_balita_t_faltering_rate" || evd.indicator_key === "rujukan_stunting_pkm_rs_rate") {
+        urgency = 5;
+        seriousness = 4;
+        growth = 4;
+      } else if (evd.indicator_key.includes("consumed_supplement") || evd.indicator_key.includes("kualitas_mpasi")) {
+        urgency = 4;
+        seriousness = 4;
+        growth = 4;
+      } else if (evd.domain === "balita_gizi" && evd.indicator_key.includes("stunting")) {
         urgency = 5;
         seriousness = 5;
         growth = evd.gap_value > 5 ? 4 : 3;
@@ -92,7 +109,7 @@ export async function generateProblemScope(
       } else {
         urgency = Math.min(5, Math.max(2, Math.round(evd.gap_value / 5) + 2));
         seriousness = Math.min(5, Math.max(2, Math.round(evd.gap_value / 4) + 2));
-        growth = 3;
+        growth = evd.gap_value > 30 ? 4 : 3;
       }
 
       const totalUsg = urgency + seriousness + growth;

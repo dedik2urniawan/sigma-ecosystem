@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    Cell, Legend
+    Cell, Legend, LabelList, ScatterChart, Scatter, ZAxis, ReferenceLine
 } from "recharts";
-import { MBGImpactResponse } from "@/app/api/rcs/v1/mbg/evaluasi-pertumbuhan/route";
+import { MBGImpactResponse, PuskesmasEffectiveness } from "@/app/api/rcs/v1/mbg/evaluasi-pertumbuhan/route";
 
 interface Props {
     userRole: string;
@@ -33,6 +33,16 @@ export default function AnalisisPertumbuhanMbgTab({
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MBGImpactResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    // Puskesmas Effectiveness State
+    const [searchPuskesmas, setSearchPuskesmas] = useState("");
+    const [tierFilter, setTierFilter] = useState<string>("all");
+    const [sortField, setSortField] = useState<keyof PuskesmasEffectiveness>("delta_haz_baduta");
+    const [sortAsc, setSortAsc] = useState<boolean>(false);
+    const [chartMode, setChartMode] = useState<"bar" | "quadrant">("bar");
+    const [chartFilterScope, setChartFilterScope] = useState<"top10" | "bottom10" | "all">("top10");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
 
     // Sync default puskesmas if puskesmas user
     useEffect(() => {
@@ -111,6 +121,131 @@ export default function AnalisisPertumbuhanMbgTab({
             p_val: data.linear_growth_impact["WAZ_Underweight (zs_bbu)"].p_value,
         },
     ] : [];
+
+    // Puskesmas Effectiveness Calculations
+    const puskesmasList: PuskesmasEffectiveness[] = useMemo(() => {
+        return data?.puskesmas_effectiveness || [];
+    }, [data]);
+
+    // KPI Aggregates
+    const topPuskesmas = useMemo(() => {
+        if (!puskesmasList.length) return null;
+        return [...puskesmasList].sort((a, b) => b.delta_haz_baduta - a.delta_haz_baduta)[0];
+    }, [puskesmasList]);
+
+    const avgDeltaBaduta = useMemo(() => {
+        if (!puskesmasList.length) return "0.000";
+        const sum = puskesmasList.reduce((acc, p) => acc + p.delta_haz_baduta, 0);
+        return (sum / puskesmasList.length).toFixed(3);
+    }, [puskesmasList]);
+
+    const optimalCount = useMemo(() => {
+        return puskesmasList.filter(p => p.tier === "High Responder" || p.tier === "Optimal").length;
+    }, [puskesmasList]);
+
+    const needsHelpCount = useMemo(() => {
+        return puskesmasList.filter(p => p.tier === "Perlu Pendampingan").length;
+    }, [puskesmasList]);
+
+    // Filtered & Sorted Table Data
+    const filteredPuskesmas = useMemo(() => {
+        return puskesmasList.filter(p => {
+            const matchesSearch = p.puskesmas.toLowerCase().includes(searchPuskesmas.toLowerCase());
+            const matchesTier = tierFilter === "all" || p.tier === tierFilter;
+            return matchesSearch && matchesTier;
+        }).sort((a, b) => {
+            const valA = a[sortField];
+            const valB = b[sortField];
+            if (typeof valA === "number" && typeof valB === "number") {
+                return sortAsc ? valA - valB : valB - valA;
+            }
+            return sortAsc 
+                ? String(valA).localeCompare(String(valB))
+                : String(valB).localeCompare(String(valA));
+        });
+    }, [puskesmasList, searchPuskesmas, tierFilter, sortField, sortAsc]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredPuskesmas.length / itemsPerPage));
+    const paginatedPuskesmas = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredPuskesmas.slice(start, start + itemsPerPage);
+    }, [filteredPuskesmas, currentPage, itemsPerPage]);
+
+    // Reset pagination on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchPuskesmas, tierFilter]);
+
+    // Chart Data
+    const barChartDisplayData = useMemo(() => {
+        const sorted = [...puskesmasList].sort((a, b) => b.delta_haz_baduta - a.delta_haz_baduta);
+        if (chartFilterScope === "top10") return sorted.slice(0, 10);
+        if (chartFilterScope === "bottom10") return sorted.slice(-10).reverse();
+        return sorted;
+    }, [puskesmasList, chartFilterScope]);
+
+    const quadrantData = useMemo(() => {
+        return puskesmasList.map(p => ({
+            name: p.puskesmas,
+            x: p.mbg_coverage_pct,
+            y: p.delta_haz_baduta,
+            z: p.total_sample,
+            stunting_reduction: p.stunting_reduction_pct,
+            tier: p.tier
+        }));
+    }, [puskesmasList]);
+
+    const handleSort = (field: keyof PuskesmasEffectiveness) => {
+        if (sortField === field) {
+            setSortAsc(!sortAsc);
+        } else {
+            setSortField(field);
+            setSortAsc(false);
+        }
+    };
+
+    const getTierBadge = (tier: PuskesmasEffectiveness["tier"]) => {
+        switch (tier) {
+            case "High Responder":
+                return {
+                    bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    dot: "bg-emerald-500",
+                    label: "High Responder"
+                };
+            case "Optimal":
+                return {
+                    bg: "bg-blue-50 text-blue-700 border-blue-200",
+                    dot: "bg-blue-500",
+                    label: "Optimal"
+                };
+            case "Moderat":
+                return {
+                    bg: "bg-amber-50 text-amber-700 border-amber-200",
+                    dot: "bg-amber-500",
+                    label: "Moderat"
+                };
+            case "Perlu Pendampingan":
+            default:
+                return {
+                    bg: "bg-rose-50 text-rose-700 border-rose-200",
+                    dot: "bg-rose-500",
+                    label: "Perlu Pendampingan"
+                };
+        }
+    };
+
+    const getRecommendation = (p: PuskesmasEffectiveness) => {
+        if (p.tier === "High Responder") {
+            return "Percontohan Best Practice (Replikasi ke wilayah sekitar)";
+        }
+        if (p.tier === "Optimal") {
+            return "Pertahankan cakupan & pantau keberlanjutan gizi";
+        }
+        if (p.tier === "Moderat") {
+            return "Akselerasi kepatuhan menu dan ketepatan sasaran 1.000 HPK";
+        }
+        return "Audit mutu gizi pangan & evaluasi kepatuhan konsumsi balita";
+    };
 
     return (
         <div className="space-y-6">
@@ -603,6 +738,609 @@ export default function AnalisisPertumbuhanMbgTab({
                             <p className="text-xs text-indigo-800 mt-1 leading-relaxed">
                                 Pada balita di atas 2 tahun, efek MBG lebih dominan menopang berat badan (WHZ) dan pencegahan wasting, sementara kenaikan tinggi badan memerlukan durasi intervensi yang lebih kontinu.
                             </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION: Insight Analisis Efektivitas MBG per-Puskesmas */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
+                {/* Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
+                                <span className="material-icons-round text-xl">query_stats</span>
+                            </span>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    Insight Analisis Efektivitas MBG per-Puskesmas
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Heterogenitas respon biologis antar wilayah, komparasi efektivitas 1.000 HPK (6–23 Bulan vs 24–59 Bulan), dan pemetaan kuadran strategis cakupan vs luaran linier.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Chart Mode Toggle */}
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl self-start lg:self-center border border-slate-200/60">
+                        <button
+                            onClick={() => setChartMode("bar")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                chartMode === "bar"
+                                    ? "bg-white text-emerald-700 shadow-sm font-bold"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            <span className="material-icons-round text-sm">bar_chart</span>
+                            Komparasi Usia
+                        </button>
+                        <button
+                            onClick={() => setChartMode("quadrant")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                chartMode === "quadrant"
+                                    ? "bg-white text-indigo-700 shadow-sm font-bold"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            <span className="material-icons-round text-sm">bubble_chart</span>
+                            Matriks Kuadran (Cakupan vs Respon)
+                        </button>
+                    </div>
+                </div>
+
+                {/* KPI Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-teal-50/40 border border-emerald-100/80">
+                        <div className="flex items-center justify-between text-xs text-emerald-800 font-medium mb-1">
+                            <span>Top Responder</span>
+                            <span className="material-icons-round text-emerald-600 text-sm">workspace_premium</span>
+                        </div>
+                        <div className="text-lg font-bold text-slate-900 truncate">
+                            {topPuskesmas ? `Puskesmas ${topPuskesmas.puskesmas}` : "-"}
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-2xl font-black text-emerald-600 font-mono">
+                                {topPuskesmas ? `+${topPuskesmas.delta_haz_baduta} SD` : "-"}
+                            </span>
+                            <span className="text-[11px] font-semibold text-emerald-700">
+                                (Baduta 6–23 bln)
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1">
+                            Reduksi Risiko Stunting: {topPuskesmas ? `${topPuskesmas.stunting_reduction_pct}%` : "-"}
+                        </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50/80 to-cyan-50/40 border border-blue-100/80">
+                        <div className="flex items-center justify-between text-xs text-blue-800 font-medium mb-1">
+                            <span>Rata-Rata Kabupaten (Baduta)</span>
+                            <span className="material-icons-round text-blue-600 text-sm">equalizer</span>
+                        </div>
+                        <div className="text-lg font-bold text-slate-900">
+                            Kabupaten Malang
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-2xl font-black text-blue-600 font-mono">
+                                +{avgDeltaBaduta} SD
+                            </span>
+                            <span className="text-[11px] font-semibold text-blue-700">
+                                (&Delta; HAZ Rerata)
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1">
+                            Basis {puskesmasList.length} Puskesmas teranalisis
+                        </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-purple-50/40 border border-indigo-100/80">
+                        <div className="flex items-center justify-between text-xs text-indigo-800 font-medium mb-1">
+                            <span>Kategori Optimal & High</span>
+                            <span className="material-icons-round text-indigo-600 text-sm">verified</span>
+                        </div>
+                        <div className="text-lg font-bold text-slate-900">
+                            {optimalCount} Puskesmas
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-2xl font-black text-indigo-600 font-mono">
+                                {puskesmasList.length > 0 ? `${Math.round((optimalCount / puskesmasList.length) * 100)}%` : "0%"}
+                            </span>
+                            <span className="text-[11px] font-semibold text-indigo-700">
+                                Capai Target
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1">
+                            Kenaikan linier &ge; +0.18 SD
+                        </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50/80 to-amber-50/40 border border-rose-100/80">
+                        <div className="flex items-center justify-between text-xs text-rose-800 font-medium mb-1">
+                            <span>Prioritas Pendampingan</span>
+                            <span className="material-icons-round text-rose-600 text-sm">priority_high</span>
+                        </div>
+                        <div className="text-lg font-bold text-slate-900">
+                            {needsHelpCount} Puskesmas
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-2xl font-black text-rose-600 font-mono">
+                                {needsHelpCount}
+                            </span>
+                            <span className="text-[11px] font-semibold text-rose-700">
+                                Wilayah Kerja
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1">
+                            Butuh audit kepatuhan & asupan gizi
+                        </div>
+                    </div>
+                </div>
+
+                {/* Chart Area */}
+                <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                    {chartMode === "bar" ? (
+                        <div className="space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                        <span className="material-icons-round text-emerald-600 text-base">leaderboard</span>
+                                        Grafik Komparasi Respon Usia Kritis (6–23 bln vs 24–59 bln) per Puskesmas
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Memperlihatkan perbandingan kenaikan linier tinggi badan (&Delta; HAZ) antara Baduta dan Balita di tiap Puskesmas.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs">
+                                    <button
+                                        onClick={() => setChartFilterScope("top10")}
+                                        className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                                            chartFilterScope === "top10"
+                                                ? "bg-emerald-500 text-white font-bold shadow-sm"
+                                                : "text-slate-600 hover:text-slate-900"
+                                        }`}
+                                    >
+                                        Top 10 Respon
+                                    </button>
+                                    <button
+                                        onClick={() => setChartFilterScope("bottom10")}
+                                        className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                                            chartFilterScope === "bottom10"
+                                                ? "bg-rose-500 text-white font-bold shadow-sm"
+                                                : "text-slate-600 hover:text-slate-900"
+                                        }`}
+                                    >
+                                        10 Terbawah (Lagging)
+                                    </button>
+                                    <button
+                                        onClick={() => setChartFilterScope("all")}
+                                        className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                                            chartFilterScope === "all"
+                                                ? "bg-indigo-600 text-white font-bold shadow-sm"
+                                                : "text-slate-600 hover:text-slate-900"
+                                        }`}
+                                    >
+                                        Semua ({puskesmasList.length})
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="h-80 w-full mt-2">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={barChartDisplayData}
+                                        margin={{ top: 25, right: 20, left: 10, bottom: 65 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis
+                                            dataKey="puskesmas"
+                                            stroke="#475569"
+                                            fontSize={11}
+                                            fontWeight={500}
+                                            interval={0}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={60}
+                                        />
+                                        <YAxis
+                                            stroke="#475569"
+                                            fontSize={11}
+                                            tickFormatter={(v) => `+${v} SD`}
+                                            domain={[0, 0.40]}
+                                        />
+                                        <Tooltip
+                                            formatter={(value: any, name: any) => [
+                                                `+${Number(value).toFixed(3)} SD`,
+                                                name === "delta_haz_baduta"
+                                                    ? "Baduta 6–23 Bulan (1.000 HPK)"
+                                                    : "Balita 24–59 Bulan"
+                                            ]}
+                                            contentStyle={{
+                                                borderRadius: "14px",
+                                                border: "1px solid #e2e8f0",
+                                                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.08)",
+                                                fontSize: "12px",
+                                            }}
+                                        />
+                                        <Legend
+                                            verticalAlign="top"
+                                            align="right"
+                                            wrapperStyle={{ paddingBottom: "10px", fontSize: "12px" }}
+                                        />
+                                        <Bar
+                                            dataKey="delta_haz_baduta"
+                                            name="Baduta 6–23 Bulan (1.000 HPK)"
+                                            fill="#10b981"
+                                            radius={[4, 4, 0, 0]}
+                                        >
+                                            {barChartDisplayData.length <= 15 && (
+                                                <LabelList
+                                                    dataKey="delta_haz_baduta"
+                                                    position="top"
+                                                    formatter={(v: any) => `+${Number(v).toFixed(2)}`}
+                                                    style={{ fontSize: "10px", fill: "#047857", fontWeight: 700 }}
+                                                />
+                                            )}
+                                        </Bar>
+                                        <Bar
+                                            dataKey="delta_haz_balita"
+                                            name="Balita 24–59 Bulan"
+                                            fill="#6366f1"
+                                            radius={[4, 4, 0, 0]}
+                                        >
+                                            {barChartDisplayData.length <= 15 && (
+                                                <LabelList
+                                                    dataKey="delta_haz_balita"
+                                                    position="top"
+                                                    formatter={(v: any) => `+${Number(v).toFixed(2)}`}
+                                                    style={{ fontSize: "10px", fill: "#4338ca", fontWeight: 700 }}
+                                                />
+                                            )}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span className="material-icons-round text-indigo-600 text-base">scatter_plot</span>
+                                    Matriks Kuadran Strategis: Cakupan MBG vs Efikasi Pertumbuhan Baduta (6–23 bln)
+                                </h4>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Memetakan wilayah berdasarkan tingkat cakupan penerima MBG (%) dengan perolehan &Delta; HAZ pada periode jendela kritis.
+                                </p>
+                            </div>
+
+                            <div className="h-80 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ScatterChart
+                                        margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                        <XAxis
+                                            type="number"
+                                            dataKey="x"
+                                            name="Cakupan MBG"
+                                            unit="%"
+                                            domain={[40, 85]}
+                                            stroke="#475569"
+                                            fontSize={11}
+                                            label={{ value: "Cakupan MBG (%)", position: "insideBottom", offset: -10, fontSize: 11, fill: "#64748b" }}
+                                        />
+                                        <YAxis
+                                            type="number"
+                                            dataKey="y"
+                                            name="&Delta; HAZ Baduta"
+                                            domain={[0.05, 0.36]}
+                                            tickFormatter={(v) => `+${v}`}
+                                            stroke="#475569"
+                                            fontSize={11}
+                                            label={{ value: "&Delta; HAZ Baduta (SD)", angle: -90, position: "insideLeft", fontSize: 11, fill: "#64748b" }}
+                                        />
+                                        <ZAxis type="number" dataKey="z" range={[60, 200]} name="Sampel" />
+                                        <ReferenceLine x={60} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: "Median Cakupan (60%)", fill: "#94a3b8", fontSize: 10 }} />
+                                        <ReferenceLine y={0.20} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: "Ambang Target (+0.20 SD)", fill: "#94a3b8", fontSize: 10 }} />
+                                        <Tooltip
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    const d = payload[0].payload;
+                                                    return (
+                                                        <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 text-xs font-sans min-w-[200px]">
+                                                            <div className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-1 mb-2">
+                                                                Puskesmas {d.name}
+                                                            </div>
+                                                            <div className="space-y-1 text-slate-600">
+                                                                <div className="flex justify-between">
+                                                                    <span>Cakupan MBG:</span>
+                                                                    <span className="font-bold text-slate-900">{d.x}%</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>&Delta; HAZ Baduta:</span>
+                                                                    <span className="font-bold text-emerald-700 font-mono">+{d.y} SD</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>Reduksi Stunting:</span>
+                                                                    <span className="font-bold text-indigo-700">{d.stunting_reduction}%</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>Total Sampel:</span>
+                                                                    <span className="font-bold text-slate-700 font-mono">{d.z.toLocaleString()}</span>
+                                                                </div>
+                                                                <div className="pt-1 border-t border-slate-100 flex justify-between">
+                                                                    <span>Status:</span>
+                                                                    <span className="font-bold text-slate-800">{d.tier}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                        <Scatter name="Puskesmas" data={quadrantData}>
+                                            {quadrantData.map((entry, index) => {
+                                                const fill =
+                                                    entry.tier === "High Responder"
+                                                        ? "#10b981"
+                                                        : entry.tier === "Optimal"
+                                                        ? "#3b82f6"
+                                                        : entry.tier === "Moderat"
+                                                        ? "#f59e0b"
+                                                        : "#f43f5e";
+                                                return <Cell key={`scatter-${index}`} fill={fill} fillOpacity={0.85} />;
+                                            })}
+                                        </Scatter>
+                                    </ScatterChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* 4 Quadrants Legend */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 text-xs">
+                                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-emerald-900">
+                                    <strong className="block font-bold">Kuadran I: Role Model</strong>
+                                    <span className="text-[11px] text-emerald-700">Cakupan Luas (&ge;60%) & Efikasi Tinggi (&ge;+0.20 SD). Dijadikan standar operasional.</span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-blue-900">
+                                    <strong className="block font-bold">Kuadran II: High Potential</strong>
+                                    <span className="text-[11px] text-blue-700">Efikasi Tinggi (&ge;+0.20 SD) namun cakupan &lt;60%. Perlu akselerasi alokasi kuota MBG.</span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-100 text-amber-900">
+                                    <strong className="block font-bold">Kuadran IV: Compliance Gap</strong>
+                                    <span className="text-[11px] text-amber-700">Cakupan Luas (&ge;60%) namun respon rendah (&lt;+0.20 SD). Butuh audit kepatuhan konsumsi & menu.</span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-rose-900">
+                                    <strong className="block font-bold">Kuadran III: Prioritas Pembenahan</strong>
+                                    <span className="text-[11px] text-rose-700">Cakupan Rendah & Respon Rendah. Memerlukan intervensi gizi terpadu dan monitoring intensif.</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Interactive Data Table */}
+                <div className="space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                <span className="material-icons-round text-slate-500 text-base">table_chart</span>
+                                Tabel Rincian Efektivitas Intervensi MBG per Puskesmas
+                            </h4>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Klik judul kolom untuk mengurutkan data (sorting). Gunakan pencarian dan filter untuk analisis spesifik.
+                            </p>
+                        </div>
+
+                        {/* Search and Tier Filter */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="relative">
+                                <span className="material-icons-round text-slate-400 text-sm absolute left-3 top-1/2 -translate-y-1/2">
+                                    search
+                                </span>
+                                <input
+                                    type="text"
+                                    value={searchPuskesmas}
+                                    onChange={(e) => setSearchPuskesmas(e.target.value)}
+                                    placeholder="Cari Puskesmas..."
+                                    className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-40 sm:w-48 bg-white"
+                                />
+                            </div>
+
+                            <select
+                                value={tierFilter}
+                                onChange={(e) => setTierFilter(e.target.value)}
+                                className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                            >
+                                <option value="all">Semua Kategori Tier</option>
+                                <option value="High Responder">High Responder</option>
+                                <option value="Optimal">Optimal</option>
+                                <option value="Moderat">Moderat</option>
+                                <option value="Perlu Pendampingan">Perlu Pendampingan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Table View */}
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <table className="w-full text-left text-xs text-slate-600">
+                            <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                                <tr>
+                                    <th className="py-3 px-3 w-10 text-center">No</th>
+                                    <th
+                                        onClick={() => handleSort("puskesmas")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            <span>Puskesmas</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "puskesmas" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort("mbg_coverage_pct")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span>Cakupan MBG</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "mbg_coverage_pct" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort("delta_haz_baduta")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span>&Delta; HAZ (6–23 bln)</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "delta_haz_baduta" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort("delta_haz_balita")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span>&Delta; HAZ (24–59 bln)</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "delta_haz_balita" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort("delta_haz_overall")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span>&Delta; HAZ Agregat</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "delta_haz_overall" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort("stunting_reduction_pct")}
+                                        className="py-3 px-3 cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span>Reduksi Stunting</span>
+                                            <span className="material-icons-round text-xs text-slate-400">
+                                                {sortField === "stunting_reduction_pct" ? (sortAsc ? "north" : "south") : "unfold_more"}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th className="py-3 px-3 text-center">Klasifikasi Tier</th>
+                                    <th className="py-3 px-3 min-w-[200px]">Rekomendasi Operasional</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {paginatedPuskesmas.length > 0 ? (
+                                    paginatedPuskesmas.map((p, idx) => {
+                                        const badge = getTierBadge(p.tier);
+                                        const rank = (currentPage - 1) * itemsPerPage + idx + 1;
+                                        return (
+                                            <tr key={p.puskesmas} className="hover:bg-slate-50/80 transition-colors">
+                                                <td className="py-3 px-3 text-center font-mono text-slate-400">
+                                                    {rank}
+                                                </td>
+                                                <td className="py-3 px-3 font-semibold text-slate-900">
+                                                    <div>Puskesmas {p.puskesmas}</div>
+                                                    <div className="text-[10px] text-slate-400 font-normal">
+                                                        N = {p.total_sample.toLocaleString()} sampel
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-3 text-right">
+                                                    <span className="font-bold text-slate-800">{p.mbg_coverage_pct}%</span>
+                                                    <div className="text-[10px] text-slate-400 font-mono">
+                                                        {p.mbg_recipients.toLocaleString()} sasaran
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/30">
+                                                    +{p.delta_haz_baduta} SD
+                                                </td>
+                                                <td className="py-3 px-3 text-right font-mono font-medium text-indigo-700">
+                                                    +{p.delta_haz_balita} SD
+                                                </td>
+                                                <td className="py-3 px-3 text-right font-mono font-medium text-slate-700">
+                                                    +{p.delta_haz_overall} SD
+                                                </td>
+                                                <td className="py-3 px-3 text-right font-bold text-indigo-900">
+                                                    {p.stunting_reduction_pct}%
+                                                </td>
+                                                <td className="py-3 px-3 text-center">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badge.bg}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`}></span>
+                                                        {badge.label}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-3 text-[11px] text-slate-600">
+                                                    {getRecommendation(p)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan={9} className="py-8 text-center text-slate-400">
+                                            Tidak ada data Puskesmas yang cocok dengan filter pencarian.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination Bar */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs text-slate-500">
+                        <div>
+                            Menampilkan{" "}
+                            <span className="font-semibold text-slate-800">
+                                {filteredPuskesmas.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}
+                            </span>{" "}
+                            sampai{" "}
+                            <span className="font-semibold text-slate-800">
+                                {Math.min(currentPage * itemsPerPage, filteredPuskesmas.length)}
+                            </span>{" "}
+                            dari{" "}
+                            <span className="font-semibold text-slate-800">{filteredPuskesmas.length}</span> Puskesmas
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                Sebelumnya
+                            </button>
+
+                            <div className="flex items-center gap-1 px-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-7 h-7 rounded-xl text-xs font-semibold transition-all ${
+                                            currentPage === pageNum
+                                                ? "bg-emerald-600 text-white shadow-sm"
+                                                : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                Selanjutnya
+                            </button>
                         </div>
                     </div>
                 </div>

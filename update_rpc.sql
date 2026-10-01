@@ -18,7 +18,17 @@ AS $$
 BEGIN
   RETURN QUERY
   WITH filtered AS (
-    SELECT jk, usia_saatukur::numeric AS age_months
+    SELECT jk, 
+      COALESCE(
+        usia_saatukur::numeric,
+        CASE 
+          WHEN tgl_lahir IS NOT NULL AND tgl_ukur IS NOT NULL THEN
+            ROUND(EXTRACT(EPOCH FROM (tgl_ukur::timestamp - tgl_lahir::timestamp)) / (86400 * 30.4375))
+          WHEN tgl_lahir IS NOT NULL THEN
+            ROUND(EXTRACT(EPOCH FROM (to_date(COALESCE(NULLIF(SUBSTRING(p_periode FROM '[0-9]{4}'), ''), '2026') || '-08-15', 'YYYY-MM-DD') - tgl_lahir::timestamp)) / (86400 * 30.4375))
+          ELSE NULL
+        END
+      ) AS age_months
     FROM data_eppgbm
     WHERE periode = p_periode
       AND (p_puskesmas = 'Semua' OR puskesmas = p_puskesmas)

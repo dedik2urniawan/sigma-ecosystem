@@ -113,21 +113,55 @@ function DistribusiDemografi({ filters }: { filters: Filters }) {
     useEffect(() => {
         async function fetch() {
             setLoading(true);
-            const { data: raw } = await supabase.rpc("get_eppgbm_distribusi_demografi", {
-                p_periode: filters.periode,
-                p_puskesmas: filters.puskesmas,
-                p_kelurahan: filters.kelurahan,
-            });
-            if (raw) {
-                const sorted = [...raw].sort(
-                    (a, b) => AGE_ORDER.indexOf(a.kelompok_usia) - AGE_ORDER.indexOf(b.kelompok_usia)
-                );
-                setData(sorted);
-                const totalL = raw.reduce((s: number, r: any) => s + Number(r.laki_laki), 0);
-                const totalP = raw.reduce((s: number, r: any) => s + Number(r.perempuan), 0);
-                setSummary({ total: totalL + totalP, laki: totalL, perempuan: totalP });
+            try {
+                // Base query builder helper for exact population counting (matching InformasiDataTab)
+                const buildCountQuery = () => {
+                    let q = supabase.from("data_eppgbm").select('*', { count: 'exact', head: true });
+                    if (filters.periode && filters.periode !== "Semua") {
+                        q = q.eq("periode", filters.periode);
+                    }
+                    if (filters.puskesmas && filters.puskesmas !== "Semua") {
+                        q = q.eq("puskesmas", filters.puskesmas);
+                    }
+                    if (filters.kelurahan && filters.kelurahan !== "Semua") {
+                        q = q.eq("kelurahan", filters.kelurahan);
+                    }
+                    return q;
+                };
+
+                const [totalRes, lRes, pRes, rpcRes] = await Promise.all([
+                    buildCountQuery(),
+                    buildCountQuery().ilike("jk", "L%"),
+                    buildCountQuery().ilike("jk", "P%"),
+                    supabase.rpc("get_eppgbm_distribusi_demografi", {
+                        p_periode: filters.periode,
+                        p_puskesmas: filters.puskesmas,
+                        p_kelurahan: filters.kelurahan,
+                    })
+                ]);
+
+                const raw = rpcRes.data;
+                if (raw) {
+                    const sorted = [...raw].sort(
+                        (a, b) => AGE_ORDER.indexOf(a.kelompok_usia) - AGE_ORDER.indexOf(b.kelompok_usia)
+                    );
+                    setData(sorted);
+                }
+
+                const total = totalRes.count ?? 0;
+                const laki = lRes.count ?? 0;
+                const perempuan = pRes.count ?? 0;
+
+                setSummary({
+                    total: total > 0 ? total : (raw ? raw.reduce((s: number, r: any) => s + Number(r.laki_laki) + Number(r.perempuan), 0) : 0),
+                    laki: laki > 0 ? laki : (raw ? raw.reduce((s: number, r: any) => s + Number(r.laki_laki), 0) : 0),
+                    perempuan: perempuan > 0 ? perempuan : (raw ? raw.reduce((s: number, r: any) => s + Number(r.perempuan), 0) : 0),
+                });
+            } catch (err) {
+                console.error("Error fetching distribusi demografi:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
         fetch();
     }, [filters]);
@@ -173,18 +207,34 @@ function DistribusiDemografi({ filters }: { filters: Filters }) {
                     {/* Age Bar Chart */}
                     <div className="lg:col-span-2">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Distribusi Kelompok Usia</p>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <BarChart data={data} margin={{ top: 25, right: 15, left: 0, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                 <XAxis dataKey="kelompok_usia" tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }} />
                                 <YAxis tick={{ fill: "#64748b", fontSize: 11 }} />
                                 <RechartsTooltip
                                     contentStyle={{ borderRadius: "16px", border: "1px solid #e2e8f0", fontSize: "12px" }}
-                                    formatter={(val: any) => [Number(val).toLocaleString("id-ID"), ""]}
+                                    formatter={(val: any, name: any) => [Number(val).toLocaleString("id-ID"), name]}
                                 />
                                 <Legend wrapperStyle={{ fontSize: "12px", fontWeight: 600 }} />
-                                <Bar dataKey="laki_laki" name="Laki-Laki" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                                <Bar dataKey="perempuan" name="Perempuan" fill="#ec4899" radius={[6, 6, 0, 0]} />
+                                <Bar dataKey="laki_laki" name="Laki-Laki" fill="#3b82f6" radius={[6, 6, 0, 0]}>
+                                    <LabelList
+                                        dataKey="laki_laki"
+                                        position="top"
+                                        offset={6}
+                                        formatter={(val: any) => Number(val) > 0 ? Number(val).toLocaleString("id-ID") : ""}
+                                        style={{ fontSize: "10px", fontWeight: 700, fill: "#2563eb" }}
+                                    />
+                                </Bar>
+                                <Bar dataKey="perempuan" name="Perempuan" fill="#ec4899" radius={[6, 6, 0, 0]}>
+                                    <LabelList
+                                        dataKey="perempuan"
+                                        position="top"
+                                        offset={6}
+                                        formatter={(val: any) => Number(val) > 0 ? Number(val).toLocaleString("id-ID") : ""}
+                                        style={{ fontSize: "10px", fontWeight: 700, fill: "#db2777" }}
+                                    />
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -414,7 +464,14 @@ function PrevalensiStatusGizi({ filters }: { filters: Filters }) {
                                         stackId="a"
                                         fill={getStatusColor(sg, indicatorColors)}
                                         name={sg.charAt(0) + sg.slice(1).toLowerCase()}
-                                    />
+                                    >
+                                        <LabelList
+                                            dataKey={sg}
+                                            position="center"
+                                            formatter={(val: any) => Number(val) >= 8 ? `${Number(val).toFixed(1)}%` : ""}
+                                            style={{ fontSize: "10px", fontWeight: 700, fill: "#ffffff", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                                        />
+                                    </Bar>
                                 ))}
                             </BarChart>
                         </ResponsiveContainer>
@@ -565,8 +622,8 @@ function DigitPreference({ filters }: { filters: Filters }) {
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                                     {chart.label}
                                 </p>
-                                <ResponsiveContainer width="100%" height={220}>
-                                    <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                                <ResponsiveContainer width="100%" height={240}>
+                                    <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                         <XAxis dataKey="digit" tick={{ fill: "#64748b", fontSize: 12, fontWeight: 700 }} />
                                         <YAxis unit="%" tick={{ fill: "#64748b", fontSize: 11 }} domain={[0, 25]} />
@@ -584,6 +641,13 @@ function DigitPreference({ filters }: { filters: Filters }) {
                                                     opacity={0.85}
                                                 />
                                             ))}
+                                            <LabelList
+                                                dataKey={chart.key}
+                                                position="top"
+                                                offset={4}
+                                                formatter={(v: any) => v !== undefined && v !== null ? `${Number(v).toFixed(1)}%` : ""}
+                                                style={{ fontSize: "10px", fontWeight: 700, fill: "#475569" }}
+                                            />
                                         </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -662,7 +726,13 @@ function DistribusiMetrik({ filters }: { filters: Filters }) {
                                         labelFormatter={(l: any) => `Berat: ${l} kg`}
                                     />
                                     <Bar dataKey="frekuensi" fill="#0ea5e9" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="frekuensi" position="top" style={{ fontSize: "10px", fill: "#64748b" }} />
+                                        <LabelList
+                                            dataKey="frekuensi"
+                                            position="top"
+                                            offset={4}
+                                            formatter={(v: any) => v ? Number(v).toLocaleString("id-ID") : ""}
+                                            style={{ fontSize: "9px", fontWeight: 700, fill: "#0369a1" }}
+                                        />
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
@@ -689,7 +759,13 @@ function DistribusiMetrik({ filters }: { filters: Filters }) {
                                         labelFormatter={(l: any) => `Tinggi: ${l} cm`}
                                     />
                                     <Bar dataKey="frekuensi" fill="#8b5cf6" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="frekuensi" position="top" style={{ fontSize: "10px", fill: "#64748b" }} />
+                                        <LabelList
+                                            dataKey="frekuensi"
+                                            position="top"
+                                            offset={4}
+                                            formatter={(v: any) => v ? Number(v).toLocaleString("id-ID") : ""}
+                                            style={{ fontSize: "9px", fontWeight: 700, fill: "#6d28d9" }}
+                                        />
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>

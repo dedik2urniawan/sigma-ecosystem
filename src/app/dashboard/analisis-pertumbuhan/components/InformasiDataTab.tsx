@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList
 } from "recharts";
 
 interface Filters {
@@ -44,6 +44,9 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                     }
                     if (filters.puskesmas && filters.puskesmas !== "Semua") {
                         q = q.eq("puskesmas", filters.puskesmas);
+                    }
+                    if (filters.kelurahan && filters.kelurahan !== "Semua") {
+                        q = q.eq("kelurahan", filters.kelurahan);
                     }
                     return q;
                 };
@@ -216,7 +219,7 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={ageData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                            <BarChart data={ageData} margin={{ top: 25, right: 30, left: 0, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} dy={10} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -228,6 +231,13 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                                     {ageData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#0ea5e9" : "#38bdf8"} />
                                     ))}
+                                    <LabelList
+                                        dataKey="count"
+                                        position="top"
+                                        offset={6}
+                                        formatter={(val: any) => val ? Number(val).toLocaleString("id-ID") : ""}
+                                        style={{ fontSize: "10px", fontWeight: 700, fill: "#0369a1" }}
+                                    />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
@@ -254,6 +264,14 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                                     {pieData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
+                                    <LabelList
+                                        dataKey="value"
+                                        position="outside"
+                                        formatter={(v: any) =>
+                                            stats.total > 0 ? `${((Number(v) / stats.total) * 100).toFixed(1)}%` : ''
+                                        }
+                                        style={{ fontSize: "11px", fontWeight: 700, fill: "#475569" }}
+                                    />
                                 </Pie>
                                 <RechartsTooltip
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -345,7 +363,7 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                             </h4>
                             <div className="h-[200px] w-full flex-1">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={mismatchData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <BarChart data={mismatchData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                         <XAxis dataKey="age_group" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} dy={10} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `${val}%`} />
@@ -354,7 +372,15 @@ export default function InformasiDataTab({ filters }: { filters: Filters }) {
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 600 }}
                                             cursor={{ fill: '#f1f5f9' }}
                                         />
-                                        <Bar dataKey="percentage" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={32} />
+                                        <Bar dataKey="percentage" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={32}>
+                                            <LabelList
+                                                dataKey="percentage"
+                                                position="top"
+                                                offset={5}
+                                                formatter={(val: any) => val !== undefined && val !== null ? `${Number(val).toFixed(1)}%` : ""}
+                                                style={{ fontSize: "10px", fontWeight: 700, fill: "#e11d48" }}
+                                            />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

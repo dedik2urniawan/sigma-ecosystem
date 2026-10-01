@@ -12,7 +12,9 @@ import {
   CheckCircle, 
   AlertCircle, 
   Info,
-  Filter
+  Filter,
+  Sparkles,
+  Layers
 } from "lucide-react";
 
 interface EvidenceMatrixSectionProps {
@@ -22,33 +24,61 @@ interface EvidenceMatrixSectionProps {
 
 export default function EvidenceMatrixSection({ evidenceList, isLoading }: EvidenceMatrixSectionProps) {
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
+
+  const countByDomain = (domain: string) => {
+    if (domain === "all") return evidenceList.length;
+    return evidenceList.filter(e => e.domain === domain).length;
+  };
 
   const domainTabs = [
-    { id: "all", label: "Semua Domain (6)", icon: Filter },
-    { id: "balita_gizi", label: "Balita Gizi", icon: Baby },
-    { id: "ibu_hamil", label: "Ibu Hamil", icon: HeartPulse },
-    { id: "remaja_putri", label: "Remaja Putri", icon: GraduationCap },
-    { id: "mbg", label: "Program MBG", icon: UtensilsCrossed },
-    { id: "pkmk", label: "Intervensi PKMK", icon: Stethoscope },
-    { id: "bimtek_gizi", label: "Bimtek Gizi", icon: ClipboardCheck },
+    { id: "all", label: `Semua Domain (${countByDomain("all")})`, icon: Filter },
+    { id: "balita_gizi", label: `Balita Gizi (${countByDomain("balita_gizi")})`, icon: Baby },
+    { id: "ibu_hamil", label: `Ibu Hamil (${countByDomain("ibu_hamil")})`, icon: HeartPulse },
+    { id: "remaja_putri", label: `Remaja Putri (${countByDomain("remaja_putri")})`, icon: GraduationCap },
+    { id: "mbg", label: `Program MBG (${countByDomain("mbg")})`, icon: UtensilsCrossed },
+    { id: "pkmk", label: `Intervensi PKMK (${countByDomain("pkmk")})`, icon: Stethoscope },
+    { id: "bimtek_gizi", label: `Bimtek Gizi (${countByDomain("bimtek_gizi")})`, icon: ClipboardCheck },
   ];
 
-  const filteredEvidence = selectedDomain === "all" 
-    ? evidenceList 
-    : evidenceList.filter(e => e.domain === selectedDomain);
+  // Derive sub-categories based on selected domain
+  const availableSubCategories = React.useMemo<string[]>(() => {
+    if (selectedDomain === "balita_gizi") {
+      const cats = Array.from(new Set(evidenceList.filter(e => e.domain === "balita_gizi").map(e => e.category).filter((c): c is string => Boolean(c))));
+      return ["all", ...cats];
+    }
+    if (selectedDomain === "ibu_hamil") {
+      const cats = Array.from(new Set(evidenceList.filter(e => e.domain === "ibu_hamil").map(e => e.category).filter((c): c is string => Boolean(c))));
+      return ["all", ...cats];
+    }
+    return [];
+  }, [selectedDomain, evidenceList]);
+
+  // Handle domain change
+  const handleDomainChange = (domainId: string) => {
+    setSelectedDomain(domainId);
+    setSelectedSubCategory("all");
+  };
+
+  // Filter evidence items
+  const filteredEvidence = evidenceList.filter(e => {
+    if (selectedDomain !== "all" && e.domain !== selectedDomain) return false;
+    if (selectedSubCategory !== "all" && e.category !== selectedSubCategory) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-4">
       {/* Domain Filters */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {domainTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = selectedDomain === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setSelectedDomain(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              onClick={() => handleDomainChange(tab.id)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? "bg-teal-600 text-white shadow-sm shadow-teal-200"
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
@@ -61,6 +91,37 @@ export default function EvidenceMatrixSection({ evidenceList, isLoading }: Evide
         })}
       </div>
 
+      {/* Sub-Category Chips (for Balita Gizi & Ibu Hamil) */}
+      {availableSubCategories.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none bg-slate-50 p-2 rounded-2xl border border-slate-100">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 flex items-center gap-1">
+            <Layers className="w-3 h-3 text-slate-400" />
+            Kelompok:
+          </span>
+          {availableSubCategories.map((cat) => {
+            const isCatActive = selectedSubCategory === cat;
+            const count = cat === "all"
+              ? evidenceList.filter(e => e.domain === selectedDomain).length
+              : evidenceList.filter(e => e.domain === selectedDomain && e.category === cat).length;
+            const label = cat === "all" ? "Semua Kelompok" : cat;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedSubCategory(cat)}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  isCatActive
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100"
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Loading Skeleton */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -71,7 +132,7 @@ export default function EvidenceMatrixSection({ evidenceList, isLoading }: Evide
       ) : filteredEvidence.length === 0 ? (
         <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500">
           <Info className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-          <p className="font-semibold text-sm">Tidak ada data bukti yang cocok dengan filter domain ini.</p>
+          <p className="font-semibold text-sm">Tidak ada data bukti yang cocok dengan filter ini.</p>
         </div>
       ) : (
         /* Evidence Grid */
@@ -100,9 +161,16 @@ export default function EvidenceMatrixSection({ evidenceList, isLoading }: Evide
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
-                      {evd.domain_label}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                        {evd.domain_label}
+                      </span>
+                      {evd.category && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          {evd.category}
+                        </span>
+                      )}
+                    </div>
                     {statusBadge}
                   </div>
 

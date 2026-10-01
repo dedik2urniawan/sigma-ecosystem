@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
-    LineChart, Line, Legend, PieChart, Pie
+    LineChart, Line, Legend, PieChart, Pie, LabelList
 } from "recharts";
 
 interface Filters {
@@ -100,6 +100,14 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
         "Y": "Y (Underweight)",
     };
 
+    const ciafChartData = useMemo(() => {
+        if (!ciafData?.distribution) return [];
+        return ciafData.distribution.map((entry: any) => ({
+            ...entry,
+            displayLabel: `${Number(entry.count).toLocaleString("id-ID")} (${entry.percentage}%)`
+        }));
+    }, [ciafData]);
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -175,7 +183,7 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                     <h4 className="font-bold text-slate-700 mb-4">Distribusi Kategori CIAF</h4>
                                     <div className="h-[280px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={ciafData.distribution || []} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                                            <BarChart data={ciafChartData} layout="vertical" margin={{ top: 0, right: 110, left: 10, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                                                 <XAxis type="number" hide />
                                                 <YAxis
@@ -197,9 +205,14 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                                     labelFormatter={(label) => ciafLabels[label as string] || label}
                                                 />
                                                 <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
-                                                    {(ciafData.distribution || []).map((entry: any, index: number) => (
+                                                    {ciafChartData.map((entry: any, index: number) => (
                                                         <Cell key={`cell-${index}`} fill={ciafColors[entry.category] || "#cbd5e1"} />
                                                     ))}
+                                                    <LabelList
+                                                        dataKey="displayLabel"
+                                                        position="right"
+                                                        style={{ fontSize: "10px", fontWeight: 700, fill: "#334155" }}
+                                                    />
                                                 </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
@@ -212,7 +225,7 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                         <h4 className="font-bold text-slate-700 mb-4">Prevalensi CIAF Kelompok Usia</h4>
                                         <div className="h-[180px] w-full">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={ciafData.by_age || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <BarChart data={ciafData.by_age || []} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                                     <XAxis dataKey="age_group" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
                                                     <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val}%`} />
@@ -220,7 +233,15 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                                         cursor={{ fill: '#f8fafc' }}
                                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                                     />
-                                                    <Bar dataKey="prevalence" fill="#0ea5e9" name="Prevalensi (%)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                                    <Bar dataKey="prevalence" fill="#0ea5e9" name="Prevalensi (%)" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                                                        <LabelList
+                                                            dataKey="prevalence"
+                                                            position="top"
+                                                            offset={5}
+                                                            formatter={(val: any) => val !== undefined && val !== null ? `${Number(val).toFixed(1)}%` : ""}
+                                                            style={{ fontSize: "10px", fontWeight: 700, fill: "#0369a1" }}
+                                                        />
+                                                    </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -349,7 +370,7 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                 </div>
                                 <div className="flex-1 min-h-[200px] w-full mt-2">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={longitudinalData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                        <LineChart data={longitudinalData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                             <XAxis dataKey="periode" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
                                             <YAxis domain={[-5, 5]} tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
@@ -357,9 +378,33 @@ export default function TrendPertumbuhanTab({ filters }: { filters: Filters }) {
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             />
                                             <Legend wrapperStyle={{ fontSize: 11 }} />
-                                            <Line type="monotone" dataKey="zs_bbu" name="BB/U" stroke="#f59e0b" strokeWidth={2} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="zs_tbu" name="TB/U" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="zs_bbtb" name="BB/TB" stroke="#ec4899" strokeWidth={2} activeDot={{ r: 6 }} />
+                                            <Line type="monotone" dataKey="zs_bbu" name="BB/U" stroke="#f59e0b" strokeWidth={2} activeDot={{ r: 6 }}>
+                                                <LabelList
+                                                    dataKey="zs_bbu"
+                                                    position="top"
+                                                    offset={6}
+                                                    formatter={(v: any) => v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v).toFixed(2) : ""}
+                                                    style={{ fontSize: "9px", fontWeight: 700, fill: "#d97706" }}
+                                                />
+                                            </Line>
+                                            <Line type="monotone" dataKey="zs_tbu" name="TB/U" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 6 }}>
+                                                <LabelList
+                                                    dataKey="zs_tbu"
+                                                    position="bottom"
+                                                    offset={6}
+                                                    formatter={(v: any) => v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v).toFixed(2) : ""}
+                                                    style={{ fontSize: "9px", fontWeight: 700, fill: "#2563eb" }}
+                                                />
+                                            </Line>
+                                            <Line type="monotone" dataKey="zs_bbtb" name="BB/TB" stroke="#ec4899" strokeWidth={2} activeDot={{ r: 6 }}>
+                                                <LabelList
+                                                    dataKey="zs_bbtb"
+                                                    position="top"
+                                                    offset={6}
+                                                    formatter={(v: any) => v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v).toFixed(2) : ""}
+                                                    style={{ fontSize: "9px", fontWeight: 700, fill: "#db2777" }}
+                                                />
+                                            </Line>
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>

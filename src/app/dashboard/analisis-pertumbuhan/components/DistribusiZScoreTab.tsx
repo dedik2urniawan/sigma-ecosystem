@@ -115,6 +115,42 @@ export default function DistribusiZScoreTab({ filters }: { filters: Filters }) {
         zs_bbtb: "Berat Badan menurut Panjang/Tinggi Badan (BB/PB atau BB/TB)"
     };
 
+    const statsSummary = useMemo(() => {
+        if (!histogramData.length) return null;
+        let totalN = 0;
+        let sumWeightedZ = 0;
+        let belowMinus2 = 0;
+        let belowMinus3 = 0;
+
+        histogramData.forEach((d) => {
+            const c = Number(d.count) || 0;
+            const b = Number(d.bin);
+            totalN += c;
+            sumWeightedZ += c * b;
+            if (b < -2) belowMinus2 += c;
+            if (b < -3) belowMinus3 += c;
+        });
+
+        if (totalN === 0) return null;
+
+        const mean = sumWeightedZ / totalN;
+        let sumVariance = 0;
+        histogramData.forEach((d) => {
+            const c = Number(d.count) || 0;
+            const b = Number(d.bin);
+            sumVariance += c * Math.pow(b - mean, 2);
+        });
+        const sd = Math.sqrt(sumVariance / totalN);
+
+        return {
+            totalN,
+            mean,
+            sd,
+            pctBelowMinus2: ((belowMinus2 / totalN) * 100).toFixed(1),
+            pctBelowMinus3: ((belowMinus3 / totalN) * 100).toFixed(1),
+        };
+    }, [histogramData]);
+
     return (
         <div className="space-y-6">
             {/* Filter Controls for Indicator */}
@@ -136,6 +172,37 @@ export default function DistribusiZScoreTab({ filters }: { filters: Filters }) {
                     </button>
                 ))}
             </div>
+
+            {/* Summary Stat Cards */}
+            {statsSummary && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Sampel (N)</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{statsSummary.totalN.toLocaleString("id-ID")}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Balita terukur valid</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Rerata (Mean) Z-Score</p>
+                        <p className={`text-2xl font-black mt-1 ${statsSummary.mean < -1 ? "text-amber-600" : statsSummary.mean < -2 ? "text-rose-600" : "text-emerald-600"}`}>
+                            {statsSummary.mean.toFixed(2)} SD
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Standar WHO: 0.00 SD</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Standar Deviasi (SD)</p>
+                        <p className="text-2xl font-black text-slate-800 mt-1">{statsSummary.sd.toFixed(2)}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Dispersi kurva (WHO: 1.00)</p>
+                    </div>
+
+                    <div className="bg-rose-50 rounded-2xl p-4 border border-rose-100 shadow-sm">
+                        <p className="text-xs text-rose-700 font-semibold uppercase tracking-wider">Kasus Bermasalah (&lt; -2 SD)</p>
+                        <p className="text-2xl font-black text-rose-700 mt-1">{statsSummary.pctBelowMinus2}%</p>
+                        <p className="text-[10px] text-rose-500 font-semibold mt-0.5">&lt; -3 SD: {statsSummary.pctBelowMinus3}% (Kritis)</p>
+                    </div>
+                </div>
+            )}
 
             {/* Histogram View */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
@@ -198,6 +265,15 @@ export default function DistribusiZScoreTab({ filters }: { filters: Filters }) {
                                 <ReferenceLine x={-2} stroke="#f59e0b" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopLeft', value: '-2 SD', fill: '#f59e0b', fontSize: 10, fontWeight: 'bold' }} />
                                 <ReferenceLine x={-3} stroke="#ef4444" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopLeft', value: '-3 SD', fill: '#ef4444', fontSize: 10, fontWeight: 'bold' }} />
                                 <ReferenceLine x={0} stroke="#10b981" strokeDasharray="5 5" opacity={0.5} label={{ position: 'insideTopLeft', value: 'Median (0 SD)', fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
+                                {statsSummary && (
+                                    <ReferenceLine
+                                        x={Number(statsSummary.mean.toFixed(1))}
+                                        stroke="#0284c7"
+                                        strokeWidth={2}
+                                        strokeDasharray="4 4"
+                                        label={{ position: 'insideTopRight', value: `Mean: ${statsSummary.mean.toFixed(2)} SD`, fill: '#0284c7', fontSize: 10, fontWeight: 'bold' }}
+                                    />
+                                )}
 
                                 <Bar dataKey="count" name="Frekuensi Balita" maxBarSize={30} radius={[4, 4, 0, 0]}>
                                     {histogramData.map((entry, index) => (

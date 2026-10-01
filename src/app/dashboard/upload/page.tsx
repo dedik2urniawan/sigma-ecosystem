@@ -1099,9 +1099,33 @@ export default function UploadPage() {
                 mapped["uploaded_at"] = new Date().toISOString();
 
                 // POST-PROCESSING EPPGBM (Prioritizing system-calculated usia in months over text parsing if dates exist)
-                if (selectedConfig.tableName === "data_eppgbm" && mapped["tgl_lahir"] && mapped["tgl_ukur"]) {
+                if (selectedConfig.tableName === "data_eppgbm" && mapped["tgl_lahir"]) {
                     const birth = new Date(mapped["tgl_lahir"] as string);
-                    const visit = new Date(mapped["tgl_ukur"] as string);
+                    let visit: Date | null = mapped["tgl_ukur"] ? new Date(mapped["tgl_ukur"] as string) : null;
+
+                    // Fallback to period date if tgl_ukur is null/missing (e.g. agustus_2026 -> 15 Agustus 2026)
+                    if (!visit || isNaN(visit.getTime())) {
+                        const p = String(mapped["periode"] || "").toLowerCase();
+                        const yearMatch = p.match(/\d{4}/);
+                        const year = yearMatch ? parseInt(yearMatch[0], 10) : new Date().getFullYear();
+
+                        let month = 8; // default to August if not specified
+                        if (p.includes("januari") || p.includes("jan")) month = 1;
+                        else if (p.includes("februari") || p.includes("feb")) month = 2;
+                        else if (p.includes("maret") || p.includes("mar")) month = 3;
+                        else if (p.includes("april") || p.includes("apr")) month = 4;
+                        else if (p.includes("mei") || p.includes("may")) month = 5;
+                        else if (p.includes("juni") || p.includes("jun")) month = 6;
+                        else if (p.includes("juli") || p.includes("jul")) month = 7;
+                        else if (p.includes("agustus") || p.includes("ags") || p.includes("agu")) month = 8;
+                        else if (p.includes("september") || p.includes("sep")) month = 9;
+                        else if (p.includes("oktober") || p.includes("okt")) month = 10;
+                        else if (p.includes("november") || p.includes("nov")) month = 11;
+                        else if (p.includes("desember") || p.includes("des")) month = 12;
+
+                        visit = new Date(year, month - 1, 15);
+                    }
+
                     if (!isNaN(birth.getTime()) && !isNaN(visit.getTime()) && visit >= birth) {
                         const daysDiff = Math.floor((visit.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
                         mapped["usia_saatukur"] = Math.round(daysDiff / 30.4375);

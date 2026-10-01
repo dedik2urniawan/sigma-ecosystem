@@ -29,6 +29,7 @@ export interface EvidenceItem {
   geography: string;
   data_status: "VALID" | "PARTIAL" | "NOT_SCHEDULED" | "SUPPRESSED";
   quality_flags: string[];
+  category?: string;
   notes?: string;
 }
 
